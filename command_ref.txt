@@ -1,0 +1,37 @@
+MySQL
+====
+docker exec -it sidjam-db-1 mysql -u siduser -<pw> sidjam
+
+QUERY: Win-Loss by user
+=======================
+
+SELECT u.UserName, a.fullpath AS song_filename, SUM(s.win) AS total_wins, SUM(s.loss) AS total_losses, (SUM(s.win) - SUM(s.loss)) AS win_loss_difference FROM sidjam s JOIN siduser u ON s.user_id = u.user_id JOIN alltunes a ON s.id = a.id WHERE u.UserName = 'Dan Nearly' GROUP BY u.UserName, a.fullpath HAVING SUM(s.win) + SUM(s.loss) > 0 ORDER BY total_wins DESC;
+
+
+SELECT 
+    u.UserName,
+    a.fullpath AS song_filename,
+    SUM(s.win) AS total_wins,
+    SUM(s.loss) AS total_losses,
+    (SUM(s.win) - SUM(s.loss)) AS win_loss_difference
+FROM 
+    sidjam s
+JOIN 
+    siduser u ON s.user_id = u.user_id
+JOIN 
+    alltunes a ON s.id = a.id
+WHERE 
+    u.UserName = 'GroovyWizard'  -- <== Replace with the desired username
+GROUP BY 
+    u.UserName, a.fullpath
+HAVING 
+    SUM(s.win) + SUM(s.loss) > 0  -- Only show songs with votes
+ORDER BY 
+    total_wins DESC;
+
+git remote add origin https://github.com/your-username/sidjam.git
+
+
+
+/* Order by Longest songs (desc) */
+SELECT      id,     fullpath,     SUBSTRING_INDEX(fullpath, '/', -1) AS filename,     LENGTH(SUBSTRING_INDEX(fullpath, '/', -1)) AS filename_length FROM      alltunes ORDER BY      filename_length DESC LIMIT 20;

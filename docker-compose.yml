@@ -1,0 +1,51 @@
+services:
+  sidjam-web:
+    image: php:8.2-apache
+    container_name: sidjam-web-1
+    ports:
+      - "8080:80"
+    volumes:
+      - ./www:/var/www/html
+      - ./www/sid:/var/www/html/sid
+    depends_on:
+      sidjam-db:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
+    environment:
+      - APACHE_DOCUMENT_ROOT=/var/www/html
+    command: >
+      sh -c "apt-get update &&
+             apt-get install -y git unzip &&
+             curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer &&
+             composer require phpmailer/phpmailer -W --working-dir=/var/www/html &&
+             docker-php-ext-install mysqli &&
+             apache2-foreground"
+
+  sidjam-db:
+    image: mysql:8.0
+    container_name: sidjam-db-1
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: sidjam
+      MYSQL_USER: siduser
+      MYSQL_PASSWORD: jam@sid2025
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "siduser", "-pjam@sid2025"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: sidjam-mailhog-1
+    ports:
+      - "1025:1025" # SMTP port for sending emails
+      - "8025:8025" # Web UI port for viewing emails
+
+volumes:
+  mysql-data:
