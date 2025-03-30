@@ -94,13 +94,20 @@ export function updateRoundInfo(currentMode, hasPlayed, bothContendersSelected, 
     }
 }
 
+// Utility function to decode HTML entities
+export function decodeHtmlEntities(str) {
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = str;
+    return textarea.value;
+}
+
 export function updateSongInfo(sidPlayer) {
     if (sidPlayer) {
         let songInfo = sidPlayer.getSongInfo();
-        document.getElementById("song-title").textContent = songInfo.songName;
-        let authorText = songInfo.songAuthor.replace(/^Author:\s*/i, '');
+        document.getElementById("song-title").textContent = decodeHtmlEntities(songInfo.songName);
+        let authorText = decodeHtmlEntities(songInfo.songAuthor.replace(/^Author:\s*/i, ''));
         document.getElementById("song-author").textContent = "Author: " + authorText;
-        document.getElementById("song-released").textContent = "Released: " + songInfo.songReleased;
+        document.getElementById("song-released").textContent = "Released: " + decodeHtmlEntities(songInfo.songReleased);
         document.getElementById("track-info").textContent = "Track: " + (songInfo.actualSubsong + 1) + "/" + songInfo.maxSubsong;
     }
 }

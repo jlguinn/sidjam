@@ -223,13 +223,13 @@ $cxn->close();
                 <h2>Register</h2>
                 <form id="registerFormElement" onsubmit="window.handleRegister(event)">
                     <div class="form-group">
-                        <label for="registerUsername">Username:</label>
-                        <input type="text" id="registerUsername" name="username" required>
-                    </div>
-                    <div class="form-group">
                         <label for="registerEmail">Email:</label>
                         <input type="email" id="registerEmail" name="email" required>
                     </div>
+                    <div class="form-group">
+                        <label for="registerUsername">Username:</label>
+                        <input type="text" id="registerUsername" name="username" required>
+                    </div>                    
                     <div class="form-group">
                         <label for="registerPassword">Password:</label>
                         <input type="password" id="registerPassword" name="password" required>
