@@ -1,4 +1,10 @@
 <?php
+// Suppress error output to the response
+ini_set('display_errors', 0);
+// Log errors to a file for debugging
+ini_set('log_errors', 1);
+ini_set('error_log', '/var/log/php_errors.log'); // Adjust path as needed
+
 include_once "sidcon.php";
 $cxn = mysqli_connect($host, $user, $pass, $database);
 if (!$cxn) {
@@ -18,23 +24,38 @@ if (!isset($data['votes']) || !is_array($data['votes']) || empty($data['votes'])
     die(json_encode(["error" => "Invalid or empty votes data"]));
 }
 
-$stmt = $cxn->prepare("INSERT INTO sidjam (user_id, id, win, loss) VALUES (?, ?, ?, ?)");
+$stmt = $cxn->prepare("INSERT INTO sidjam (user_id, id, win, loss) VALUES (?, ?, ?, ?) 
+                       ON DUPLICATE KEY UPDATE win = win + VALUES(win), loss = loss + VALUES(loss)");
 if (!$stmt) {
     header('Content-Type: application/json');
     die(json_encode(["error" => "Prepare failed: " . $cxn->error]));
 }
 $stmt->bind_param("iiii", $user_id, $id, $win, $loss);
 
-foreach ($data['votes'] as $vote) {
-    $id = $vote['id'] ?? 0;
-    $increment = $vote['increment'] ?? 0;
-    $win = $increment > 0 ? $increment : 0;
-    $loss = $increment < 0 ? abs($increment) : 0;
-    if (!$stmt->execute()) {
-        header('Content-Type: application/json');
-        die(json_encode(["error" => "Execute failed: " . $stmt->error]));
+// Process votes in a transaction for atomicity
+$cxn->begin_transaction();
+try {
+    foreach ($data['votes'] as $vote) {
+        $id = $vote['id'] ?? 0;
+        $increment = $vote['increment'] ?? 0;
+        $win = $increment > 0 ? $increment : 0;
+        $loss = $increment < 0 ? abs($increment) : 0;
+
+        if ($id == 0) {
+            throw new Exception("Invalid song ID: $id");
+        }
+
+        if (!$stmt->execute()) {
+            throw new Exception("Execute failed: " . $stmt->error);
+        }
     }
+    $cxn->commit();
+} catch (Exception $e) {
+    $cxn->rollback();
+    header('Content-Type: application/json');
+    die(json_encode(["error" => $e->getMessage()]));
 }
+
 $stmt->close();
 $cxn->close();
 header('Content-Type: application/json');
