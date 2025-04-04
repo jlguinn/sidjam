@@ -1,6 +1,26 @@
 import { sidPlayer, isPlaying, stopTimer, setIsPlaying } from './player.js';
 import { applyBoutTheme, applyNowPlayingTheme } from './ui.js'; // Import specific functions
 
+class SeededRandom {
+    constructor(seed) {
+      this.seed = seed;
+    }
+  
+    random() {
+      const a = 1664525;
+      const c = 1013904223;
+      const m = Math.pow(2, 32);
+      this.seed = (a * this.seed + c) % m;
+      return this.seed / m;
+    }
+  
+    randint(min, max) {
+      return Math.floor(this.random() * (max - min + 1)) + min;
+    }
+  }
+
+  const seededRandom = new SeededRandom(12345); // Fixed seed for reproducibility
+
 debug("brackets.js module loaded");
 
 export let contenders = [];
@@ -85,36 +105,53 @@ export function findEligibleBracket() {
     return selectedBracket;
 }
 
-export function pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton) {
+// Helper function to shuffle an array using SeededRandom
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = seededRandom.randint(0, i); // Use randint for integer indices
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+  
+  // Modified pickContenders function
+  export function pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton) {
     let filteredFiles = [];
+    // Filter files based on the current bracket (e.g., "All", "Eliminated Contenders", or "Wins - Losses")
     if (currentBracket === "All") {
-        filteredFiles = window.sidJamData.sidFiles;
+      filteredFiles = window.sidJamData.sidFiles;
     } else if (currentBracket === "Eliminated Contenders") {
-        filteredFiles = window.sidJamData.sidFiles.filter(file => {
-            let record = window.sidJamData.cachedResults[file] || { wins: 0, losses: 0 };
-            return record.losses >= 2;
-        });
+      filteredFiles = window.sidJamData.sidFiles.filter(file => {
+        let record = window.sidJamData.cachedResults[file] || { wins: 0, losses: 0 };
+        return record.losses >= 2;
+      });
     } else {
-        let [wins, losses] = currentBracket.split(' - ').map(Number);
-        filteredFiles = window.sidJamData.sidFiles.filter(file => {
-            let record = window.sidJamData.cachedResults[file] || { wins: 0, losses: 0 };
-            return record.wins === wins && record.losses === losses;
-        });
+      let [wins, losses] = currentBracket.split(' - ').map(Number);
+      filteredFiles = window.sidJamData.sidFiles.filter(file => {
+        let record = window.sidJamData.cachedResults[file] || { wins: 0, losses: 0 };
+        return record.wins === wins && record.losses === losses;
+      });
     }
-
+  
     if (filteredFiles.length < 2) {
-        debug(`Not enough contenders in ${currentBracket} to load`);
-        setCurrentBracket(previousBracket);
-        updateBracketDropdown();
-        return false;
+      console.debug(`Not enough contenders in ${currentBracket} to load`);
+      setCurrentBracket(previousBracket);
+      updateBracketDropdown();
+      return false;
     }
-
-    let shuffled = filteredFiles.sort(() => 0.5 - Math.random());
-    setContenders(shuffled.slice(0, 2));
-    let song0 = contenders[0].split('/').pop();
-    let song1 = contenders[1]?.split('/').pop() || "-";
+  
+    // Shuffle and pick contenders with seeded randomness
+    let shuffled = shuffleArray([...filteredFiles]); // Clone array to avoid modifying original
+    let selectedContenders = shuffled.slice(0, 2);
+    setContenders(selectedContenders);
+  
+    // Update UI with selected contenders
+    let song0 = selectedContenders[0].split('/').pop();
+    let song1 = selectedContenders[1]?.split('/').pop() || "-";
     document.getElementById("song1").innerHTML = `<span>${song0}</span>`;
     document.getElementById("song2").innerHTML = `<span>${song1}</span>`;
+  
+    // Reset state for new matchup
     setHasJammed(false);
     setBothContendersSelected(false);
     setIsFlameActive(false);
@@ -124,8 +161,9 @@ export function pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerBut
     updateWinnerButtons();
     updateFlameButton();
     return true;
-}
+  }
 
+  
 export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup, updateRoundInfo, updateWinnerButtons, updateFlameButton, updateBracketDropdown) {
     debug("Jamming...");
     if (!sidPlayer) return;
