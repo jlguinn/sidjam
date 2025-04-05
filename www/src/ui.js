@@ -73,13 +73,13 @@ export function updateRoundInfo(currentMode, hasPlayed, bothContendersSelected, 
     if (!window.isLoggedIn && window.showPromptMessage && !window.hasShownPrompt) {
         roundDiv.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="3">Please sign in or register to save your progress...</marquee>`;
         // Log to confirm the message is being set
-        console.log("[DEBUG] Displaying scrolling message for guest user");
+        // console.log("[DEBUG] Displaying scrolling message for guest user");
         return;
     }
 
     // Set the flag to true after the first jAM click following the prompt
     if (!window.isLoggedIn && window.showPromptMessage && window.hasShownPrompt) {
-        console.log("[DEBUG] Scrolling message dismissed after jAM click");
+        // console.log("[DEBUG] Scrolling message dismissed after jAM click");
     }
 
     // Standard behavior for logged-in users, before the third vote, or after the prompt has been shown
@@ -137,7 +137,7 @@ export function updateFlameButton(currentMode, currentBracket, nowPlayingSong, w
     const flameButton = document.getElementById("flameButton");
     const reviveButton = document.getElementById("reviveButton");
 
-    debug(`updateFlameButton: hasPlayed=${hasPlayed}, currentBracket=${currentBracket}, isFlameActive=${isFlameActive}`);
+    // debug(`updateFlameButton: hasPlayed=${hasPlayed}, currentBracket=${currentBracket}, isFlameActive=${isFlameActive}`);
 
     if (currentMode === "nowPlaying") {
         if (currentBracket === "Eliminated Contenders" && nowPlayingSong) {

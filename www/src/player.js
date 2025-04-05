@@ -9,9 +9,10 @@ export function setIsPlaying(value) {
 }
 
 export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseButton, resetVoiceStates, updateNavigationButtons, updateVsMatchup) {
-    debug("Loading song: " + filename + ", track: " + trackNumber);
+    // debug("Loading song: " + filename + ", track: " + trackNumber);
     let onFail = () => console.error("Failed to load song");
-    let onProgress = (total, loaded) => debug(`Loading progress: ${loaded}/${total}`);
+    let onProgress = (total, loaded) => {};
+//    let onProgress = (total, loaded) => debug(`Loading progress: ${loaded}/${total}`);
     let options = { track: trackNumber, timeout: -1, traceSID: true };
 
     if (sidPlayer && isPlaying) {
@@ -21,7 +22,7 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
     }
 
     ScriptNodePlayer.loadMusicFromURL(filename, options, onFail, onProgress).then(() => {
-        debug("Song loaded successfully");
+        // debug("Song loaded successfully");
         updateSongInfo();
         sidPlayer.resume();
         setIsPlaying(true);
@@ -34,13 +35,13 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
 }
 
 export function initPlayer(hasPlayed, activeContender, contenders, loadSongFn, updateWinnerButtons, updateFlameButton) {
-    debug("Initializing player");
+//    debug("sID JAm starting...");
     let BASIC_ROM, KERNAL_ROM, CHAR_ROM;
     window.backend = new SIDBackendAdapter(BASIC_ROM, CHAR_ROM, KERNAL_ROM);
     let onTrackEnd = () => debug("Track ended - stopping music");
 
     ScriptNodePlayer.initialize(window.backend, onTrackEnd).then((msg) => {
-        debug("Player initialized: " + msg);
+        // debug("Player initialized: " + msg);
         sidPlayer = ScriptNodePlayer.getInstance();
         if (contenders.length > 0) {
             loadSongFn(contenders[activeContender], -1);
@@ -53,7 +54,7 @@ export function initPlayer(hasPlayed, activeContender, contenders, loadSongFn, u
 }
 
 export function togglePlayPause(updateRoundInfo, updatePlayPauseButton, updateWinnerButtons, updateFlameButton, initPlayerFn, setHasPlayed) {
-    debug("Toggle play/pause");
+    // debug("Toggle play/pause");
     if (!sidPlayer) {
         initPlayerFn();
     } else if (isPlaying) {
@@ -77,7 +78,7 @@ export function togglePlayPause(updateRoundInfo, updatePlayPauseButton, updateWi
 }
 
 export function nextTrack(currentMode, nowPlayingSong, contenders, activeContender, loadSongFn) {
-    debug("Next track");
+    // debug("Next track");
     if (sidPlayer) {
         let songInfo = sidPlayer.getSongInfo();
         if (songInfo.actualSubsong < songInfo.maxSubsong - 1) {
@@ -87,7 +88,7 @@ export function nextTrack(currentMode, nowPlayingSong, contenders, activeContend
 }
 
 export function prevTrack(currentMode, nowPlayingSong, contenders, activeContender, loadSongFn) {
-    debug("Previous track");
+    // debug("Previous track");
     if (sidPlayer) {
         let songInfo = sidPlayer.getSongInfo();
         if (songInfo.actualSubsong > 0) {
@@ -99,13 +100,13 @@ export function prevTrack(currentMode, nowPlayingSong, contenders, activeContend
 }
 
 export function startTimer(updateTimer) {
-    debug("Starting timer");
+    // debug("Starting timer");
     updateTimer();
     timerInterval = setInterval(updateTimer, 1000);
 }
 
 export function stopTimer() {
-    debug("Stopping timer");
+    // debug("Stopping timer");
     clearInterval(timerInterval);
 }
 

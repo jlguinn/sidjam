@@ -1,6 +1,7 @@
 import { sidPlayer, isPlaying, stopTimer, setIsPlaying } from './player.js';
 import { applyBoutTheme, applyNowPlayingTheme } from './ui.js'; // Import specific functions
 
+/* Deterministic psuedo random number generator for testing */
 class SeededRandom {
     constructor(seed) {
       this.seed = seed;
@@ -19,9 +20,9 @@ class SeededRandom {
     }
   }
 
-  const seededRandom = new SeededRandom(12345); // Fixed seed for reproducibility
+  const seededRandom = new SeededRandom(7473646); // Fixed seed for reproducibility
 
-debug("brackets.js module loaded");
+// debug("brackets.js module loaded");
 
 export let contenders = [];
 export let activeContender = 0;
@@ -48,20 +49,14 @@ export function setCurrentMode(value) { currentMode = value; }
 export function setContenders(value) { contenders = value; }
 export function setActiveContender(value) { activeContender = value; }
 export function setRoundCount(value) { roundCount = value; }
-export function setWinner(value) { 
-    debug("setWinner called with value: " + value);
-    winner = value; 
-}
+export function setWinner(value) { winner = value; }
 export function setHasJammed(value) { hasJammed = value; }
 export function setBothContendersSelected(value) { bothContendersSelected = value; }
 export function setIsFlameActive(value) { isFlameActive = value; }
 export function setIsReviveActive(value) { isReviveActive = value; }
 export function setCurrentBracket(value) { currentBracket = value; }
 export function setPreviousBracket(value) { previousBracket = value; }
-export function setNowPlayingSong(value) { 
-    debug("setNowPlayingSong called with value: " + value); 
-    nowPlayingSong = value; 
-}
+export function setNowPlayingSong(value) { nowPlayingSong = value; }
 
 export function getContenderCount(bracket) {
     let count;
@@ -79,7 +74,7 @@ export function getContenderCount(bracket) {
             return record.wins === wins && record.losses === losses;
         }).length;
     }
-    debug(`getContenderCount for ${bracket}: ${count}`);
+    // debug(`getContenderCount for ${bracket}: ${count}`);
     return count;
 }
 
@@ -134,7 +129,6 @@ function shuffleArray(array) {
     }
   
     if (filteredFiles.length < 2) {
-      console.debug(`Not enough contenders in ${currentBracket} to load`);
       setCurrentBracket(previousBracket);
       updateBracketDropdown();
       return false;
@@ -146,10 +140,10 @@ function shuffleArray(array) {
     setContenders(selectedContenders);
   
     // Adding logging for the selected bout
-    debug("Bout selected:");
-    debug(`${window.sidJamData.pathToId[contenders[0]]} ${contenders[0]}`);
-    debug("- vs -");
-    debug(`${window.sidJamData.pathToId[contenders[1]]} ${contenders[1]}`);
+    console.log(`Bracket : ${currentBracket}`);
+    console.log(`${window.sidJamData.pathToId[contenders[0]]} ${contenders[0]}`);
+    console.log("- vs -");
+    console.log(`${window.sidJamData.pathToId[contenders[1]]} ${contenders[1]}`);
 
     // Update UI with selected contenders
     let song0 = selectedContenders[0].split('/').pop();
@@ -171,7 +165,7 @@ function shuffleArray(array) {
 
   
 export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup, updateRoundInfo, updateWinnerButtons, updateFlameButton, updateBracketDropdown) {
-    debug("Jamming...");
+    // debug("Jamming...");
     if (!sidPlayer) return;
 
     let shouldUpdateBracketDropdown = false;
@@ -181,7 +175,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
     // Set the prompt flag to true on the first jAM click *after* the scrolling message has been shown
     if (!window.isLoggedIn && window.showPromptMessage && !window.hasShownPrompt) {
         window.hasShownPrompt = true;
-        debug("Prompt flag set to true after first jAM click following the scrolling message");
+        // debug("Prompt flag set to true after first jAM click following the scrolling message");
     }
 
     if (currentMode === "nowPlaying") {
@@ -194,7 +188,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 let availableSongs = window.sidJamData.sidFiles.filter(song => song !== nowPlayingSong && (window.sidJamData.cachedResults[song] || { wins: 0, losses: 0 }).wins === 0 && (window.sidJamData.cachedResults[song] || { wins: 0, losses: 0 }).losses === 0);
                 if (availableSongs.length > 0) {
                     contenders[1] = availableSongs[Math.floor(Math.random() * availableSongs.length)];
-                    debug(`Revived ${nowPlayingSong} paired with ${contenders[1]}`);
+                    // debug(`Revived ${nowPlayingSong} paired with ${contenders[1]}`);
                     revivedToZeroZero = true;
                 }
             }
@@ -354,7 +348,6 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
 }
 
 export function updateWinner(contenderIndex, updateRoundInfo, updateWinnerButtons, updateFlameButton) {
-    debug(`updateWinner called with contenderIndex: ${contenderIndex}`);
     if (winner === null && !bothContendersSelected) {
         setWinner(contenderIndex);
     } else if (winner !== null && winner !== contenderIndex) {
@@ -478,12 +471,12 @@ export async function logResult() {
             body: JSON.stringify({ user_id: window.user.id, votes })
         })
         .then(response => {
-            debug(`log_result.php response status: ${response.status}`);
+            // debug(`log_result.php response status: ${response.status}`);
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
             return response.json();
         })
         .then(data => {
-            debug(`log_result.php response data: ${JSON.stringify(data)}`);
+            // debug(`log_result.php response data: ${JSON.stringify(data)}`);
             if (data.success) return fetch(`dbcontrol/get_results.php?user_id=${window.user.id}`);
             throw new Error('Failed to log result');
         })
@@ -493,7 +486,6 @@ export async function logResult() {
         })
         .then(data => {
             window.sidJamData.cachedResults = data;
-            debug(`Logged result, updated cache`);
 
             let voteCount = parseInt(sessionStorage.getItem('voteCount') || '0', 10);
             voteCount += 1;
@@ -503,7 +495,7 @@ export async function logResult() {
             if (voteCount === 3 && !window.isLoggedIn) {
                 window.showPromptMessage = true; // Start showing the scrolling message
                 window.flashProfileIcon(); // Flash the profile icon
-                debug("Prompt triggered: flashing icon and enabling scrolling message");
+                // debug("Prompt triggered: flashing icon and enabling scrolling message");
             }
         })
         .catch(error => {
@@ -515,7 +507,7 @@ export async function logResult() {
 }
 
 export function updateBracketDropdown() {
-    debug("Updating bracket dropdown...");
+    // debug("Updating bracket dropdown...");
     let brackets = {};
     let eliminatedCount = 0;
     if (!window.sidJamData.cachedResults || Object.keys(window.sidJamData.cachedResults).length === 0) {

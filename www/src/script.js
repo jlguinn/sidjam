@@ -37,8 +37,6 @@ function checkSong2Clipping() {
     document.body.appendChild(tempElement); // Add to DOM to measure
 
     const intrinsicWidth = tempElement.offsetWidth; // Measure the intrinsic width
-    console.log("Song2 text: " + song2.textContent);
-    console.log("Song2 intrinsic width: " + intrinsicWidth);
 
     // Remove the temporary element
     document.body.removeChild(tempElement);
@@ -85,7 +83,7 @@ window.renderProfileBitmap = function(textColor) {
     bitmapContainer.innerHTML = ''; // Clear existing content
 
     // Log the color being used for debugging
-    debug(`Rendering profile bitmap with color: ${textColor}`);
+    // debug(`Rendering profile bitmap with color: ${textColor}`);
 
     for (let row = 0; row < 18; row++) {
         for (let col = 0; col < 15; col++) {
@@ -101,7 +99,7 @@ window.renderProfileBitmap = function(textColor) {
         }
     }
 
-    debug(`Rendered ${bitmapContainer.children.length} pixels in profile bitmap`);
+    // debug(`Rendered ${bitmapContainer.children.length} pixels in profile bitmap`);
 };
 
 // Bound functions to avoid passing arguments repeatedly (defined first)
@@ -143,7 +141,6 @@ window.togglePlayPause = () => {
         () => player.initPlayer(brackets.hasPlayed, brackets.activeContender, brackets.contenders, loadSongBound, updateWinnerButtonsBound, updateFlameButtonBound),
         brackets.setHasPlayed
     );
-    debug("hasPlayed after toggle: " + brackets.hasPlayed);
 };
 
 window.jamToggle = () => brackets.jamToggle(
@@ -534,15 +531,12 @@ window.handleForgotPassword = async function(event) {
 
     // Client-side email validation (already handled by HTML5 type="email" and required)
     try {
-        console.log("Forgot Password: Sending request for email:", email);
         const response = await fetch('dbcontrol/send_reset_email.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: `email=${encodeURIComponent(email)}`
         });
-        console.log("Forgot Password: Response received, status:", response.status);
         const result = await response.json();
-        console.log("Forgot Password: Response data:", result);
 
         if (result.success) {
             messageElement.style.color = 'green';
@@ -818,48 +812,40 @@ window.resetPlayer = function() {
 
 // Update UI to reflect logged-out state
 window.updateUIForLogout = function() {
-    console.log("updateUIForLogout: Starting UI update");
+
     const preferencesLink = document.getElementById('preferencesLink');
     const profileIcon = document.getElementById('profileIcon');
-    console.log("updateUIForLogout: preferencesLink found:", !!preferencesLink, "profileIcon found:", !!profileIcon);
+
     if (preferencesLink) preferencesLink.style.display = 'none';
     if (profileIcon) profileIcon.style.display = 'none';
 
     const authLink = document.getElementById('authLink');
-    console.log("updateUIForLogout: authLink found:", !!authLink);
+
     if (authLink) {
         authLink.style.display = 'inline';
         authLink.textContent = 'Sign In';
     }
 
     const userGreeting = document.getElementById('userGreeting');
-    console.log("updateUIForLogout: userGreeting found:", !!userGreeting);
     if (userGreeting) userGreeting.textContent = '';
-    console.log("updateUIForLogout: UI update complete");
 };
 
 // Handle logout
 window.handleLogout = async function(event) {
     event.preventDefault();
 
-    console.log("Logout: Starting logout process");
     window.stopPlayer(); // Still stop the player to avoid music playing during reload
 
     try {
-        console.log("Logout: Sending request to logout.php");
         const response = await fetch('dbcontrol/logout.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
         });
-        console.log("Logout: Response received, status:", response.status);
         const data = await response.json();
-        console.log("Logout: Response data:", data);
 
         if (data.success) {
-            console.log("Logout: Success, reloading page");
             window.location.reload();
         } else {
-            console.log("Logout: Failed, showing alert with message:", data.message);
             alert(data.message);
         }
     } catch (error) {
@@ -939,14 +925,12 @@ window.flashProfileIcon = function() {
             // Convert RGB to hex
             const rgb = bgColor.match(/\d+/g);
             currentColor = `#${parseInt(rgb[0]).toString(16).padStart(2, '0')}${parseInt(rgb[1]).toString(16).padStart(2, '0')}${parseInt(rgb[2]).toString(16).padStart(2, '0')}`;
-            debug(`Found current color for flashing: ${currentColor}`);
             break;
         }
     }
 
     // If no color is found, use the theme's text color as a fallback
     if (!currentColor) {
-        debug('Could not determine current profile icon color for flashing. Using theme text color as fallback.');
         currentColor = boutColorSchemes[boutSchemeIndex].text || '#000000'; // Fallback to black if theme color is undefined
         // Re-render the bitmap with the correct color to ensure consistency
         window.renderProfileBitmap(currentColor);
@@ -960,7 +944,6 @@ window.flashProfileIcon = function() {
     function flash() {
         if (flashCount >= maxFlashes) {
             // Final render with the original color
-            debug(`Finished flashing, rendering with original color: ${currentColor}`);
             window.renderProfileBitmap(currentColor);
             return;
         }
@@ -968,14 +951,11 @@ window.flashProfileIcon = function() {
         // Toggle between current and complementary color
         // Start with the complementary color to flash to it first
         const colorToUse = flashCount % 2 === 0 ? complementaryColor : currentColor;
-        debug(`Flashing with color: ${colorToUse}, flash ${flashCount + 1}/${maxFlashes}`);
         window.renderProfileBitmap(colorToUse);
         flashCount++;
         setTimeout(flash, flashDuration);
     }
-
     // Start flashing
-    debug("Starting profile icon flash");
     flash();
 };
 
@@ -985,7 +965,6 @@ async function initializeApp() {
     const preferencesLink = document.getElementById('preferences-link');
     const profileIcon = document.getElementById('profile-icon');
     const userInfo = document.getElementById('user-info');
-    debug(`authLink found: ${!!authLink}, preferencesLink found: ${!!preferencesLink}, profileIcon found: ${!!profileIcon}, userInfo found: ${!!userInfo}`);
 
     // Initialize the prompt flags
     window.hasShownPrompt = false; // Controls when to stop showing the message (after jAM click)
@@ -996,7 +975,6 @@ async function initializeApp() {
         authLink.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            debug('auth-link clicked');
             window.toggleAuthPopUp();
         });
     }
@@ -1004,7 +982,6 @@ async function initializeApp() {
     if (preferencesLink) {
         preferencesLink.addEventListener('click', (e) => {
             e.preventDefault();
-            debug('preferences-link clicked');
             window.togglePreferencesPopUp();
         });
     }
@@ -1012,7 +989,6 @@ async function initializeApp() {
     if (profileIcon) {
         profileIcon.addEventListener('click', (e) => {
             e.stopPropagation();
-            debug('profile-icon clicked');
             if (window.isLoggedIn) {
                 window.togglePreferencesPopUp();
             } else {
@@ -1032,7 +1008,7 @@ async function initializeApp() {
         return;
     }
 
-    debug("DOM loaded");
+    // debug("DOM loaded");
     try {
         const songsResponse = await fetch('dbcontrol/get_alltunes.php?full_list=true');
         if (!songsResponse.ok) throw new Error(`Failed to load alltunes: ${songsResponse.statusText}`);
@@ -1041,12 +1017,12 @@ async function initializeApp() {
         window.sidJamData.sidFiles.forEach((file, index) => {
             window.sidJamData.pathToId[file] = index + 1;
         });
-        debug(`Loaded ${window.sidJamData.sidFiles.length} songs from alltunes`);
+        // debug(`Loaded ${window.sidJamData.sidFiles.length} songs from alltunes`);
 
         const resultsResponse = await fetch(`dbcontrol/get_results.php?user_id=${window.user.id}`);
         if (!resultsResponse.ok) throw new Error(`Failed to load results: ${resultsResponse.statusText}`);
         window.sidJamData.cachedResults = await resultsResponse.json();
-        debug(`CachedResults set to: ${JSON.stringify(window.sidJamData.cachedResults)} with length ${Object.keys(window.sidJamData.cachedResults).length}`);
+        // debug(`CachedResults set to: ${JSON.stringify(window.sidJamData.cachedResults)} with length ${Object.keys(window.sidJamData.cachedResults).length}`);
     } catch (error) {
         console.error('Error loading data:', error);
         window.sidJamData.cachedResults = {};
@@ -1067,7 +1043,7 @@ async function initializeApp() {
     button.querySelector('.inner-box').style.backgroundColor = nextScheme.interior;
     // Ensure the profile bitmap is rendered with a valid color
     const initialColor = boutColorSchemes[boutSchemeIndex].text || '#000000'; // Fallback to black
-    debug(`Initial color for profile bitmap: ${initialColor}`);
+    // debug(`Initial color for profile bitmap: ${initialColor}`);
     window.renderProfileBitmap(initialColor);
     brackets.updateBracketDropdown();
     brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateFlameButtonBound);
@@ -1077,7 +1053,6 @@ async function initializeApp() {
 // Close auth pop-up when clicking outside the container
 document.getElementById('authOverlay').addEventListener('click', function(event) {
     if (event.target === this) {
-        console.log("[DEBUG] Clicking outside auth container, closing pop-up");
         window.toggleAuthPopUp();
     }
 });
@@ -1085,7 +1060,6 @@ document.getElementById('authOverlay').addEventListener('click', function(event)
 // Close preferences pop-up when clicking outside the container
 document.getElementById('preferencesOverlay').addEventListener('click', function(event) {
     if (event.target === this) {
-        console.log("[DEBUG] Clicking outside preferences container, closing pop-up");
         window.togglePreferencesPopUp();
     }
 });
