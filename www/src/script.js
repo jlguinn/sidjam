@@ -251,6 +251,8 @@ let currentFilter = '';
 let isLoading = false;
 let hasMoreSongs = true;
 
+const SONGS_PER_FETCH = 500; // Adjustable chunk size for lazy scrolling
+
 function populateSongList(filter) {
     const songList = document.getElementById("songList");
     const songListWrapper = document.getElementById("songListWrapper");
@@ -266,7 +268,17 @@ function populateSongList(filter) {
     if (!hasMoreSongs || isLoading) return;
 
     isLoading = true;
-    fetch(`dbcontrol/get_alltunes.php?filter=${encodeURIComponent(filter)}&offset=${currentOffset}&limit=50`)
+
+    // Build query parameters
+    let queryParams = `filter=${encodeURIComponent(filter)}&offset=${currentOffset}&limit=${SONGS_PER_FETCH}&user_id=${window.user.id}`;
+    if (brackets.currentBracket !== "All" && brackets.currentBracket !== "Eliminated Contenders") {
+        let [wins, losses] = brackets.currentBracket.split(' - ').map(Number);
+        queryParams += `&wins=${wins}&losses=${losses}`;
+    } else if (brackets.currentBracket === "Eliminated Contenders") {
+        queryParams += "&wins=-1&losses=2"; // Special case: losses >= 2
+    }
+
+    fetch(`dbcontrol/get_alltunes.php?${queryParams}`)
         .then(response => {
             if (!response.ok) throw new Error(`Failed to fetch songs: ${response.status}`);
             return response.json();
@@ -275,27 +287,14 @@ function populateSongList(filter) {
             const { files, offset, limit, hasMore } = data;
             hasMoreSongs = hasMore;
 
-            // Filter songs by the current bracket
-            let bracketFiles = files;
-            if (brackets.currentBracket === "All") {
-                // No additional filtering needed
-            } else if (brackets.currentBracket === "Eliminated Contenders") {
-                bracketFiles = files.filter(file => (window.sidJamData.cachedResults[file]?.losses || 0) >= 2);
-            } else {
-                let [wins, losses] = brackets.currentBracket.split(' - ').map(Number);
-                bracketFiles = files.filter(file => {
-                    let record = window.sidJamData.cachedResults[file] || { wins: 0, losses: 0 };
-                    return record.wins === wins && record.losses === losses;
-                });
-            }
-
-            if (bracketFiles.length === 0 && currentOffset === 0) {
+            // No client-side filtering needed; server already filtered by bracket
+            if (files.length === 0 && currentOffset === 0) {
                 const li = document.createElement("li");
                 li.textContent = "No contenders found";
                 li.className = "no-results";
                 songList.appendChild(li);
             } else {
-                bracketFiles.forEach(file => {
+                files.forEach(file => {
                     const li = document.createElement("li");
                     li.textContent = file.replace('/sid/C64Music', '');
                     if (peekPlayingSong === file) {
