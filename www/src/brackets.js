@@ -38,12 +38,10 @@ export let previousBracket = "0 - 0";
 export let currentMode = "bout";
 export let nowPlayingSong = null;
 export let boutState = {};
-export let sidFiles = [];
 
 export function debug(message) { console.log(`[DEBUG] ${message}`); }
 
 export function setHasPlayed(value) { hasPlayed = value; }
-export function setSidFiles(files) { sidFiles = files; }
 export function setBoutState(newState) { boutState = newState; }
 export function setCurrentMode(value) { currentMode = value; }
 export function setContenders(value) { contenders = value; }
@@ -451,17 +449,17 @@ export async function logResult() {
     
     // Add logging for bout decision
     if (bothContendersSelected) {
-        debug("Both contenders selected as winners:");
-        debug(`${window.sidJamData.pathToId[contenders[0]]} ${contenders[0]}`);
-        debug(`${window.sidJamData.pathToId[contenders[1]]} ${contenders[1]}`);
+        console.log("Both contenders selected as winners:");
+        console.log(`${window.sidJamData.pathToId[contenders[0]]} ${contenders[0]}`);
+        console.log(`${window.sidJamData.pathToId[contenders[1]]} ${contenders[1]}`);
     } else if (winner !== null) {
         let winnerPath = contenders[winner];
         let loserPath = contenders[1 - winner]; // Simpler way to get the loser index
         let winnerId = window.sidJamData.pathToId[winnerPath];
         let loserId = window.sidJamData.pathToId[loserPath];
-        debug("Bout decided:");
-        debug(`Winner: ${winnerId} ${winnerPath}`);
-        debug(`Loser: ${loserId} ${loserPath}`);
+        console.log("Bout decided:");
+        console.log(`Winner: ${winnerId} ${winnerPath}`);
+        console.log(`Loser: ${loserId} ${loserPath}`);
     }
     
     if (votes.length && votes.every(vote => vote.id !== 0)) {

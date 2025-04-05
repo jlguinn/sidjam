@@ -1,5 +1,4 @@
 import { boutColorSchemes, nowPlayingColorSchemes } from './themes.js';
-import { sidFiles } from './brackets.js'; // Added import for sidFiles
 
 export let boutSchemeIndex = 0;
 export let nowPlayingSchemeIndex = 0;
@@ -137,8 +136,6 @@ export function updateFlameButton(currentMode, currentBracket, nowPlayingSong, w
     const flameButton = document.getElementById("flameButton");
     const reviveButton = document.getElementById("reviveButton");
 
-    // debug(`updateFlameButton: hasPlayed=${hasPlayed}, currentBracket=${currentBracket}, isFlameActive=${isFlameActive}`);
-
     if (currentMode === "nowPlaying") {
         if (currentBracket === "Eliminated Contenders" && nowPlayingSong) {
             let results = JSON.parse(localStorage.getItem('sidJamResults') || '{}');
@@ -168,10 +165,21 @@ export function updateFlameButton(currentMode, currentBracket, nowPlayingSong, w
         return;
     }
 
+    if (currentBracket === "0 - 0") {
+        flameControls.classList.remove("hidden");
+        flameButton.style.display = "block";
+        reviveButton.style.display = "none";
+    } else {
+        flameControls.classList.add("hidden");
+        flameButton.style.display = "none";
+        reviveButton.style.display = "none";
+        return;
+    }
+
     if (winner !== null || bothContendersSelected) {
         flameButton.disabled = true;
     } else {
-        let availableSongs = sidFiles.filter(song => !contenders.includes(song)); // Now uses imported sidFiles
+        let availableSongs = window.sidJamData.sidFiles.filter(song => !contenders.includes(song));
         flameButton.disabled = !hasPlayed || availableSongs.length === 0;
     }
 
