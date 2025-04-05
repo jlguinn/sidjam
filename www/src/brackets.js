@@ -145,6 +145,12 @@ function shuffleArray(array) {
     let selectedContenders = shuffled.slice(0, 2);
     setContenders(selectedContenders);
   
+    // Adding logging for the selected bout
+    debug("Bout selected:");
+    debug(`${window.sidJamData.pathToId[contenders[0]]} ${contenders[0]}`);
+    debug("- vs -");
+    debug(`${window.sidJamData.pathToId[contenders[1]]} ${contenders[1]}`);
+
     // Update UI with selected contenders
     let song0 = selectedContenders[0].split('/').pop();
     let song1 = selectedContenders[1]?.split('/').pop() || "-";
@@ -449,6 +455,7 @@ export async function logResult() {
         votes.push({ id: window.sidJamData.pathToId[contenders[winner]], increment: 1 });
         votes.push({ id: window.sidJamData.pathToId[contenders[winner === 0 ? 1 : 0]], increment: -1 });
     }
+    
     if (votes.length && votes.every(vote => vote.id !== 0)) {
         return fetch('dbcontrol/log_result.php', {
             method: 'POST',
