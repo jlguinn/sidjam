@@ -456,6 +456,21 @@ export async function logResult() {
         votes.push({ id: window.sidJamData.pathToId[contenders[winner === 0 ? 1 : 0]], increment: -1 });
     }
     
+    // Add logging for bout decision
+    if (bothContendersSelected) {
+        debug("Both contenders selected as winners:");
+        debug(`${window.sidJamData.pathToId[contenders[0]]} ${contenders[0]}`);
+        debug(`${window.sidJamData.pathToId[contenders[1]]} ${contenders[1]}`);
+    } else if (winner !== null) {
+        let winnerPath = contenders[winner];
+        let loserPath = contenders[1 - winner]; // Simpler way to get the loser index
+        let winnerId = window.sidJamData.pathToId[winnerPath];
+        let loserId = window.sidJamData.pathToId[loserPath];
+        debug("Bout decided:");
+        debug(`Winner: ${winnerId} ${winnerPath}`);
+        debug(`Loser: ${loserId} ${loserPath}`);
+    }
+    
     if (votes.length && votes.every(vote => vote.id !== 0)) {
         return fetch('dbcontrol/log_result.php', {
             method: 'POST',
