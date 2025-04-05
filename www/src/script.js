@@ -1012,12 +1012,17 @@ async function initializeApp() {
     try {
         const songsResponse = await fetch('dbcontrol/get_alltunes.php?full_list=true');
         if (!songsResponse.ok) throw new Error(`Failed to load alltunes: ${songsResponse.statusText}`);
-        window.sidJamData.sidFiles = await songsResponse.json();
+        const tunesData = await songsResponse.json();
+        window.sidJamData.sidFiles = tunesData.map(tune => tune.fullpath);
         if (!window.sidJamData.sidFiles || window.sidJamData.sidFiles.length === 0) throw new Error('No songs loaded from alltunes');
-        window.sidJamData.sidFiles.forEach((file, index) => {
-            window.sidJamData.pathToId[file] = index + 1;
+        window.sidJamData.pathToId = {};
+        tunesData.forEach(tune => {
+            window.sidJamData.pathToId[tune.fullpath] = tune.id;
         });
-        // debug(`Loaded ${window.sidJamData.sidFiles.length} songs from alltunes`);
+        // Debug logs to verify mappings
+        debug(`Loaded ${window.sidJamData.sidFiles.length} songs from alltunes`);
+        debug(`pathToId for Sunny_Day: ${window.sidJamData.pathToId["/sid/C64Music/MUSICIANS/D/Djinn/Sunny_Day.sid"]}`);
+        debug(`pathToId for Streets_of_Rage: ${window.sidJamData.pathToId["/sid/C64Music/MUSICIANS/D/DJ_Space/Streets_of_Rage.sid"]}`);
 
         const resultsResponse = await fetch(`dbcontrol/get_results.php?user_id=${window.user.id}`);
         if (!resultsResponse.ok) throw new Error(`Failed to load results: ${resultsResponse.statusText}`);
@@ -1027,9 +1032,7 @@ async function initializeApp() {
         console.error('Error loading data:', error);
         window.sidJamData.cachedResults = {};
         window.sidJamData.sidFiles = [];
-        window.sidJamData.sidFiles.forEach((file, index) => {
-            window.sidJamData.pathToId[file] = index + 1;
-        });
+        window.sidJamData.pathToId = {};
     }
 
     document.getElementById("playPauseButton").disabled = false;

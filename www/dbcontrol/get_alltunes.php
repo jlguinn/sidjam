@@ -11,19 +11,29 @@ $full_list = isset($_GET['full_list']) && $_GET['full_list'] === 'true';
 $filter = mysqli_real_escape_string($cxn, $filter);
 
 // Build the query
-$query = "SELECT fullpath FROM alltunes";
-if ($filter !== '') {
-    $query .= " WHERE fullpath LIKE '%$filter%'";
-}
-
-if (!$full_list) {
+if ($full_list) {
+    $query = "SELECT id, fullpath FROM alltunes";
+    if ($filter !== '') {
+        $query .= " WHERE fullpath LIKE '%$filter%'";
+    }
+} else {
+    $query = "SELECT fullpath FROM alltunes";
+    if ($filter !== '') {
+        $query .= " WHERE fullpath LIKE '%$filter%'";
+    }
     $query .= " LIMIT $limit OFFSET $offset";
 }
 
 $result = mysqli_query($cxn, $query) or die(json_encode(["error" => "Query failed: " . mysqli_error($cxn)]));
 $files = [];
-while ($row = mysqli_fetch_assoc($result)) {
-    $files[] = $row['fullpath'];
+if ($full_list) {
+    while ($row = mysqli_fetch_assoc($result)) {
+        $files[] = ['id' => (int)$row['id'], 'fullpath' => $row['fullpath']];
+    }
+} else {
+    while ($row = mysqli_fetch_assoc($result)) {
+        $files[] = $row['fullpath'];
+    }
 }
 mysqli_close($cxn);
 

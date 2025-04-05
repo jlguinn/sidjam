@@ -140,7 +140,7 @@ function shuffleArray(array) {
     setContenders(selectedContenders);
   
     // Adding logging for the selected bout
-    console.log(`Bracket : ${currentBracket}`);
+    console.log(`Bracket: ${currentBracket} (${filteredFiles.length} contenders)`);
     console.log(`${window.sidJamData.pathToId[contenders[0]]} ${contenders[0]}`);
     console.log("- vs -");
     console.log(`${window.sidJamData.pathToId[contenders[1]]} ${contenders[1]}`);
