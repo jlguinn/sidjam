@@ -252,6 +252,10 @@ function shuffleArray(array) {
     if (isFlameActive && currentBracket === "0 - 0") {
         let flamedIndex = activeContender;
         let flamedFile = contenders[flamedIndex];
+
+        console.log(`Flaming: ${window.sidJamData.pathToId[flamedFile]}!`);
+        console.log(`${flamedFile}`);
+
         let votes = [{ id: window.sidJamData.pathToId[flamedFile], increment: -2 }];
         try {
             await fetch('dbcontrol/log_result.php', {
@@ -275,6 +279,10 @@ function shuffleArray(array) {
                     let newSong = availableSongs[Math.floor(Math.random() * availableSongs.length)];
                     contenders[flamedIndex] = newSong;
                     loadSong(newSong, -1);
+
+                    console.log(`New contender: ${window.sidJamData.pathToId[newSong]}`);
+                    console.log(`${newSong}`);
+
                 }
                 setIsFlameActive(false);
                 updateVsMatchup();
