@@ -60,7 +60,7 @@ export function getContenderCount(bracket) {
     let count;
     if (bracket === "All") {
         count = window.sidJamData.sidFiles.length;
-    } else if (bracket === "Eliminated Contenders") {
+    } else if (bracket === "Eliminated") {
         count = window.sidJamData.sidFiles.filter(file => {
             let record = window.sidJamData.cachedResults[file] || { wins: 0, losses: 0 };
             return record.losses >= 2;
@@ -72,7 +72,6 @@ export function getContenderCount(bracket) {
             return record.wins === wins && record.losses === losses;
         }).length;
     }
-    // debug(`getContenderCount for ${bracket}: ${count}`);
     return count;
 }
 
@@ -107,48 +106,43 @@ function shuffleArray(array) {
     return array;
   }
   
-export function pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton) {
+  export function pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton) {
     let filteredFiles = [];
-    // Filter files based on the current bracket (e.g., "All", "Eliminated Contenders", or "Wins - Losses")
     if (currentBracket === "All") {
-      filteredFiles = window.sidJamData.sidFiles;
-    } else if (currentBracket === "Eliminated Contenders") {
-      filteredFiles = window.sidJamData.sidFiles.filter(file => {
-        let record = window.sidJamData.cachedResults[file] || { wins: 0, losses: 0 };
-        return record.losses >= 2;
-      });
+        filteredFiles = window.sidJamData.sidFiles;
+    } else if (currentBracket === "Eliminated") {
+        filteredFiles = window.sidJamData.sidFiles.filter(file => {
+            let record = window.sidJamData.cachedResults[file] || { wins: 0, losses: 0 };
+            return record.losses >= 2;
+        });
     } else {
-      let [wins, losses] = currentBracket.split(' - ').map(Number);
-      filteredFiles = window.sidJamData.sidFiles.filter(file => {
-        let record = window.sidJamData.cachedResults[file] || { wins: 0, losses: 0 };
-        return record.wins === wins && record.losses === losses;
-      });
+        let [wins, losses] = currentBracket.split(' - ').map(Number);
+        filteredFiles = window.sidJamData.sidFiles.filter(file => {
+            let record = window.sidJamData.cachedResults[file] || { wins: 0, losses: 0 };
+            return record.wins === wins && record.losses === losses;
+        });
     }
-  
+
     if (filteredFiles.length < 2) {
-      setCurrentBracket(previousBracket);
-      updateBracketDropdown();
-      return false;
+        setCurrentBracket(previousBracket);
+        updateBracketDropdown();
+        return false;
     }
-  
-    // Shuffle and pick contenders with seeded randomness
-    let shuffled = shuffleArray([...filteredFiles]); // Clone array to avoid modifying original
+
+    let shuffled = shuffleArray([...filteredFiles]);
     let selectedContenders = shuffled.slice(0, 2);
     setContenders(selectedContenders);
-  
-    // Adding logging for the selected bout
+
     console.log(`Bracket: ${currentBracket} (${filteredFiles.length} contenders)`);
     console.log(`${window.sidJamData.pathToId[contenders[0]]} ${contenders[0]}`);
     console.log("- vs -");
     console.log(`${window.sidJamData.pathToId[contenders[1]]} ${contenders[1]}`);
 
-    // Update UI with selected contenders
     let song0 = selectedContenders[0].split('/').pop();
     let song1 = selectedContenders[1]?.split('/').pop() || "-";
     document.getElementById("song1").innerHTML = `<span>${song0}</span>`;
     document.getElementById("song2").innerHTML = `<span>${song1}</span>`;
-  
-    // Reset state for new matchup
+
     setHasJammed(false);
     setBothContendersSelected(false);
     setIsFlameActive(false);
@@ -158,21 +152,18 @@ export function pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerBut
     updateWinnerButtons();
     updateFlameButton();
     return true;
-  }
+}
 
   
-export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup, updateRoundInfo, updateWinnerButtons, updateFlameButton, updateBracketDropdown) {
-    // debug("Jamming...");
+  export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup, updateRoundInfo, updateWinnerButtons, updateFlameButton, updateBracketDropdown) {
     if (!sidPlayer) return;
 
     let shouldUpdateBracketDropdown = false;
     let newBracket = null;
     let voteProcessed = false;
 
-    // Set the prompt flag to true on the first jAM click *after* the scrolling message has been shown
     if (!window.isLoggedIn && window.showPromptMessage && !window.hasShownPrompt) {
         window.hasShownPrompt = true;
-        // debug("Prompt flag set to true after first jAM click following the scrolling message");
     }
 
     if (currentMode === "nowPlaying") {
@@ -185,7 +176,6 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 let availableSongs = window.sidJamData.sidFiles.filter(song => song !== nowPlayingSong && (window.sidJamData.cachedResults[song] || { wins: 0, losses: 0 }).wins === 0 && (window.sidJamData.cachedResults[song] || { wins: 0, losses: 0 }).losses === 0);
                 if (availableSongs.length > 0) {
                     contenders[1] = availableSongs[Math.floor(Math.random() * availableSongs.length)];
-                    // debug(`Revived ${nowPlayingSong} paired with ${contenders[1]}`);
                     revivedToZeroZero = true;
                 }
             }
@@ -247,11 +237,10 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
         return;
     }
 
-    // Treat 1-contender brackets like special brackets ("All" and "Eliminated Contenders")
-    const specialBrackets = ["All", "Eliminated Contenders"];
+    // Treat 1-contender brackets like special brackets ("All" and "Eliminated")
+    const specialBrackets = ["All", "Eliminated"];
     let contenderCount = getContenderCount(currentBracket);
     if (specialBrackets.includes(currentBracket) || contenderCount === 1) {
-        // debug(`Special or 1-contender bracket ${currentBracket}, reverting to ${previousBracket}`);
         setCurrentBracket(previousBracket);
         shouldUpdateBracketDropdown = true;
     }
@@ -277,7 +266,6 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
             .then(response => response.json())
             .then(data => {
                 window.sidJamData.cachedResults = data;
-                // debug(`Flamed: ${flamedFile} now at 0-2`);
 
                 let availableSongs = window.sidJamData.sidFiles.filter(song => !contenders.includes(song));
                 if (availableSongs.length === 0) {
@@ -412,16 +400,14 @@ export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, upda
         return;
     }
 
-    // Treat 1-contender brackets like special brackets ("All" and "Eliminated Contenders")
-    const specialBrackets = ["All", "Eliminated Contenders"];
+    // Treat 1-contender brackets like special brackets ("All" and "Eliminated")
+    const specialBrackets = ["All", "Eliminated"];
     let contenderCount = getContenderCount(newBracket);
-    // debug(`New bracket ${newBracket} has ${contenderCount} contenders`);
     if (specialBrackets.includes(newBracket) || contenderCount === 1) {
-        // debug(`Special or 1-contender bracket ${newBracket}, keeping bout`);
         return;
     }
 
-    if (contenderCount < 1) { // Only revert if the bracket has 0 contenders
+    if (contenderCount < 1) {
         debug(`No contenders in ${newBracket}, reverting to ${previousBracket}`);
         setCurrentBracket(previousBracket);
         updateBracketDropdown();
@@ -511,7 +497,6 @@ export async function logResult() {
 }
 
 export function updateBracketDropdown() {
-    // debug("Updating bracket dropdown...");
     let brackets = {};
     let eliminatedCount = 0;
     if (!window.sidJamData.cachedResults || Object.keys(window.sidJamData.cachedResults).length === 0) {
@@ -528,14 +513,14 @@ export function updateBracketDropdown() {
         });
     }
     brackets["All"] = window.sidJamData.sidFiles.length;
-    brackets["Eliminated Contenders"] = eliminatedCount;
+    brackets["Eliminated"] = eliminatedCount; // Updated key
 
     let select = document.getElementById("bracket-select");
     let currentValue = select.value;
 
     select.innerHTML = "";
 
-    let sortedKeys = Object.keys(brackets).filter(key => key !== "All" && key !== "Eliminated Contenders").sort((a, b) => {
+    let sortedKeys = Object.keys(brackets).filter(key => key !== "All" && key !== "Eliminated").sort((a, b) => {
         let [aWins, aLosses] = a.split(" - ").map(Number);
         let [bWins, bLosses] = b.split(" - ").map(Number);
         if (aWins !== bWins) return bWins - aWins;
@@ -555,12 +540,12 @@ export function updateBracketDropdown() {
     select.appendChild(allOption);
 
     let eliminatedOption = document.createElement("option");
-    eliminatedOption.value = "Eliminated-Contenders";
-    eliminatedOption.text = `Eliminated Contenders (${eliminatedCount})`;
+    eliminatedOption.value = "Eliminated"; // Updated value
+    eliminatedOption.text = `Eliminated (${eliminatedCount} contenders)`; // Updated label
     select.appendChild(eliminatedOption);
 
     let newValue = currentBracket.replace(" - ", "-");
-    if (!(newValue in Object.fromEntries(sortedKeys.map(key => [key.replace(" - ", "-"), key]).concat([["All", "All"], ["Eliminated-Contenders", "Eliminated Contenders"]]))) || !brackets[currentBracket]) {
+    if (!(newValue in Object.fromEntries(sortedKeys.map(key => [key.replace(" - ", "-"), key]).concat([["All", "All"], ["Eliminated", "Eliminated"]]))) || !brackets[currentBracket]) {
         newValue = sortedKeys[0]?.replace(" - ", "-") || "All";
         setCurrentBracket(sortedKeys[0] || "All");
     }

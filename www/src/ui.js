@@ -137,28 +137,17 @@ export function updateFlameButton(currentMode, currentBracket, nowPlayingSong, w
     const reviveButton = document.getElementById("reviveButton");
 
     if (currentMode === "nowPlaying") {
-        if (currentBracket === "Eliminated Contenders" && nowPlayingSong) {
+        if (currentBracket === "Eliminated" && nowPlayingSong) {
             let results = JSON.parse(localStorage.getItem('sidJamResults') || '{}');
             let record = results[nowPlayingSong] || { wins: 0, losses: 0 };
             if (record.losses >= 2) {
                 flameControls.classList.remove("hidden");
                 flameButton.style.display = "none";
                 reviveButton.style.display = "block";
-                updateReviveButton(false); // Placeholder, assumes revive not active
+                updateReviveButton(false);
                 return;
             }
         }
-        flameControls.classList.add("hidden");
-        flameButton.style.display = "none";
-        reviveButton.style.display = "none";
-        return;
-    }
-
-    if (currentBracket === "0 - 0") {
-        flameControls.classList.remove("hidden");
-        flameButton.style.display = "block";
-        reviveButton.style.display = "none";
-    } else {
         flameControls.classList.add("hidden");
         flameButton.style.display = "none";
         reviveButton.style.display = "none";

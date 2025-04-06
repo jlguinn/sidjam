@@ -264,7 +264,6 @@ function populateSongList(filter) {
         currentFilter = filter;
         hasMoreSongs = true;
         songList.innerHTML = '';
-        // Reset observer
         if (currentObserver) {
             currentObserver.disconnect();
             currentObserver = null;
@@ -277,10 +276,10 @@ function populateSongList(filter) {
     isLoading = true;
 
     let queryParams = `filter=${encodeURIComponent(filter)}&offset=${currentOffset}&limit=${SONGS_PER_FETCH}&user_id=${window.user.id}`;
-    if (brackets.currentBracket !== "All" && brackets.currentBracket !== "Eliminated Contenders") {
+    if (brackets.currentBracket !== "All" && brackets.currentBracket !== "Eliminated") {
         let [wins, losses] = brackets.currentBracket.split(' - ').map(Number);
         queryParams += `&wins=${wins}&losses=${losses}`;
-    } else if (brackets.currentBracket === "Eliminated Contenders") {
+    } else if (brackets.currentBracket === "Eliminated") {
         queryParams += "&wins=-1&losses=2";
     }
 
@@ -318,20 +317,18 @@ function populateSongList(filter) {
                     sentinel.id = "sentinel";
                     songList.appendChild(sentinel);
 
-                    // Disconnect the old observer if it exists
                     if (currentObserver) {
                         currentObserver.disconnect();
                         currentObserver = null;
                     }
 
-                    // Set up a new observer for the new sentinel
                     const observer = new IntersectionObserver((entries) => {
                         if (entries[0].isIntersecting && !isLoading) {
                             populateSongList(currentFilter);
                         }
                     }, { root: songListWrapper, threshold: 0.1 });
                     observer.observe(sentinel);
-                    currentObserver = observer; // Store the observer instance
+                    currentObserver = observer;
                     songListWrapper.dataset.observerSet = "true";
                 }
             }
