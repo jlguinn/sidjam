@@ -94,7 +94,7 @@ export function findEligibleBracket() {
 
     eligibleBrackets.sort((a, b) => getContenderCount(b) - getContenderCount(a));
     let selectedBracket = eligibleBrackets[0];
-    debug(`Selected bracket: ${selectedBracket} with ${getContenderCount(selectedBracket)} contenders`);
+    // debug(`Selected bracket: ${selectedBracket} with ${getContenderCount(selectedBracket)} contenders`);
     return selectedBracket;
 }
 
@@ -107,8 +107,7 @@ function shuffleArray(array) {
     return array;
   }
   
-  // Modified pickContenders function
-  export function pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton) {
+export function pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton) {
     let filteredFiles = [];
     // Filter files based on the current bracket (e.g., "All", "Eliminated Contenders", or "Wins - Losses")
     if (currentBracket === "All") {
@@ -252,7 +251,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
     const specialBrackets = ["All", "Eliminated Contenders"];
     let contenderCount = getContenderCount(currentBracket);
     if (specialBrackets.includes(currentBracket) || contenderCount === 1) {
-        debug(`Special or 1-contender bracket ${currentBracket}, reverting to ${previousBracket}`);
+        // debug(`Special or 1-contender bracket ${currentBracket}, reverting to ${previousBracket}`);
         setCurrentBracket(previousBracket);
         shouldUpdateBracketDropdown = true;
     }
@@ -278,7 +277,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
             .then(response => response.json())
             .then(data => {
                 window.sidJamData.cachedResults = data;
-                debug(`Flamed: ${flamedFile} now at 0-2`);
+                // debug(`Flamed: ${flamedFile} now at 0-2`);
 
                 let availableSongs = window.sidJamData.sidFiles.filter(song => !contenders.includes(song));
                 if (availableSongs.length === 0) {
@@ -368,7 +367,7 @@ export function updateWinner(contenderIndex, updateRoundInfo, updateWinnerButton
 }
 
 export function toggleFlame(updateFlameButton, updateVsMatchup, updateWinnerButtons) {
-    debug("Toggling flame");
+    // debug("Toggling flame");
     setIsFlameActive(!isFlameActive);
     updateFlameButton();
     updateVsMatchup();
@@ -376,7 +375,7 @@ export function toggleFlame(updateFlameButton, updateVsMatchup, updateWinnerButt
 }
 
 export function toggleRevive(updateReviveButton, updateSongTitleHighlight) {
-    debug("Toggling revive");
+    // debug("Toggling revive");
     setIsReviveActive(!isReviveActive);
     if (isReviveActive && nowPlayingSong && window.sidJamData.pathToId[nowPlayingSong]) {
         fetch('dbcontrol/reset_result.php', {
@@ -416,9 +415,9 @@ export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, upda
     // Treat 1-contender brackets like special brackets ("All" and "Eliminated Contenders")
     const specialBrackets = ["All", "Eliminated Contenders"];
     let contenderCount = getContenderCount(newBracket);
-    debug(`New bracket ${newBracket} has ${contenderCount} contenders`);
+    // debug(`New bracket ${newBracket} has ${contenderCount} contenders`);
     if (specialBrackets.includes(newBracket) || contenderCount === 1) {
-        debug(`Special or 1-contender bracket ${newBracket}, keeping bout`);
+        // debug(`Special or 1-contender bracket ${newBracket}, keeping bout`);
         return;
     }
 

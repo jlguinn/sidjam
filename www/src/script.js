@@ -367,7 +367,7 @@ function playSongOnDemand(filename) {
 }
 
 function enterNowPlayingMode(song) {
-    debug(`Entering Now Playing mode with song: ${song}`);
+    // debug(`Entering Now Playing mode with song: ${song}`);
     brackets.setBoutState({
         contenders: [...brackets.contenders],
         activeContender: brackets.activeContender,
@@ -399,14 +399,14 @@ window.toggleAuthPopUp = (function() {
     let isToggling = false;
     return function() {
         if (isToggling) {
-            debug('toggleAuthPopUp: Debounced call, ignoring');
+            // debug('toggleAuthPopUp: Debounced call, ignoring');
             return;
         }
         isToggling = true;
         setTimeout(() => { isToggling = false; }, 300); // 300ms debounce
 
         const overlay = document.getElementById('authOverlay');
-        debug(`Toggling auth pop-up, current display: ${overlay.style.display}`);
+        // debug(`Toggling auth pop-up, current display: ${overlay.style.display}`);
         if (overlay.style.display === 'block') {
             overlay.style.display = 'none';
             document.removeEventListener('keydown', handleAuthEscapeKey); // Remove listener when closing
@@ -427,7 +427,7 @@ window.toggleAuthPopUp = (function() {
             window.showAuthTab('signIn');
             document.addEventListener('keydown', handleAuthEscapeKey); // Add listener when opening
         }
-        debug(`New display state: ${overlay.style.display}`);
+        // debug(`New display state: ${overlay.style.display}`);
     };
 })();
 
@@ -439,7 +439,7 @@ function handleAuthEscapeKey(event) {
 }
 
 window.showAuthTab = function(tab) {
-    debug(`Showing auth tab: ${tab}`);
+    // debug(`Showing auth tab: ${tab}`);
     const tabs = ['signIn', 'register', 'forgotPassword'];
     tabs.forEach(t => {
         const tabElement = document.getElementById(`${t}Tab`);
@@ -564,7 +564,7 @@ window.handleForgotPassword = async function(event) {
 // Show/hide the preferences pop-up
 window.togglePreferencesPopUp = function() {
     const overlay = document.getElementById('preferencesOverlay');
-    debug(`Toggling preferences pop-up, current display: ${overlay.style.display}`);
+    // debug(`Toggling preferences pop-up, current display: ${overlay.style.display}`);
     if (overlay.style.display === 'block') {
         if (document.getElementById('updatePasswordSuccess').style.display === 'block' ||
             document.getElementById('updateUsernameSuccess').style.display === 'block' ||
@@ -578,7 +578,7 @@ window.togglePreferencesPopUp = function() {
         window.showPreferencesTab('password');
         document.addEventListener('keydown', handlePreferencesEscapeKey); // Add listener when opening
     }
-    debug(`New display state: ${overlay.style.display}`);
+    // debug(`New display state: ${overlay.style.display}`);
 };
 
 // Escape key handler for preferences pop-up
@@ -1008,7 +1008,7 @@ async function initializeApp() {
 
     if (userInfo) {
         userInfo.addEventListener('click', (e) => {
-            debug(`user-info clicked, target: ${e.target.id}`);
+            // debug(`user-info clicked, target: ${e.target.id}`);
         });
     }
 
@@ -1029,9 +1029,7 @@ async function initializeApp() {
             window.sidJamData.pathToId[tune.fullpath] = tune.id;
         });
         // Debug logs to verify mappings
-        debug(`Loaded ${window.sidJamData.sidFiles.length} songs from alltunes`);
-        debug(`pathToId for Sunny_Day: ${window.sidJamData.pathToId["/sid/C64Music/MUSICIANS/D/Djinn/Sunny_Day.sid"]}`);
-        debug(`pathToId for Streets_of_Rage: ${window.sidJamData.pathToId["/sid/C64Music/MUSICIANS/D/DJ_Space/Streets_of_Rage.sid"]}`);
+        // debug(`Loaded ${window.sidJamData.sidFiles.length} songs from alltunes`);
 
         const resultsResponse = await fetch(`dbcontrol/get_results.php?user_id=${window.user.id}`);
         if (!resultsResponse.ok) throw new Error(`Failed to load results: ${resultsResponse.statusText}`);
