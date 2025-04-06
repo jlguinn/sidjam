@@ -8,21 +8,37 @@ export function setIsPlaying(value) {
     isPlaying = value;
 }
 
+// player.js
 export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseButton, resetVoiceStates, updateNavigationButtons, updateVsMatchup) {
-    // debug("Loading song: " + filename + ", track: " + trackNumber);
+    if (!filename) return; // Guard against null/undefined filename
+    debug(`Loading song: ${filename}, track: ${trackNumber}`);
+
     let onFail = () => console.error("Failed to load song");
     let onProgress = (total, loaded) => {};
-//    let onProgress = (total, loaded) => debug(`Loading progress: ${loaded}/${total}`);
     let options = { track: trackNumber, timeout: -1, traceSID: true };
 
+    // If sidPlayer exists and is playing, pause it
     if (sidPlayer && isPlaying) {
         sidPlayer.pause();
         setIsPlaying(false);
         stopTimer();
     }
 
+    // Check if sidPlayer is initialized
+    if (!sidPlayer) {
+        debug(`sidPlayer not initialized, deferring song load: ${filename}`);
+        // Update UI to reflect the song, but don't attempt to load/play
+        updateSongInfo();
+        updateVsMatchup();
+        updateNavigationButtons();
+        updatePlayPauseButton();
+        resetVoiceStates();
+        return;
+    }
+
+    // Proceed with loading the song if sidPlayer is initialized
     ScriptNodePlayer.loadMusicFromURL(filename, options, onFail, onProgress).then(() => {
-        // debug("Song loaded successfully");
+        debug("Song loaded successfully");
         updateSongInfo();
         sidPlayer.resume();
         setIsPlaying(true);
@@ -31,6 +47,9 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
         resetVoiceStates();
         updateNavigationButtons();
         updateVsMatchup();
+    }).catch(error => {
+        console.error(`Error loading song ${filename}:`, error);
+        onFail();
     });
 }
 
