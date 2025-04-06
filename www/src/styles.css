@@ -213,3 +213,10 @@ body {
     text-align: center;
     margin-top: 15px;
 }
+
+#songList li#sentinel {
+    height: 1px;
+    visibility: hidden;
+    margin: 0;
+    padding: 0;
+}

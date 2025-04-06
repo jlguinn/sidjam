@@ -250,7 +250,10 @@ let currentFilter = '';
 let isLoading = false;
 let hasMoreSongs = true;
 
-const SONGS_PER_FETCH = 500; // Adjustable chunk size for lazy scrolling
+const SONGS_PER_FETCH = 500;
+
+// Store the IntersectionObserver instance in a module-level variable
+let currentObserver = null;
 
 function populateSongList(filter) {
     const songList = document.getElementById("songList");
@@ -261,6 +264,12 @@ function populateSongList(filter) {
         currentFilter = filter;
         hasMoreSongs = true;
         songList.innerHTML = '';
+        // Reset observer
+        if (currentObserver) {
+            currentObserver.disconnect();
+            currentObserver = null;
+        }
+        songListWrapper.dataset.observerSet = "";
     }
 
     if (!hasMoreSongs || isLoading) return;
@@ -307,24 +316,28 @@ function populateSongList(filter) {
                 if (hasMoreSongs) {
                     const sentinel = document.createElement("li");
                     sentinel.id = "sentinel";
-                    sentinel.textContent = "Loading more...";
                     songList.appendChild(sentinel);
+
+                    // Disconnect the old observer if it exists
+                    if (currentObserver) {
+                        currentObserver.disconnect();
+                        currentObserver = null;
+                    }
+
+                    // Set up a new observer for the new sentinel
+                    const observer = new IntersectionObserver((entries) => {
+                        if (entries[0].isIntersecting && !isLoading) {
+                            populateSongList(currentFilter);
+                        }
+                    }, { root: songListWrapper, threshold: 0.1 });
+                    observer.observe(sentinel);
+                    currentObserver = observer; // Store the observer instance
+                    songListWrapper.dataset.observerSet = "true";
                 }
             }
 
             currentOffset = offset + limit;
             isLoading = false;
-
-            if (hasMoreSongs && !songListWrapper.dataset.observerSet) {
-                const sentinel = document.getElementById("sentinel");
-                const observer = new IntersectionObserver((entries) => {
-                    if (entries[0].isIntersecting && !isLoading) {
-                        populateSongList(currentFilter);
-                    }
-                }, { root: songListWrapper, threshold: 0.1 });
-                observer.observe(sentinel);
-                songListWrapper.dataset.observerSet = "true";
-            }
         })
         .catch(error => {
             console.error('Error fetching songs:', error);

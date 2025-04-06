@@ -8,7 +8,7 @@ export function setIsPlaying(value) {
     isPlaying = value;
 }
 
-// player.js
+
 export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseButton, resetVoiceStates, updateNavigationButtons, updateVsMatchup) {
     if (!filename) return; // Guard against null/undefined filename
     debug(`Loading song: ${filename}, track: ${trackNumber}`);
