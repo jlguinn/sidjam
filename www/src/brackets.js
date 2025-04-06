@@ -248,8 +248,11 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
         return;
     }
 
-    if (currentBracket === "All" || currentBracket === "Eliminated Contenders") {
-        debug(`Special bracket ${currentBracket}, reverting to ${previousBracket}`);
+    // Treat 1-contender brackets like special brackets ("All" and "Eliminated Contenders")
+    const specialBrackets = ["All", "Eliminated Contenders"];
+    let contenderCount = getContenderCount(currentBracket);
+    if (specialBrackets.includes(currentBracket) || contenderCount === 1) {
+        debug(`Special or 1-contender bracket ${currentBracket}, reverting to ${previousBracket}`);
         setCurrentBracket(previousBracket);
         shouldUpdateBracketDropdown = true;
     }
@@ -316,8 +319,10 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 }
             }
             loadSong(contenders[activeContender], -1);
-            updateVsMatchup(); // Ensure UI updates after vote
-            updateRoundInfo(); // Ensure the scrolling message appears immediately after the third vote
+            updateVsMatchup();
+            updateRoundInfo();
+            updateWinnerButtons();
+            updateFlameButton();
         } catch (error) {
             console.error('Error in jamToggle after logResult:', error);
         }
@@ -408,15 +413,17 @@ export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, upda
         return;
     }
 
-    if (currentBracket === "All" || currentBracket === "Eliminated Contenders") {
-        debug(`Special bracket ${currentBracket}, keeping bout`);
+    // Treat 1-contender brackets like special brackets ("All" and "Eliminated Contenders")
+    const specialBrackets = ["All", "Eliminated Contenders"];
+    let contenderCount = getContenderCount(newBracket);
+    debug(`New bracket ${newBracket} has ${contenderCount} contenders`);
+    if (specialBrackets.includes(newBracket) || contenderCount === 1) {
+        debug(`Special or 1-contender bracket ${newBracket}, keeping bout`);
         return;
     }
 
-    let contenderCount = getContenderCount(newBracket);
-    debug(`New bracket ${newBracket} has ${contenderCount} contenders`);
-    if (contenderCount < 2) {
-        debug(`Not enough contenders, reverting to ${previousBracket}`);
+    if (contenderCount < 1) { // Only revert if the bracket has 0 contenders
+        debug(`No contenders in ${newBracket}, reverting to ${previousBracket}`);
         setCurrentBracket(previousBracket);
         updateBracketDropdown();
         return;
