@@ -204,27 +204,26 @@ function toggleSongList() {
     const overlay = document.getElementById("songListOverlay");
     const filterInput = document.getElementById("filterInput");
     const songListWrapper = document.getElementById("songListWrapper");
+
     if (overlay.style.display === "block") {
         overlay.style.display = "none";
-        if (originalSongState && brackets.currentMode !== "nowPlaying") {
-            brackets.setContenders(originalSongState.contenders);
-            brackets.setActiveContender(originalSongState.activeContender);
-            player.setIsPlaying(originalSongState.isPlaying);
-            loadSongBound(brackets.contenders[brackets.activeContender], -1);
-            originalSongState = null;
-            peekPlayingSong = null;
-            updateVsMatchupBound();
-        }
+        // Reset state
+        currentOffset = 0;
+        currentFilter = "";
+        hasMoreSongs = true;
+        document.getElementById("songList").innerHTML = '';
+        songListWrapper.dataset.observerSet = ""; // Reset observer
         document.removeEventListener('keydown', handleEscapeKey);
         filterInput.removeEventListener('input', handleFilterInput);
-        // Reset lazy scrolling state
-        currentOffset = 0;
-        currentFilter = '';
-        hasMoreSongs = true;
-        delete songListWrapper.dataset.observerSet;
     } else {
         overlay.style.display = "block";
         filterInput.value = "";
+        // Reset state on open
+        currentOffset = 0;
+        currentFilter = "";
+        hasMoreSongs = true;
+        document.getElementById("songList").innerHTML = '';
+        songListWrapper.dataset.observerSet = ""; // Reset observer
         if (lastBracketViewed !== brackets.currentBracket) {
             document.getElementById("songListWrapper").scrollTop = 0;
             lastBracketViewed = brackets.currentBracket;
@@ -257,7 +256,6 @@ function populateSongList(filter) {
     const songList = document.getElementById("songList");
     const songListWrapper = document.getElementById("songListWrapper");
 
-    // Reset state if the filter has changed
     if (filter !== currentFilter) {
         currentOffset = 0;
         currentFilter = filter;
@@ -269,14 +267,15 @@ function populateSongList(filter) {
 
     isLoading = true;
 
-    // Build query parameters
     let queryParams = `filter=${encodeURIComponent(filter)}&offset=${currentOffset}&limit=${SONGS_PER_FETCH}&user_id=${window.user.id}`;
     if (brackets.currentBracket !== "All" && brackets.currentBracket !== "Eliminated Contenders") {
         let [wins, losses] = brackets.currentBracket.split(' - ').map(Number);
         queryParams += `&wins=${wins}&losses=${losses}`;
     } else if (brackets.currentBracket === "Eliminated Contenders") {
-        queryParams += "&wins=-1&losses=2"; // Special case: losses >= 2
+        queryParams += "&wins=-1&losses=2";
     }
+
+    console.log(`Fetching songs for bracket ${brackets.currentBracket}, offset=${currentOffset}, filter=${filter}`);
 
     fetch(`dbcontrol/get_alltunes.php?${queryParams}`)
         .then(response => {
@@ -287,7 +286,8 @@ function populateSongList(filter) {
             const { files, offset, limit, hasMore } = data;
             hasMoreSongs = hasMore;
 
-            // No client-side filtering needed; server already filtered by bracket
+            console.log(`Fetched ${files.length} songs for bracket ${brackets.currentBracket}, hasMore=${hasMore}`);
+
             if (files.length === 0 && currentOffset === 0) {
                 const li = document.createElement("li");
                 li.textContent = "No contenders found";
@@ -304,7 +304,6 @@ function populateSongList(filter) {
                     songList.appendChild(li);
                 });
 
-                // Add a sentinel element for IntersectionObserver
                 if (hasMoreSongs) {
                     const sentinel = document.createElement("li");
                     sentinel.id = "sentinel";
@@ -313,11 +312,9 @@ function populateSongList(filter) {
                 }
             }
 
-            // Update offset for the next fetch
             currentOffset = offset + limit;
             isLoading = false;
 
-            // Set up IntersectionObserver if not already set
             if (hasMoreSongs && !songListWrapper.dataset.observerSet) {
                 const sentinel = document.getElementById("sentinel");
                 const observer = new IntersectionObserver((entries) => {

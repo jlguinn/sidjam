@@ -5,7 +5,7 @@ $cxn = mysqli_connect($host, $user, $pass, $database) or die(json_encode(["error
 // Get parameters
 $filter = isset($_GET['filter']) ? $_GET['filter'] : '';
 $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
-$limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 50; // Will be 500 from script.js
+$limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 50;
 $full_list = isset($_GET['full_list']) && $_GET['full_list'] === 'true';
 $wins = isset($_GET['wins']) ? (int)$_GET['wins'] : -1;
 $losses = isset($_GET['losses']) ? (int)$_GET['losses'] : -1;
@@ -30,8 +30,13 @@ if ($full_list) {
                        FROM sidjam 
                        WHERE user_id = $user_id 
                        GROUP BY id) s ON a.id = s.id";
-        $conditions[] = "(s.wins = $wins AND s.losses = $losses)";
-    } else if ($losses === 2 && $user_id > 0) { // Special case for "Eliminated Contenders"
+        if ($wins === 0 && $losses === 0) {
+            // For 0-0 bracket, include songs with no voting record (NULL) or explicitly 0-0
+            $conditions[] = "((s.wins = 0 AND s.losses = 0) OR (s.wins IS NULL AND s.losses IS NULL))";
+        } else {
+            $conditions[] = "(s.wins = $wins AND s.losses = $losses)";
+        }
+    } else if ($losses === 2 && $user_id > 0) {
         $query .= " LEFT JOIN (SELECT id, SUM(win) as wins, SUM(loss) as losses 
                        FROM sidjam 
                        WHERE user_id = $user_id 
