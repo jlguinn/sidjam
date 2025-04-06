@@ -1,6 +1,8 @@
 import { sidPlayer, isPlaying, stopTimer, setIsPlaying } from './player.js';
 import { applyBoutTheme, applyNowPlayingTheme } from './ui.js'; // Import specific functions
 
+const USE_DETERMINISTIC_RANDOM = false; // Set to false to use Math.random()
+
 /* Deterministic psuedo random number generator for testing */
 class SeededRandom {
     constructor(seed) {
@@ -20,7 +22,22 @@ class SeededRandom {
     }
   }
 
-  const seededRandom = new SeededRandom(7473646); // Fixed seed for reproducibility
+const seededRandom = new SeededRandom(7473646); // Fixed seed for reproducibility
+
+const getRandom = {
+    random: () => {
+        if (USE_DETERMINISTIC_RANDOM) {
+            return seededRandom.random();
+        }
+        return Math.random();
+    },
+    randint: (min, max) => {
+        if (USE_DETERMINISTIC_RANDOM) {
+            return seededRandom.randint(min, max);
+        }
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+};
 
 // debug("brackets.js module loaded");
 
@@ -100,7 +117,7 @@ export function findEligibleBracket() {
 // Helper function to shuffle an array using SeededRandom
 function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
-      const j = seededRandom.randint(0, i); // Use randint for integer indices
+      const j = getRandom.randint(0, i); 
       [array[i], array[j]] = [array[j], array[i]];
     }
     return array;
@@ -175,7 +192,9 @@ function shuffleArray(array) {
                 setContenders([nowPlayingSong]);
                 let availableSongs = window.sidJamData.sidFiles.filter(song => song !== nowPlayingSong && (window.sidJamData.cachedResults[song] || { wins: 0, losses: 0 }).wins === 0 && (window.sidJamData.cachedResults[song] || { wins: 0, losses: 0 }).losses === 0);
                 if (availableSongs.length > 0) {
-                    contenders[1] = availableSongs[Math.floor(Math.random() * availableSongs.length)];
+                    // Use getRandom instead of Math.random()
+                    let newSongIndex = getRandom.randint(0, availableSongs.length - 1);
+                    contenders[1] = availableSongs[newSongIndex];
                     revivedToZeroZero = true;
                 }
             }
@@ -252,10 +271,11 @@ function shuffleArray(array) {
     if (isFlameActive && currentBracket === "0 - 0") {
         let flamedIndex = activeContender;
         let flamedFile = contenders[flamedIndex];
-
-        console.log(`Flaming: ${window.sidJamData.pathToId[flamedFile]}!`);
+    
+        // Log the flamed song
+        console.log(`Flamed!: ${window.sidJamData.pathToId[flamedFile]}`);
         console.log(`${flamedFile}`);
-
+    
         let votes = [{ id: window.sidJamData.pathToId[flamedFile], increment: -2 }];
         try {
             await fetch('dbcontrol/log_result.php', {
@@ -270,19 +290,22 @@ function shuffleArray(array) {
             .then(response => response.json())
             .then(data => {
                 window.sidJamData.cachedResults = data;
-
+    
                 let availableSongs = window.sidJamData.sidFiles.filter(song => !contenders.includes(song));
                 if (availableSongs.length === 0) {
                     debug("No songs to replace flamed song");
                     contenders[flamedIndex] = null;
                 } else {
-                    let newSong = availableSongs[Math.floor(Math.random() * availableSongs.length)];
-                    contenders[flamedIndex] = newSong;
-                    loadSong(newSong, -1);
-
+                    // Use getRandom to select a new song index
+                    let newSongIndex = getRandom.randint(0, availableSongs.length - 1);
+                    let newSong = availableSongs[newSongIndex];
+                    
+                    // Log the new contender
                     console.log(`New contender: ${window.sidJamData.pathToId[newSong]}`);
                     console.log(`${newSong}`);
-
+    
+                    contenders[flamedIndex] = newSong;
+                    loadSong(newSong, -1);
                 }
                 setIsFlameActive(false);
                 updateVsMatchup();
