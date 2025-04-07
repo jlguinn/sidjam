@@ -16,6 +16,13 @@ export function applyTheme(currentMode) {
     document.getElementById("round-info").style.color = theme.exteriorTextColor;
     document.getElementById("bracket-label").style.color = theme.exteriorTextColor;
     document.getElementById("user-info").style.color = theme.exteriorTextColor;
+    const authLinkDiv = document.getElementById("auth-link");
+    if (authLinkDiv) {
+        const authLink = authLinkDiv.querySelector("a"); // Target the <a> tag inside the div
+        if (authLink) {
+            authLink.style.color = theme.exteriorTextColor; // Apply exteriorTextColor to the link
+        }
+    }
 
     // Apply interior styles
     document.getElementById("player-info").style.backgroundColor = theme.interior;
@@ -25,7 +32,6 @@ export function applyTheme(currentMode) {
     // Update profile bitmap with exterior text color
     window.renderProfileBitmap(theme.exteriorTextColor);
 }
-
 
 
 export function updateVsMatchup(currentMode, nowPlayingSong, contenders, activeContender, hasPlayed, isFlameActive) {
@@ -195,7 +201,8 @@ export function toggleColorScheme(currentMode) {
     const button = document.getElementById("colorButton");
     button.style.backgroundColor = nextTheme.exterior;
     button.querySelector('.inner-box').style.backgroundColor = nextTheme.interior;
-    button.title = `Switch Theme\nFrom: ${baseTheme.name}${currentMode === "nowPlaying" ? " (Inverted)" : ""}\nTo: ${nextBaseTheme.name}${currentMode === "nowPlaying" ? " (Inverted)" : ""}`;
-
+    // button.title = `Switch Theme\nFrom: ${baseTheme.name}${currentMode === "nowPlaying" ? " (Inverted)" : ""}\nTo: ${nextBaseTheme.name}${currentMode === "nowPlaying" ? " (Inverted)" : ""}`;
+    button.title = `Switch Theme \n  From: ${baseTheme.name}\n  To: ${nextBaseTheme.name}`;
     debug(`Theme switched to ${baseTheme.name} (index ${currentThemeIndex}).`);
 }
+

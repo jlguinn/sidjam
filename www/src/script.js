@@ -1049,7 +1049,7 @@ async function initializeApp() {
     const nextTheme = baseColorSchemes[nextIndex];
     button.style.backgroundColor = nextTheme.exterior; // Preview next theme's exterior
     button.querySelector('.inner-box').style.backgroundColor = nextTheme.interior; // Preview next theme's interior
-    button.title = `Current: ${currentTheme.name}\nNext: ${nextTheme.name}`;
+    button.title = `Switch Theme \n  From: ${currentTheme.name}\n  To: ${nextTheme.name}`;
 
     // Ensure the profile bitmap is rendered with a valid color
     const initialColor = baseColorSchemes[ui.currentThemeIndex].exteriorTextColor || '#000000';
