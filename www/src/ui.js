@@ -23,11 +23,6 @@ export function applyTheme(currentMode) {
 
     // Update profile bitmap with exterior text color
     window.renderProfileBitmap(theme.exteriorTextColor);
-
-    // Update color toggle button to reflect *current* theme
-    const button = document.getElementById("colorButton");
-    button.style.backgroundColor = theme.exterior;
-    button.querySelector('.inner-box').style.backgroundColor = theme.interior;
 }
 
 
@@ -191,6 +186,13 @@ export function toggleColorScheme(currentMode) {
     currentThemeIndex = (currentThemeIndex + 1) % baseColorSchemes.length;
     applyTheme(currentMode);
 
-    // Log for debugging
-    debug(`Switched to theme index ${currentThemeIndex} in ${currentMode} mode`);
+    // Update button to show the *next* theme in line
+    const nextIndex = (currentThemeIndex + 1) % baseColorSchemes.length;
+    const nextBaseTheme = baseColorSchemes[nextIndex];
+    const nextTheme = currentMode === "nowPlaying" ? getInvertedTheme(nextBaseTheme) : nextBaseTheme;
+    const button = document.getElementById("colorButton");
+    button.style.backgroundColor = nextTheme.exterior;
+    button.querySelector('.inner-box').style.backgroundColor = nextTheme.interior;
+
+    debug(`Switched to theme index ${currentThemeIndex} in ${currentMode} mode, button shows next theme ${nextIndex}`);
 }

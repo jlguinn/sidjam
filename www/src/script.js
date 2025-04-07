@@ -1042,12 +1042,13 @@ async function initializeApp() {
     // Apply initial theme for Bout Mode
     ui.applyTheme("bout"); // Use the new applyTheme with mode parameter
     const button = document.getElementById("colorButton");
-    const currentScheme = baseColorSchemes[ui.currentThemeIndex]; // Use current theme
-    button.style.backgroundColor = currentScheme.exterior; // Reflect current exterior
-    button.querySelector('.inner-box').style.backgroundColor = currentScheme.interior; // Reflect current interior
+    const nextIndex = (ui.currentThemeIndex + 1) % baseColorSchemes.length; // Next theme
+    const nextScheme = baseColorSchemes[nextIndex]; // Base theme for Bout Mode
+    button.style.backgroundColor = nextScheme.exterior; // Next exterior
+    button.querySelector('.inner-box').style.backgroundColor = nextScheme.interior; // Next interior
 
     // Ensure the profile bitmap is rendered with a valid color
-    const initialColor = baseColorSchemes[ui.currentThemeIndex].exteriorTextColor || '#000000'; // Fallback to black
+    const initialColor = baseColorSchemes[ui.currentThemeIndex].exteriorTextColor || '#000000'; // Current exterior text color
     window.renderProfileBitmap(initialColor);
 
     brackets.updateBracketDropdown();
