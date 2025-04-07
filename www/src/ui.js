@@ -1,39 +1,36 @@
-import { boutColorSchemes, nowPlayingColorSchemes } from './themes.js';
-
-export let boutSchemeIndex = 0;
-export let nowPlayingSchemeIndex = 0;
+import { baseColorSchemes, getInvertedTheme } from './themes.js';
+export let currentThemeIndex = 0;
 
 export function debug(message) { console.log(`[DEBUG] ${message}`); }
 
-// Debug check for imported schemes
-if (!boutColorSchemes || !nowPlayingColorSchemes) {
-    debug("Error: boutColorSchemes or nowPlayingColorSchemes is undefined. Check themes.js import.");
+export function applyTheme(currentMode) {
+    const baseTheme = baseColorSchemes[currentThemeIndex];
+    const theme = currentMode === "nowPlaying" ? getInvertedTheme(baseTheme) : baseTheme;
+
+    // Apply exterior styles
+    document.body.style.backgroundColor = theme.exterior;
+    document.getElementById("title").style.color = theme.exteriorTextColor;
+    document.getElementById("version").style.color = theme.exteriorTextColor;
+    document.getElementById("vs-matchup").style.color = theme.exteriorTextColor;
+    document.getElementById("round-info").style.color = theme.exteriorTextColor;
+    document.getElementById("bracket-label").style.color = theme.exteriorTextColor;
+    document.getElementById("user-info").style.color = theme.exteriorTextColor;
+
+    // Apply interior styles
+    document.getElementById("player-info").style.backgroundColor = theme.interior;
+    document.getElementById("track-details").style.color = theme.interiorTextColor;
+    document.getElementById("song-title").style.color = theme.interiorTextColor;
+
+    // Update profile bitmap with exterior text color
+    window.renderProfileBitmap(theme.exteriorTextColor);
+
+    // Update color toggle button to reflect *current* theme
+    const button = document.getElementById("colorButton");
+    button.style.backgroundColor = theme.exterior;
+    button.querySelector('.inner-box').style.backgroundColor = theme.interior;
 }
 
-export function applyTheme(scheme) {
-    document.getElementById("player-info").style.backgroundColor = scheme.interior;
-    document.body.style.backgroundColor = scheme.exterior;
-    document.getElementById("title").style.color = scheme.textColor;
-    document.getElementById("version").style.color = scheme.textColor;
-    document.getElementById("vs-matchup").style.color = scheme.textColor; // Revert to theme color
-    document.getElementById("round-info").style.color = scheme.textColor;
-    document.getElementById("track-details").style.color = scheme.textColor;
-    document.getElementById("bracket-label").style.color = scheme.textColor;
-    // Update the user-info color to match the theme
-    document.getElementById("user-info").style.color = scheme.textColor;
-    // Update profile bitmap color
-    window.renderProfileBitmap(scheme.textColor);
-}
 
-export function applyBoutTheme() {
-    const scheme = boutColorSchemes[boutSchemeIndex];
-    applyTheme(scheme);
-}
-
-export function applyNowPlayingTheme() {
-    const scheme = nowPlayingColorSchemes[nowPlayingSchemeIndex];
-    applyTheme(scheme);
-}
 
 export function updateVsMatchup(currentMode, nowPlayingSong, contenders, activeContender, hasPlayed, isFlameActive) {
     if (currentMode === "nowPlaying") {
@@ -189,22 +186,11 @@ export function updateSongTitleHighlight(currentMode, isReviveActive) {
     }
 }
 
-export function toggleColorScheme(currentMode, applyTheme) {
-    if (currentMode === "nowPlaying") {
-        nowPlayingSchemeIndex = (nowPlayingSchemeIndex + 1) % nowPlayingColorSchemes.length;
-        applyNowPlayingTheme();
-    } else {
-        boutSchemeIndex = (boutSchemeIndex + 1) % boutColorSchemes.length;
-        applyBoutTheme();
-    }
+export function toggleColorScheme(currentMode) {
+    // Cycle to the next theme
+    currentThemeIndex = (currentThemeIndex + 1) % baseColorSchemes.length;
+    applyTheme(currentMode);
 
-    const nextIndex = currentMode === "nowPlaying" ?
-        (nowPlayingSchemeIndex + 1) % nowPlayingColorSchemes.length :
-        (boutSchemeIndex + 1) % boutColorSchemes.length;
-    const nextScheme = currentMode === "nowPlaying" ?
-        nowPlayingColorSchemes[nextIndex] : boutColorSchemes[nextIndex];
-    const button = document.getElementById("colorButton");
-    button.style.backgroundColor = nextScheme.exterior;
-    button.querySelector('.inner-box').style.backgroundColor = nextScheme.interior;
+    // Log for debugging
+    debug(`Switched to theme index ${currentThemeIndex} in ${currentMode} mode`);
 }
-

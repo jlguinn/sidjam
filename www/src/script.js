@@ -6,8 +6,7 @@ window.sidJamData = {
 
 import * as player from './player.js';  // Still in /src/, relative to script.js
 import * as ui from './ui.js';
-import { boutColorSchemes, nowPlayingColorSchemes } from './themes.js';
-import { boutSchemeIndex, nowPlayingSchemeIndex } from './ui.js';
+import { baseColorSchemes } from './themes.js'; // Replace old imports
 import * as brackets from './brackets.js';
 
 let lastBracketViewed = null;
@@ -146,7 +145,7 @@ window.togglePlayPause = () => {
 window.jamToggle = () => brackets.jamToggle(
     player.sidPlayer,
     loadSongBound,
-    ui.applyTheme,
+    () => ui.applyTheme(brackets.currentMode), // Pass currentMode dynamically
     updateVsMatchupBound,
     updateRoundInfoBound,
     updateWinnerButtonsBound,
@@ -196,7 +195,7 @@ window.changeBracket = () => brackets.changeBracket(
     updateWinnerButtonsBound
 );
 
-window.toggleColorScheme = () => ui.toggleColorScheme(brackets.currentMode, ui.applyTheme);
+window.toggleColorScheme = () => ui.toggleColorScheme(brackets.currentMode);
 
 window.toggleSongList = toggleSongList;
 
@@ -383,7 +382,7 @@ function enterNowPlayingMode(song) {
         player.stopTimer();
     }
     loadSongBound(brackets.nowPlayingSong, -1);
-    ui.applyTheme(nowPlayingColorSchemes[nowPlayingSchemeIndex]);
+    ui.applyTheme("nowPlaying"); // Updated to use new applyTheme with mode
     toggleSongList();
     updateVsMatchupBound();
     updateRoundInfoBound();
@@ -973,8 +972,8 @@ async function initializeApp() {
     const userInfo = document.getElementById('user-info');
 
     // Initialize the prompt flags
-    window.hasShownPrompt = false; // Controls when to stop showing the message (after jAM click)
-    window.showPromptMessage = false; // Controls when to start showing the message (after 3rd vote)
+    window.hasShownPrompt = false;
+    window.showPromptMessage = false;
 
     if (authLink) {
         authLink.removeEventListener('click', window.toggleAuthPopUp);
@@ -1014,7 +1013,6 @@ async function initializeApp() {
         return;
     }
 
-    // debug("DOM loaded");
     try {
         const songsResponse = await fetch('dbcontrol/get_alltunes.php?full_list=true');
         if (!songsResponse.ok) throw new Error(`Failed to load alltunes: ${songsResponse.statusText}`);
@@ -1025,13 +1023,10 @@ async function initializeApp() {
         tunesData.forEach(tune => {
             window.sidJamData.pathToId[tune.fullpath] = tune.id;
         });
-        // Debug logs to verify mappings
-        // debug(`Loaded ${window.sidJamData.sidFiles.length} songs from alltunes`);
 
         const resultsResponse = await fetch(`dbcontrol/get_results.php?user_id=${window.user.id}`);
         if (!resultsResponse.ok) throw new Error(`Failed to load results: ${resultsResponse.statusText}`);
         window.sidJamData.cachedResults = await resultsResponse.json();
-        // debug(`CachedResults set to: ${JSON.stringify(window.sidJamData.cachedResults)} with length ${Object.keys(window.sidJamData.cachedResults).length}`);
     } catch (error) {
         console.error('Error loading data:', error);
         window.sidJamData.cachedResults = {};
@@ -1043,19 +1038,23 @@ async function initializeApp() {
     for (let i = 1; i <= 3; i++) {
         document.getElementById(`voice${i}`).addEventListener('change', () => player.toggleVoice(i));
     }
-    ui.applyTheme(boutColorSchemes[boutSchemeIndex]);
+
+    // Apply initial theme for Bout Mode
+    ui.applyTheme("bout"); // Use the new applyTheme with mode parameter
     const button = document.getElementById("colorButton");
-    const nextScheme = boutColorSchemes[(boutSchemeIndex + 1) % boutColorSchemes.length];
-    button.style.backgroundColor = nextScheme.exterior;
-    button.querySelector('.inner-box').style.backgroundColor = nextScheme.interior;
+    const currentScheme = baseColorSchemes[ui.currentThemeIndex]; // Use current theme
+    button.style.backgroundColor = currentScheme.exterior; // Reflect current exterior
+    button.querySelector('.inner-box').style.backgroundColor = currentScheme.interior; // Reflect current interior
+
     // Ensure the profile bitmap is rendered with a valid color
-    const initialColor = boutColorSchemes[boutSchemeIndex].text || '#000000'; // Fallback to black
-    // debug(`Initial color for profile bitmap: ${initialColor}`);
+    const initialColor = baseColorSchemes[ui.currentThemeIndex].exteriorTextColor || '#000000'; // Fallback to black
     window.renderProfileBitmap(initialColor);
+
     brackets.updateBracketDropdown();
     brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateFlameButtonBound);
     checkSong2Clipping();
 }
+
 
 // Close auth pop-up when clicking outside the container
 document.getElementById('authOverlay').addEventListener('click', function(event) {

@@ -1,9 +1,25 @@
-export const boutColorSchemes = [
-    { interior: '#f5f5dc', exterior: '#d3d3d3', textColor: 'black' },
-    { interior: '#191970', exterior: '#000080', textColor: 'white' }
+// File: themes.js
+export const baseColorSchemes = [
+    {
+        interior: '#f5f5dc',        // Beige
+        exterior: '#d3d3d3',        // Light Gray
+        interiorTextColor: '#000000', // Black
+        exteriorTextColor: '#000000'  // Black
+    },
+    {
+        interior: '#191970',        // Midnight Blue
+        exterior: '#000080',        // Navy
+        interiorTextColor: '#ffffff', // White
+        exteriorTextColor: '#ffffff'  // White
+    }
 ];
 
-export const nowPlayingColorSchemes = [
-    { interior: '#ff00ff', exterior: '#c71585', textColor: 'white' },
-    { interior: '#8a2be2', exterior: '#4b0082', textColor: 'white' }
-];
+// Function to get the inverted theme for Now Playing Mode
+export function getInvertedTheme(theme) {
+    return {
+        interior: theme.exterior,
+        exterior: theme.interior,
+        interiorTextColor: theme.exteriorTextColor,
+        exteriorTextColor: theme.interiorTextColor
+    };
+}

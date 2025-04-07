@@ -1,5 +1,5 @@
 import { sidPlayer, isPlaying, stopTimer, setIsPlaying } from './player.js';
-import { applyBoutTheme, applyNowPlayingTheme } from './ui.js'; // Import specific functions
+import { applyTheme } from './ui.js';
 
 const USE_DETERMINISTIC_RANDOM = true; // Set to false to use Math.random()
 
@@ -171,8 +171,8 @@ function shuffleArray(array) {
     return true;
 }
 
-  
-  export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup, updateRoundInfo, updateWinnerButtons, updateFlameButton, updateBracketDropdown) {
+
+export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup, updateRoundInfo, updateWinnerButtons, updateFlameButton, updateBracketDropdown) {
     if (!sidPlayer) return;
 
     let shouldUpdateBracketDropdown = false;
@@ -246,7 +246,7 @@ function shuffleArray(array) {
         }
         setBoutState({});
         loadSong(contenders[activeContender], -1);
-        applyTheme(boutColorSchemes[ui.boutSchemeIndex]);
+        applyTheme("bout"); // Apply Bout Mode theme directly with mode parameter
         updateVsMatchup();
         updateRoundInfo();
         updateWinnerButtons();
