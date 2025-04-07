@@ -1040,15 +1040,19 @@ async function initializeApp() {
     }
 
     // Apply initial theme for Bout Mode
-    ui.applyTheme("bout"); // Use the new applyTheme with mode parameter
+    ui.applyTheme("bout");
+
+    // Set initial button colors and title for hover
     const button = document.getElementById("colorButton");
-    const nextIndex = (ui.currentThemeIndex + 1) % baseColorSchemes.length; // Next theme
-    const nextScheme = baseColorSchemes[nextIndex]; // Base theme for Bout Mode
-    button.style.backgroundColor = nextScheme.exterior; // Next exterior
-    button.querySelector('.inner-box').style.backgroundColor = nextScheme.interior; // Next interior
+    const currentTheme = baseColorSchemes[ui.currentThemeIndex];
+    const nextIndex = (ui.currentThemeIndex + 1) % baseColorSchemes.length;
+    const nextTheme = baseColorSchemes[nextIndex];
+    button.style.backgroundColor = nextTheme.exterior; // Preview next theme's exterior
+    button.querySelector('.inner-box').style.backgroundColor = nextTheme.interior; // Preview next theme's interior
+    button.title = `Current: ${currentTheme.name}\nNext: ${nextTheme.name}`;
 
     // Ensure the profile bitmap is rendered with a valid color
-    const initialColor = baseColorSchemes[ui.currentThemeIndex].exteriorTextColor || '#000000'; // Current exterior text color
+    const initialColor = baseColorSchemes[ui.currentThemeIndex].exteriorTextColor || '#000000';
     window.renderProfileBitmap(initialColor);
 
     brackets.updateBracketDropdown();

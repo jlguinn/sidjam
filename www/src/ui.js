@@ -1,4 +1,5 @@
 import { baseColorSchemes, getInvertedTheme } from './themes.js';
+
 export let currentThemeIndex = 0;
 
 export function debug(message) { console.log(`[DEBUG] ${message}`); }
@@ -183,6 +184,7 @@ export function updateSongTitleHighlight(currentMode, isReviveActive) {
 
 export function toggleColorScheme(currentMode) {
     // Cycle to the next theme
+    const baseTheme = baseColorSchemes[currentThemeIndex];
     currentThemeIndex = (currentThemeIndex + 1) % baseColorSchemes.length;
     applyTheme(currentMode);
 
@@ -193,6 +195,7 @@ export function toggleColorScheme(currentMode) {
     const button = document.getElementById("colorButton");
     button.style.backgroundColor = nextTheme.exterior;
     button.querySelector('.inner-box').style.backgroundColor = nextTheme.interior;
+    button.title = `Switch Theme\nFrom: ${baseTheme.name}${currentMode === "nowPlaying" ? " (Inverted)" : ""}\nTo: ${nextBaseTheme.name}${currentMode === "nowPlaying" ? " (Inverted)" : ""}`;
 
-    debug(`Switched to theme index ${currentThemeIndex} in ${currentMode} mode, button shows next theme ${nextIndex}`);
+    debug(`Theme switched to ${baseTheme.name} (index ${currentThemeIndex}).`);
 }
