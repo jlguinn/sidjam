@@ -1,7 +1,7 @@
 import { sidPlayer, isPlaying, stopTimer, setIsPlaying } from './player.js';
 import { applyBoutTheme, applyNowPlayingTheme } from './ui.js'; // Import specific functions
 
-const USE_DETERMINISTIC_RANDOM = false; // Set to false to use Math.random()
+const USE_DETERMINISTIC_RANDOM = true; // Set to false to use Math.random()
 
 /* Deterministic psuedo random number generator for testing */
 class SeededRandom {

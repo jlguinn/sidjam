@@ -106,6 +106,7 @@ $cxn->close();
     <script>
         window.isLoggedIn = <?php echo json_encode($is_logged_in); ?>;
     </script>
+    <script>console.log("sID JAm Version (ALPHA) 2025.03.19a");</script>
     <script type="module" src="src/script.js"></script>
 </head>
 <body>

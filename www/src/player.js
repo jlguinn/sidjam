@@ -76,6 +76,7 @@ export function togglePlayPause(updateRoundInfo, updatePlayPauseButton, updateWi
     // debug("Toggle play/pause");
     if (!sidPlayer) {
         initPlayerFn();
+        console.log("Notice to dev partners: Ignore ScriptProcessorNode Depracation warning. We will not be remediating this as part of sID JAm initial development. ")
     } else if (isPlaying) {
         sidPlayer.pause();
         setIsPlaying(false);
