@@ -1,3 +1,4 @@
+/* File: styles.css */
 body { 
     font-family: Arial, sans-serif; 
     background-color: #f0f0f0; 
@@ -28,20 +29,40 @@ body {
 #user-info {
     font-size: 0.9em;
     margin-bottom: 5px;
+    transition: color 0.3s; /* Added transition for consistency */
 }
 #greeting { font-style: italic; }
 #profile-icon {
     margin-bottom: 5px;
 }
+
 #auth-link a {
     color: #0000FF; /* Fallback color until theme applies */
-    text-decoration: underline; /* Already present by default, but explicit for clarity */
+    text-decoration: underline;
     cursor: pointer;
-    transition: filter 0.3s ease; /* Smooth transition for hover effect */
+    transition: filter 0.3s ease;
 }
 
-#auth-link a:hover {
-    filter: brightness(1.2); /* Slightly brighten the color on hover */
+/* Style for the profile icon */
+#profile-icon {
+    transition: filter 0.3s ease;
+    cursor: pointer; /* Ensure it looks clickable */
+}
+
+/* Brighten on hover (for dark text/icons) */
+#auth-link a.brighten-on-hover:hover,
+#profile-icon.brighten-on-hover:hover,
+#auth-link a.brighten-on-hover.hover,
+#profile-icon.brighten-on-hover.hover {
+    filter: brightness(1.2);
+}
+
+/* Darken on hover (for bright text/icons) */
+#auth-link a.darken-on-hover:hover,
+#profile-icon.darken-on-hover:hover,
+#auth-link a.darken-on-hover.hover,
+#profile-icon.darken-on-hover.hover {
+    filter: brightness(0.8);
 }
 
 #vs-matchup { display: flex; justify-content: center; align-items: center; font-weight: bold; margin-bottom: 5px; transition: color 0.3s; }

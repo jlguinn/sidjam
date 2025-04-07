@@ -4,6 +4,15 @@ export let currentThemeIndex = 0;
 
 export function debug(message) { console.log(`[DEBUG] ${message}`); }
 
+// Utility function to calculate luminance of a hex color
+function calculateLuminance(hexColor) {
+    hexColor = hexColor.replace('#', '');
+    const r = parseInt(hexColor.substr(0, 2), 16) / 255;
+    const g = parseInt(hexColor.substr(2, 2), 16) / 255;
+    const b = parseInt(hexColor.substr(4, 2), 16) / 255;
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
 export function applyTheme(currentMode) {
     const baseTheme = baseColorSchemes[currentThemeIndex];
     const theme = currentMode === "nowPlaying" ? getInvertedTheme(baseTheme) : baseTheme;
@@ -16,12 +25,46 @@ export function applyTheme(currentMode) {
     document.getElementById("round-info").style.color = theme.exteriorTextColor;
     document.getElementById("bracket-label").style.color = theme.exteriorTextColor;
     document.getElementById("user-info").style.color = theme.exteriorTextColor;
+
     const authLinkDiv = document.getElementById("auth-link");
-    if (authLinkDiv) {
-        const authLink = authLinkDiv.querySelector("a"); // Target the <a> tag inside the div
-        if (authLink) {
-            authLink.style.color = theme.exteriorTextColor; // Apply exteriorTextColor to the link
+    const authLink = authLinkDiv ? authLinkDiv.querySelector("a") : null;
+    const profileIcon = document.getElementById("profile-icon");
+
+    if (authLink) {
+        authLink.style.color = theme.exteriorTextColor;
+        const luminance = calculateLuminance(theme.exteriorTextColor);
+        debug("luminance == " + luminance);
+        authLink.classList.remove('brighten-on-hover', 'darken-on-hover');
+        if (luminance > 0.92) {
+            authLink.classList.add('darken-on-hover');
+        } else {
+            authLink.classList.add('brighten-on-hover');
         }
+    }
+
+    if (profileIcon) {
+        const luminance = calculateLuminance(theme.exteriorTextColor);
+        profileIcon.classList.remove('brighten-on-hover', 'darken-on-hover');
+        if (luminance > 0.92) {
+            profileIcon.classList.add('darken-on-hover');
+        } else {
+            profileIcon.classList.add('brighten-on-hover');
+        }
+    }
+
+    // Synchronize hover effects between auth-link and profile-icon
+    if (authLink && profileIcon) {
+        // Remove any existing listeners to avoid duplicates
+        authLink.removeEventListener('mouseover', syncHoverOn);
+        authLink.removeEventListener('mouseout', syncHoverOff);
+        profileIcon.removeEventListener('mouseover', syncHoverOn);
+        profileIcon.removeEventListener('mouseout', syncHoverOff);
+
+        // Add new listeners
+        authLink.addEventListener('mouseover', syncHoverOn);
+        authLink.addEventListener('mouseout', syncHoverOff);
+        profileIcon.addEventListener('mouseover', syncHoverOn);
+        profileIcon.addEventListener('mouseout', syncHoverOff);
     }
 
     // Apply interior styles
@@ -31,8 +74,31 @@ export function applyTheme(currentMode) {
 
     // Update profile bitmap with exterior text color
     window.renderProfileBitmap(theme.exteriorTextColor);
+
+    // Update color toggle button with next theme preview and hover text
+    const nextIndex = (currentThemeIndex + 1) % baseColorSchemes.length;
+    const nextBaseTheme = baseColorSchemes[nextIndex];
+    const nextTheme = currentMode === "nowPlaying" ? getInvertedTheme(nextBaseTheme) : nextBaseTheme;
+    const button = document.getElementById("colorButton");
+    button.style.backgroundColor = nextTheme.exterior;
+    button.querySelector('.inner-box').style.backgroundColor = nextTheme.interior;
+    button.title = `Switch Theme \n  From: ${baseTheme.name}\n  To: ${nextBaseTheme.name}`;
 }
 
+// Synchronize hover effects
+function syncHoverOn() {
+    const authLink = document.getElementById("auth-link")?.querySelector("a");
+    const profileIcon = document.getElementById("profile-icon");
+    if (authLink) authLink.classList.add('hover');
+    if (profileIcon) profileIcon.classList.add('hover');
+}
+
+function syncHoverOff() {
+    const authLink = document.getElementById("auth-link")?.querySelector("a");
+    const profileIcon = document.getElementById("profile-icon");
+    if (authLink) authLink.classList.remove('hover');
+    if (profileIcon) profileIcon.classList.remove('hover');
+}
 
 export function updateVsMatchup(currentMode, nowPlayingSong, contenders, activeContender, hasPlayed, isFlameActive) {
     if (currentMode === "nowPlaying") {
