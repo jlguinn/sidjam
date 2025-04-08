@@ -33,7 +33,13 @@ if (!$stmt) {
     exit;
 }
 $stmt->bind_param("s", $_SESSION['session_id']);
-$stmt->execute();
+if (!$stmt->execute()) {
+    error_log("Logout: Execute failed for session_id {$_SESSION['session_id']}: " . $stmt->error);
+    echo json_encode(['success' => false, 'message' => 'Database error']);
+    $stmt->close();
+    $cxn->close();
+    exit;
+}
 $stmt->close();
 $cxn->close();
 

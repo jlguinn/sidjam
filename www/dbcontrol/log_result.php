@@ -24,25 +24,25 @@ if (!isset($data['votes']) || !is_array($data['votes']) || empty($data['votes'])
     die(json_encode(["error" => "Invalid or empty votes data"]));
 }
 
-$stmt = $cxn->prepare("INSERT INTO sidjam (user_id, id, win, loss) VALUES (?, ?, ?, ?) 
+$stmt = $cxn->prepare("INSERT INTO sidjam (user_id, sid_id, win, loss) VALUES (?, ?, ?, ?) 
                        ON DUPLICATE KEY UPDATE win = win + VALUES(win), loss = loss + VALUES(loss)");
 if (!$stmt) {
     header('Content-Type: application/json');
     die(json_encode(["error" => "Prepare failed: " . $cxn->error]));
 }
-$stmt->bind_param("iiii", $user_id, $id, $win, $loss);
+$stmt->bind_param("iiii", $user_id, $sid_id, $win, $loss);
 
 // Process votes in a transaction for atomicity
 $cxn->begin_transaction();
 try {
     foreach ($data['votes'] as $vote) {
-        $id = $vote['id'] ?? 0;
+        $sid_id = $vote['id'] ?? 0;
         $increment = $vote['increment'] ?? 0;
         $win = $increment > 0 ? $increment : 0;
         $loss = $increment < 0 ? abs($increment) : 0;
 
-        if ($id == 0) {
-            throw new Exception("Invalid song ID: $id");
+        if ($sid_id == 0) {
+            throw new Exception("Invalid song ID: $sid_id");
         }
 
         if (!$stmt->execute()) {

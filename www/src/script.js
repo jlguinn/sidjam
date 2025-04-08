@@ -284,7 +284,7 @@ function populateSongList(filter) {
 
     console.log(`Fetching songs for bracket ${brackets.currentBracket}, offset=${currentOffset}, filter=${filter}`);
 
-    fetch(`dbcontrol/get_alltunes.php?${queryParams}`)
+    fetch(`dbcontrol/get_sidtunes.php?${queryParams}`)
         .then(response => {
             if (!response.ok) throw new Error(`Failed to fetch songs: ${response.status}`);
             return response.json();
@@ -1014,11 +1014,11 @@ async function initializeApp() {
     }
 
     try {
-        const songsResponse = await fetch('dbcontrol/get_alltunes.php?full_list=true');
-        if (!songsResponse.ok) throw new Error(`Failed to load alltunes: ${songsResponse.statusText}`);
+        const songsResponse = await fetch('dbcontrol/get_sidtunes.php?full_list=true'); 
+        if (!songsResponse.ok) throw new Error(`Failed to load sidtunes: ${songsResponse.statusText}`);
         const tunesData = await songsResponse.json();
         window.sidJamData.sidFiles = tunesData.map(tune => tune.fullpath);
-        if (!window.sidJamData.sidFiles || window.sidJamData.sidFiles.length === 0) throw new Error('No songs loaded from alltunes');
+        if (!window.sidJamData.sidFiles || window.sidJamData.sidFiles.length === 0) throw new Error('No songs loaded from sidtunes');
         window.sidJamData.pathToId = {};
         tunesData.forEach(tune => {
             window.sidJamData.pathToId[tune.fullpath] = tune.id;

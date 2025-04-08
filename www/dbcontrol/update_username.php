@@ -18,7 +18,7 @@ $newUsername = isset($_POST['newUsername']) ? trim($_POST['newUsername']) : '';
 
 if (empty($newUsername)) {
     error_log("Update Username: Missing required field");
-    echo json_encode(['success' => false, 'message' => 'Username is required']); // Fixed syntax
+    echo json_encode(['success' => false, 'message' => 'Username is required']);
     exit;
 }
 
@@ -35,7 +35,7 @@ if (!$cxn) {
     exit;
 }
 
-$stmt = $cxn->prepare("SELECT user_id FROM siduser WHERE username = ? AND user_id != ?");
+$stmt = $cxn->prepare("SELECT user_id FROM siduser WHERE UserName = ? AND user_id != ?");
 if (!$stmt) {
     error_log("Update Username: Prepare statement failed: " . $cxn->error);
     echo json_encode(['success' => false, 'message' => 'Database error']);
@@ -64,7 +64,7 @@ $result = $stmt->get_result()->fetch_assoc();
 $email = $result['email'];
 $stmt->close();
 
-$stmt = $cxn->prepare("UPDATE siduser SET username = ? WHERE user_id = ?");
+$stmt = $cxn->prepare("UPDATE siduser SET UserName = ? WHERE user_id = ?");
 if (!$stmt) {
     error_log("Update Username: Prepare update statement failed: " . $cxn->error);
     echo json_encode(['success' => false, 'message' => 'Database error']);

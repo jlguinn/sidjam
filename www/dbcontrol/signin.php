@@ -24,7 +24,7 @@ if (!$cxn) {
 }
 
 // Check if the email exists and get the password hash
-$stmt = $cxn->prepare("SELECT user_id, username, email, password FROM siduser WHERE email = ?");
+$stmt = $cxn->prepare("SELECT user_id, UserName, email, password FROM siduser WHERE email = ?");
 if (!$stmt) {
     error_log("Signin: Prepare statement failed: " . $cxn->error);
     echo json_encode(['success' => false, 'message' => 'Database error']);
@@ -48,7 +48,7 @@ if (!$user || !password_verify($password, $user['password'])) {
 $user_id = $user['user_id'];
 $new_session_id = bin2hex(random_bytes(16));
 $_SESSION['user_id'] = $user_id;
-$_SESSION['username'] = $user['username'];
+$_SESSION['username'] = $user['UserName']; // Updated key to match schema
 $_SESSION['email'] = $user['email'];
 $_SESSION['session_id'] = $new_session_id;
 

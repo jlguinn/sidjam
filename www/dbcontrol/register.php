@@ -20,14 +20,14 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     exit;
 }
 
-// Validate password length (e.g., minimum 8 characters)
+// Validate password length (minimum 8 characters)
 if (strlen($password) < 8) {
     error_log("Register: Password too short: " . strlen($password));
     echo json_encode(['success' => false, 'message' => 'Password must be at least 8 characters long']);
     exit;
 }
 
-$cxn = mysqli_connect($host, $user, $pass, $database) or die("Connection failed: " . mysqli_connect_error());
+$cxn = mysqli_connect($host, $user, $pass, $database) or die(json_encode(['success' => false, 'message' => "Connection failed: " . mysqli_connect_error()]));
 
 // Check if email or username already exists (for registered users)
 $stmt = $cxn->prepare("SELECT user_id FROM siduser WHERE email = ?");
@@ -36,7 +36,7 @@ $stmt->execute();
 $email_exists = $stmt->get_result()->fetch_assoc() ? true : false;
 $stmt->close();
 
-$stmt = $cxn->prepare("SELECT user_id FROM siduser WHERE username = ?");
+$stmt = $cxn->prepare("SELECT user_id FROM siduser WHERE UserName = ?"); // Case-sensitive field name
 $stmt->bind_param("s", $username);
 $stmt->execute();
 $username_exists = $stmt->get_result()->fetch_assoc() ? true : false;
@@ -79,14 +79,14 @@ $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
 if ($user_id) {
     // Update existing guest user
-    $stmt = $cxn->prepare("UPDATE siduser SET username = ?, email = ?, password = ?, LastAccessDate = CURDATE() WHERE user_id = ?");
+    $stmt = $cxn->prepare("UPDATE siduser SET UserName = ?, email = ?, password = ?, LastAccessDate = CURDATE(), current_bracket = '0-0', current_theme = 1 WHERE user_id = ?");
     $stmt->bind_param("sssi", $username, $email, $hashed_password, $user_id);
     $stmt->execute();
     $affected_rows = $stmt->affected_rows;
     $stmt->close();
 
     if ($affected_rows > 0) {
-        // Optionally regenerate session_id for security
+        // Regenerate session_id for security
         $new_session_id = bin2hex(random_bytes(16));
         $stmt = $cxn->prepare("UPDATE siduser SET session_id = ? WHERE user_id = ?");
         $stmt->bind_param("si", $new_session_id, $user_id);
@@ -105,8 +105,8 @@ if ($user_id) {
         echo json_encode(['success' => false, 'message' => 'Failed to update user']);
     }
 } else {
-    // No existing user (edge case), insert new user
-    $stmt = $cxn->prepare("INSERT INTO siduser (session_id, username, email, password, RegDate, LastAccessDate) VALUES (?, ?, ?, ?, CURDATE(), CURDATE())");
+    // Insert new user
+    $stmt = $cxn->prepare("INSERT INTO siduser (session_id, UserName, email, password, RegDate, LastAccessDate, current_bracket, current_theme) VALUES (?, ?, ?, ?, CURDATE(), CURDATE(), '0-0', 0)");
     $new_session_id = bin2hex(random_bytes(16));
     $stmt->bind_param("ssss", $new_session_id, $username, $email, $hashed_password);
     $stmt->execute();

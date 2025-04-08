@@ -77,12 +77,12 @@ if (!$user_id) {
 $username = "Guest User"; // Default for guests
 $is_logged_in = false;
 if (isset($_SESSION['user_id'])) {
-    $stmt = $cxn->prepare("SELECT username, email FROM siduser WHERE user_id = ?");
+    $stmt = $cxn->prepare("SELECT UserName, email FROM siduser WHERE user_id = ?"); // Fixed 'username' to 'UserName'
     $stmt->bind_param("i", $_SESSION['user_id']);
     $stmt->execute();
     $result = $stmt->get_result();
     if ($row = $result->fetch_assoc()) {
-        $username = $row['username'] ?: "Guest User";
+        $username = $row['UserName'] ?: "Guest User"; // Fixed key to 'UserName'
         // A user is considered logged in only if they have an email (i.e., registered)
         $is_logged_in = !empty($row['email']);
     }
@@ -96,7 +96,6 @@ $cxn->close();
 <head>
     <title>sID JAm</title>
     <meta charset="utf-8" />
-    <link rel="stylesheet" href="src/styles.css">
     <link rel="stylesheet" href="src/styles.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tektur:wght@400;700&display=swap">
     <script>window.WASM_SEARCH_PATH = 'src/websid/htdocs/';</script>
