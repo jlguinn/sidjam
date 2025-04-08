@@ -15,5 +15,5 @@ foreach ($songs as $index => $path) {
 }
 $stmt->close();
 $cxn->close();
-echo "Imported " . count($songs) . " songs into alltunes.";
+echo "Imported " . count($songs) . " songs into sidtunes.";
 ?>

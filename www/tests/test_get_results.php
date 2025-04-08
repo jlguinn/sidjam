@@ -7,7 +7,7 @@ if (!$cxn) {
 }
 
 $user_id = 1;
-$stmt = $cxn->prepare("SELECT a.fullpath, SUM(s.win) as wins, SUM(s.loss) as losses FROM sidjam s JOIN alltunes a ON s.id = a.id WHERE s.user_id = ? GROUP BY s.id, a.fullpath");
+$stmt = $cxn->prepare("SELECT a.fullpath, SUM(s.win) as wins, SUM(s.loss) as losses FROM sidjam s JOIN sidtunes a ON s.id = a.id WHERE s.user_id = ? GROUP BY s.id, a.fullpath");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
