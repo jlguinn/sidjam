@@ -208,33 +208,34 @@ function toggleSongList() {
 
     if (overlay.style.display === "block") {
         // Closing the song list
-        if (peekPlayingSong && originalSongState) {
-            // Stop the peeked song
+        if (peekPlayingSong) {
+            // Stop the peeked song regardless of original state
             if (player.sidPlayer) {
                 player.sidPlayer.pause();
                 player.setIsPlaying(false);
                 player.stopTimer();
             }
-            // Restore original song
-            brackets.setContenders(originalSongState.contenders);
-            brackets.setActiveContender(originalSongState.activeContender);
-            brackets.setCurrentMode("bout");
-            loadSongBound(originalSongState.contenders[originalSongState.activeContender], -1);
-            if (originalSongState.isPlaying) {
-                // Attempt to resume
-                setTimeout(() => {
-                    if (player.sidPlayer) {
-                        player.sidPlayer.resume();
-                        player.setIsPlaying(true);
-                        player.startTimer(updateTimerBound); // Use the bound function here
-                    }
-                }, 100); // Small delay to ensure song loads
+            if (originalSongState) {
+                // Restore Bout mode state
+                brackets.setContenders(originalSongState.contenders);
+                brackets.setActiveContender(originalSongState.activeContender);
+                brackets.setCurrentMode("bout");
+                loadSongBound(originalSongState.contenders[originalSongState.activeContender], -1);
+                if (originalSongState.isPlaying) {
+                    // Resume only if it was playing
+                    setTimeout(() => {
+                        if (player.sidPlayer) {
+                            player.sidPlayer.resume();
+                            player.setIsPlaying(true);
+                            player.startTimer(updateTimerBound);
+                        }
+                    }, 100);
+                } // If paused, do nothing—song is loaded but stopped
+                originalSongState = null;
             }
             peekPlayingSong = null;
-            originalSongState = null;
         }
         overlay.style.display = "none";
-        // Reset state
         currentOffset = 0;
         currentFilter = "";
         hasMoreSongs = true;
@@ -380,17 +381,19 @@ function playSongOnDemand(filename) {
     }
 
     peekPlayingSong = filename;
-    if (player.sidPlayer && player.isPlaying) {
-        let currentTime = Math.floor(window.backend.getCurrentPlaytime()); // Capture current time
+    if (player.sidPlayer) { // Check only for sidPlayer existence, not isPlaying
+        let currentTime = Math.floor(window.backend.getCurrentPlaytime() || 0); // Default to 0 if not playing
         originalSongState = {
             contenders: [...brackets.contenders],
             activeContender: brackets.activeContender,
-            isPlaying: player.isPlaying,
-            pausedTime: currentTime // Add paused time
+            isPlaying: player.isPlaying, // Save true or false
+            pausedTime: currentTime
         };
-        player.sidPlayer.pause();
-        player.setIsPlaying(false);
-        player.stopTimer();
+        if (player.isPlaying) { // Only pause if it was playing
+            player.sidPlayer.pause();
+            player.setIsPlaying(false);
+            player.stopTimer();
+        }
     }
     loadSongBound(filename, -1);
     populateSongList(document.getElementById("filterInput").value);
