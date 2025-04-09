@@ -101,6 +101,8 @@ window.renderProfileBitmap = function(textColor) {
     // debug(`Rendered ${bitmapContainer.children.length} pixels in profile bitmap`);
 };
 
+const updateTimerBound = () => player.updateTimer();
+
 // Bound functions to avoid passing arguments repeatedly (defined first)
 const loadSongBound = (filename, trackNumber) => player.loadSong(
     filename, trackNumber,
@@ -219,14 +221,12 @@ function toggleSongList() {
             brackets.setCurrentMode("bout");
             loadSongBound(originalSongState.contenders[originalSongState.activeContender], -1);
             if (originalSongState.isPlaying) {
-                // Attempt to resume from paused time
+                // Attempt to resume
                 setTimeout(() => {
                     if (player.sidPlayer) {
                         player.sidPlayer.resume();
                         player.setIsPlaying(true);
-                        player.startTimer(updateTimerBound);
-                        // Seeking isn’t directly supported by ScriptNodePlayer, so we’ll note this limitation
-                        console.log(`Resuming at ${originalSongState.pausedTime}s (seeking not fully supported yet)`);
+                        player.startTimer(updateTimerBound); // Use the bound function here
                     }
                 }, 100); // Small delay to ensure song loads
             }
@@ -242,7 +242,7 @@ function toggleSongList() {
         songListWrapper.dataset.observerSet = "";
         document.removeEventListener('keydown', handleEscapeKey);
         filterInput.removeEventListener('input', handleFilterInput);
-        updateVsMatchupBound(); // Ensure UI reflects Bout mode
+        updateVsMatchupBound();
         updateRoundInfoBound();
         updateWinnerButtonsBound();
         updateFlameButtonBound();
@@ -325,7 +325,7 @@ function populateSongList(filter) {
             const { files, offset, limit, hasMore } = data;
             hasMoreSongs = hasMore;
 
-            console.log(`Fetched ${files.length} songs for bracket ${brackets.currentBracket}, hasMore=${hasMore}`);
+            // console.log(`Fetched ${files.length} songs for bracket ${brackets.currentBracket}, hasMore=${hasMore}`);
 
             if (files.length === 0 && currentOffset === 0) {
                 const li = document.createElement("li");
