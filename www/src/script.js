@@ -205,24 +205,56 @@ function toggleSongList() {
     const songListWrapper = document.getElementById("songListWrapper");
 
     if (overlay.style.display === "block") {
+        // Closing the song list
+        if (peekPlayingSong && originalSongState) {
+            // Stop the peeked song
+            if (player.sidPlayer) {
+                player.sidPlayer.pause();
+                player.setIsPlaying(false);
+                player.stopTimer();
+            }
+            // Restore original song
+            brackets.setContenders(originalSongState.contenders);
+            brackets.setActiveContender(originalSongState.activeContender);
+            brackets.setCurrentMode("bout");
+            loadSongBound(originalSongState.contenders[originalSongState.activeContender], -1);
+            if (originalSongState.isPlaying) {
+                // Attempt to resume from paused time
+                setTimeout(() => {
+                    if (player.sidPlayer) {
+                        player.sidPlayer.resume();
+                        player.setIsPlaying(true);
+                        player.startTimer(updateTimerBound);
+                        // Seeking isn’t directly supported by ScriptNodePlayer, so we’ll note this limitation
+                        console.log(`Resuming at ${originalSongState.pausedTime}s (seeking not fully supported yet)`);
+                    }
+                }, 100); // Small delay to ensure song loads
+            }
+            peekPlayingSong = null;
+            originalSongState = null;
+        }
         overlay.style.display = "none";
         // Reset state
         currentOffset = 0;
         currentFilter = "";
         hasMoreSongs = true;
         document.getElementById("songList").innerHTML = '';
-        songListWrapper.dataset.observerSet = ""; // Reset observer
+        songListWrapper.dataset.observerSet = "";
         document.removeEventListener('keydown', handleEscapeKey);
         filterInput.removeEventListener('input', handleFilterInput);
+        updateVsMatchupBound(); // Ensure UI reflects Bout mode
+        updateRoundInfoBound();
+        updateWinnerButtonsBound();
+        updateFlameButtonBound();
     } else {
+        // Opening the song list (unchanged)
         overlay.style.display = "block";
         filterInput.value = "";
-        // Reset state on open
         currentOffset = 0;
         currentFilter = "";
         hasMoreSongs = true;
         document.getElementById("songList").innerHTML = '';
-        songListWrapper.dataset.observerSet = ""; // Reset observer
+        songListWrapper.dataset.observerSet = "";
         if (lastBracketViewed !== brackets.currentBracket) {
             document.getElementById("songListWrapper").scrollTop = 0;
             lastBracketViewed = brackets.currentBracket;
@@ -282,7 +314,7 @@ function populateSongList(filter) {
         queryParams += "&wins=-1&losses=2";
     }
 
-    console.log(`Fetching songs for bracket ${brackets.currentBracket}, offset=${currentOffset}, filter=${filter}`);
+    // console.log(`Fetching songs for bracket ${brackets.currentBracket}, offset=${currentOffset}, filter=${filter}`);
 
     fetch(`dbcontrol/get_sidtunes.php?${queryParams}`)
         .then(response => {
@@ -349,10 +381,12 @@ function playSongOnDemand(filename) {
 
     peekPlayingSong = filename;
     if (player.sidPlayer && player.isPlaying) {
+        let currentTime = Math.floor(window.backend.getCurrentPlaytime()); // Capture current time
         originalSongState = {
             contenders: [...brackets.contenders],
             activeContender: brackets.activeContender,
-            isPlaying: player.isPlaying
+            isPlaying: player.isPlaying,
+            pausedTime: currentTime // Add paused time
         };
         player.sidPlayer.pause();
         player.setIsPlaying(false);
