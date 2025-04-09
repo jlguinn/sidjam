@@ -9,25 +9,21 @@ export function setIsPlaying(value) {
 }
 
 
-export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseButton, resetVoiceStates, updateNavigationButtons, updateVsMatchup) {
-    if (!filename) return; // Guard against null/undefined filename
-    // debug(`Loading song: ${filename}, track: ${trackNumber}`);
+export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseButton, resetVoiceStates, updateNavigationButtons, updateVsMatchup, autoPlay = true) {
+    if (!filename) return;
+    console.log(`[DEBUG] loadSong: ${filename}, autoPlay: ${autoPlay}`);
 
     let onFail = () => console.error("Failed to load song");
     let onProgress = (total, loaded) => {};
     let options = { track: trackNumber, timeout: -1, traceSID: true };
 
-    // If sidPlayer exists and is playing, pause it
     if (sidPlayer && isPlaying) {
         sidPlayer.pause();
         setIsPlaying(false);
         stopTimer();
     }
 
-    // Check if sidPlayer is initialized
     if (!sidPlayer) {
-        // debug(`sidPlayer not initialized, deferring song load: ${filename}`);
-        // Update UI to reflect the song, but don't attempt to load/play
         updateSongInfo();
         updateVsMatchup();
         updateNavigationButtons();
@@ -36,13 +32,17 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
         return;
     }
 
-    // Proceed with loading the song if sidPlayer is initialized
     ScriptNodePlayer.loadMusicFromURL(filename, options, onFail, onProgress).then(() => {
-        // debug("Song loaded successfully");
+        console.log("[DEBUG] Song loaded successfully");
         updateSongInfo();
-        sidPlayer.resume();
-        setIsPlaying(true);
-        startTimer(updateTimer);
+        if (autoPlay) {
+            sidPlayer.resume();
+            setIsPlaying(true);
+            startTimer(updateTimer);
+            console.log("[DEBUG] Auto-playing song");
+        } else {
+            console.log("[DEBUG] Song loaded, pausing explicitly");
+        }
         updatePlayPauseButton();
         resetVoiceStates();
         updateNavigationButtons();
@@ -50,6 +50,13 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
     }).catch(error => {
         console.error(`Error loading song ${filename}:`, error);
         onFail();
+    }).finally(() => {
+        if (!autoPlay) {
+            sidPlayer.pause();
+            setIsPlaying(false);
+            stopTimer();
+            console.log("[DEBUG] Ensured paused state after load");
+        }
     });
 }
 

@@ -104,13 +104,14 @@ window.renderProfileBitmap = function(textColor) {
 const updateTimerBound = () => player.updateTimer();
 
 // Bound functions to avoid passing arguments repeatedly (defined first)
-const loadSongBound = (filename, trackNumber) => player.loadSong(
+const loadSongBound = (filename, trackNumber, autoPlay = true) => player.loadSong(
     filename, trackNumber,
     () => ui.updateSongInfo(player.sidPlayer),
     () => ui.updatePlayPauseButton(player.isPlaying),
     player.resetVoiceStates,
     () => ui.updateNavigationButtons(player.sidPlayer),
-    updateVsMatchupBound
+    updateVsMatchupBound,
+    autoPlay
 );
 
 const updateVsMatchupBound = () => {
@@ -207,30 +208,20 @@ function toggleSongList() {
     const songListWrapper = document.getElementById("songListWrapper");
 
     if (overlay.style.display === "block") {
-        // Closing the song list
         if (peekPlayingSong) {
-            // Stop the peeked song regardless of original state
             if (player.sidPlayer) {
                 player.sidPlayer.pause();
                 player.setIsPlaying(false);
                 player.stopTimer();
+                console.log("[DEBUG] Stopped peeked song");
             }
             if (originalSongState) {
-                // Restore Bout mode state
                 brackets.setContenders(originalSongState.contenders);
                 brackets.setActiveContender(originalSongState.activeContender);
                 brackets.setCurrentMode("bout");
-                loadSongBound(originalSongState.contenders[originalSongState.activeContender], -1);
-                if (originalSongState.isPlaying) {
-                    // Resume only if it was playing
-                    setTimeout(() => {
-                        if (player.sidPlayer) {
-                            player.sidPlayer.resume();
-                            player.setIsPlaying(true);
-                            player.startTimer(updateTimerBound);
-                        }
-                    }, 100);
-                } // If paused, do nothing—song is loaded but stopped
+                console.log(`[DEBUG] Restoring Bout song, wasPlaying: ${originalSongState.isPlaying}`);
+                loadSongBound(originalSongState.contenders[originalSongState.activeContender], -1, originalSongState.isPlaying);
+                // Remove setTimeout, rely on loadSong to handle playback
                 originalSongState = null;
             }
             peekPlayingSong = null;
@@ -248,7 +239,7 @@ function toggleSongList() {
         updateWinnerButtonsBound();
         updateFlameButtonBound();
     } else {
-        // Opening the song list (unchanged)
+        // Opening logic unchanged
         overlay.style.display = "block";
         filterInput.value = "";
         currentOffset = 0;
@@ -379,28 +370,27 @@ function playSongOnDemand(filename) {
         enterNowPlayingMode(filename);
         return;
     }
-
     peekPlayingSong = filename;
-    if (player.sidPlayer) { // Check only for sidPlayer existence, not isPlaying
-        let currentTime = Math.floor(window.backend.getCurrentPlaytime() || 0); // Default to 0 if not playing
+    if (player.sidPlayer) {
+        let currentTime = Math.floor(window.backend.getCurrentPlaytime() || 0);
         originalSongState = {
             contenders: [...brackets.contenders],
             activeContender: brackets.activeContender,
-            isPlaying: player.isPlaying, // Save true or false
+            isPlaying: player.isPlaying,
             pausedTime: currentTime
         };
-        if (player.isPlaying) { // Only pause if it was playing
+        console.log(`[DEBUG] Saving state, isPlaying: ${player.isPlaying}`);
+        if (player.isPlaying) {
             player.sidPlayer.pause();
             player.setIsPlaying(false);
             player.stopTimer();
         }
     }
-    loadSongBound(filename, -1);
+    loadSongBound(filename, -1, true);
     populateSongList(document.getElementById("filterInput").value);
 }
 
 function enterNowPlayingMode(song) {
-    // debug(`Entering Now Playing mode with song: ${song}`);
     brackets.setBoutState({
         contenders: [...brackets.contenders],
         activeContender: brackets.activeContender,
@@ -418,8 +408,8 @@ function enterNowPlayingMode(song) {
         player.setIsPlaying(false);
         player.stopTimer();
     }
-    loadSongBound(brackets.nowPlayingSong, -1);
-    ui.applyTheme("nowPlaying"); // Updated to use new applyTheme with mode
+    loadSongBound(brackets.nowPlayingSong, -1, true); // Now Playing should play
+    ui.applyTheme("nowPlaying");
     toggleSongList();
     updateVsMatchupBound();
     updateRoundInfoBound();
