@@ -11,8 +11,6 @@ export function setIsPlaying(value) {
 
 export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseButton, resetVoiceStates, updateNavigationButtons, updateVsMatchup, autoPlay = true) {
     if (!filename) return;
-    console.log(`[DEBUG] loadSong: ${filename}, autoPlay: ${autoPlay}`);
-
     let onFail = () => console.error("Failed to load song");
     let onProgress = (total, loaded) => {};
     let options = { track: trackNumber, timeout: -1, traceSID: true };
@@ -33,15 +31,11 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
     }
 
     ScriptNodePlayer.loadMusicFromURL(filename, options, onFail, onProgress).then(() => {
-        console.log("[DEBUG] Song loaded successfully");
         updateSongInfo();
         if (autoPlay) {
             sidPlayer.resume();
             setIsPlaying(true);
             startTimer(updateTimer);
-            console.log("[DEBUG] Auto-playing song");
-        } else {
-            console.log("[DEBUG] Song loaded, pausing explicitly");
         }
         updatePlayPauseButton();
         resetVoiceStates();
@@ -55,10 +49,10 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
             sidPlayer.pause();
             setIsPlaying(false);
             stopTimer();
-            console.log("[DEBUG] Ensured paused state after load");
         }
     });
 }
+
 
 export function initPlayer(hasPlayed, activeContender, contenders, loadSongFn, updateWinnerButtons, updateFlameButton) {
 //    debug("sID JAm starting...");
