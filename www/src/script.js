@@ -143,6 +143,7 @@ window.togglePlayPause = () => {
         () => player.initPlayer(brackets.hasPlayed, brackets.activeContender, brackets.contenders, loadSongBound, updateWinnerButtonsBound, updateFlameButtonBound),
         brackets.setHasPlayed
     );
+    document.getElementById("ellipsis-button").disabled = false;
 };
 
 window.jamToggle = () => brackets.jamToggle(

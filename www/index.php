@@ -172,7 +172,7 @@ $cxn->close();
             <span id="bracket-label">Bracket</span>
             <div class="bracket-row">
                 <select id="bracket-select" onchange="window.changeBracket()"></select>
-                <button id="ellipsis-button" class="control-button" onclick="window.toggleSongList()">...</button>
+                <button id="ellipsis-button" class="control-button" onclick="window.toggleSongList()" disabled>...</button>
             </div>
         </div>
         <div id="flame-wrapper">
