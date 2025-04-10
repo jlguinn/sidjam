@@ -366,6 +366,18 @@ function populateSongList(filter) {
         });
 }
 
+function updatePlayingIndicator() {
+    const songList = document.getElementById("songList");
+    songList.querySelectorAll("li").forEach(li => {
+        if (li.textContent === peekPlayingSong?.replace('/sid/C64Music', '')) {
+            li.classList.add("playing");
+        } else {
+            li.classList.remove("playing");
+        }
+    });
+}
+
+// Update playSongOnDemand in script.js
 function playSongOnDemand(filename) {
     if (peekPlayingSong === filename) {
         enterNowPlayingMode(filename);
@@ -380,7 +392,6 @@ function playSongOnDemand(filename) {
             isPlaying: player.isPlaying,
             pausedTime: currentTime
         };
-        console.log(`[DEBUG] Saving state, isPlaying: ${player.isPlaying}`);
         if (player.isPlaying) {
             player.sidPlayer.pause();
             player.setIsPlaying(false);
@@ -389,6 +400,7 @@ function playSongOnDemand(filename) {
     }
     loadSongBound(filename, -1, true);
     populateSongList(document.getElementById("filterInput").value);
+    updatePlayingIndicator(); // Add this call
 }
 
 function enterNowPlayingMode(song) {
