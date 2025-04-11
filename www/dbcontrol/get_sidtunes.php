@@ -103,26 +103,26 @@ if ($full_list) {
     }
 }
 
-// Log the query with parameters substituted for debugging
-$logQuery = $query;
-$logParams = $params;
-$paramIndex = 0;
-while ($paramIndex < count($logParams)) {
-    $pos = strpos($logQuery, '?');
-    if ($pos !== false) {
-        $param = $logParams[$paramIndex];
-        if (is_string($param)) {
-            $param = "'$param'";
-        }
-        $logQuery = substr_replace($logQuery, $param, $pos, 1);
-        $paramIndex++;
-    } else {
-        break;
-    }
-}
-error_log("Fully substituted query: $logQuery");
-error_log("Parameter array: " . json_encode($params));
-error_log("Types string: $types");
+// Log the query with parameters substituted for debugging (commented out for performance)
+// $logQuery = $query;
+// $logParams = $params;
+// $paramIndex = 0;
+// while ($paramIndex < count($logParams)) {
+//     $pos = strpos($logQuery, '?');
+//     if ($pos !== false) {
+//         $param = $logParams[$paramIndex];
+//         if (is_string($param)) {
+//             $param = "'$param'";
+//         }
+//         $logQuery = substr_replace($logQuery, $param, $pos, 1);
+//         $paramIndex++;
+//     } else {
+//         break;
+//     }
+// }
+// error_log("Fully substituted query: $logQuery");
+// error_log("Parameter array: " . json_encode($params));
+// error_log("Types string: $types");
 
 $stmt->execute();
 error_log("Executed query: $query");
@@ -154,7 +154,7 @@ if ($full_list) {
 } else {
     echo json_encode([
         'query' => $query,
-        'displayQuery' => $logQuery,
+        'displayQuery' => $logQuery ?? $query, // Fallback to $query if $logQuery isn't set
         'files' => $files,
         'offset' => $offset,
         'limit' => $limit,
