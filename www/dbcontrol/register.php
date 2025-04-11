@@ -3,6 +3,10 @@ session_start();
 require_once "sidcon.php";
 header('Content-Type: application/json');
 
+// Ensure errors are logged, not displayed, to avoid breaking JSON response
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+
 $username = isset($_POST['username']) ? $_POST['username'] : '';
 $email = isset($_POST['email']) ? $_POST['email'] : '';
 $password = isset($_POST['password']) ? $_POST['password'] : '';
@@ -27,7 +31,12 @@ if (strlen($password) < 8) {
     exit;
 }
 
-$cxn = mysqli_connect($host, $user, $pass, $database) or die(json_encode(['success' => false, 'message' => "Connection failed: " . mysqli_connect_error()]));
+$cxn = mysqli_connect($host, $user, $pass, $database);
+if (!$cxn) {
+    error_log("Register: Connection failed: " . mysqli_connect_error());
+    echo json_encode(['success' => false, 'message' => "Connection failed: " . mysqli_connect_error()]);
+    exit;
+}
 
 // Check if email or username already exists (for registered users)
 $stmt = $cxn->prepare("SELECT user_id FROM siduser WHERE email = ?");
@@ -36,7 +45,7 @@ $stmt->execute();
 $email_exists = $stmt->get_result()->fetch_assoc() ? true : false;
 $stmt->close();
 
-$stmt = $cxn->prepare("SELECT user_id FROM siduser WHERE UserName = ?"); // Case-sensitive field name
+$stmt = $cxn->prepare("SELECT user_id FROM siduser WHERE UserName = ?");
 $stmt->bind_param("s", $username);
 $stmt->execute();
 $username_exists = $stmt->get_result()->fetch_assoc() ? true : false;
@@ -76,12 +85,20 @@ if ($current_session_id) {
 }
 
 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+// Prepare the player_state JSON
+$player_state = json_encode(['bracket' => '0-0', 'theme' => 1]);
 
 if ($user_id) {
     // Update existing guest user
-    $stmt = $cxn->prepare("UPDATE siduser SET UserName = ?, email = ?, password = ?, LastAccessDate = CURDATE(), current_bracket = '0-0', current_theme = 1 WHERE user_id = ?");
-    $stmt->bind_param("sssi", $username, $email, $hashed_password, $user_id);
-    $stmt->execute();
+    $stmt = $cxn->prepare("UPDATE siduser SET UserName = ?, email = ?, password = ?, LastAccessDate = CURDATE(), player_state = ? WHERE user_id = ?");
+    $stmt->bind_param("ssssi", $username, $email, $hashed_password, $player_state, $user_id);
+    if (!$stmt->execute()) {
+        error_log("Register: Failed to update user_id $user_id: " . $stmt->error);
+        echo json_encode(['success' => false, 'message' => 'Failed to update user']);
+        $stmt->close();
+        $cxn->close();
+        exit;
+    }
     $affected_rows = $stmt->affected_rows;
     $stmt->close();
 
@@ -101,15 +118,21 @@ if ($user_id) {
         error_log("Register: Successfully updated user_id $user_id");
         echo json_encode(['success' => true]);
     } else {
-        error_log("Register: Failed to update user_id $user_id");
+        error_log("Register: No rows affected for user_id $user_id");
         echo json_encode(['success' => false, 'message' => 'Failed to update user']);
     }
 } else {
     // Insert new user
-    $stmt = $cxn->prepare("INSERT INTO siduser (session_id, UserName, email, password, RegDate, LastAccessDate, current_bracket, current_theme) VALUES (?, ?, ?, ?, CURDATE(), CURDATE(), '0-0', 0)");
+    $stmt = $cxn->prepare("INSERT INTO siduser (session_id, UserName, email, password, RegDate, LastAccessDate, player_state) VALUES (?, ?, ?, ?, CURDATE(), CURDATE(), ?)");
     $new_session_id = bin2hex(random_bytes(16));
-    $stmt->bind_param("ssss", $new_session_id, $username, $email, $hashed_password);
-    $stmt->execute();
+    $stmt->bind_param("sssss", $new_session_id, $username, $email, $hashed_password, $player_state);
+    if (!$stmt->execute()) {
+        error_log("Register: Failed to insert new user: " . $stmt->error);
+        echo json_encode(['success' => false, 'message' => 'Registration failed']);
+        $stmt->close();
+        $cxn->close();
+        exit;
+    }
     $user_id = $cxn->insert_id;
     $stmt->close();
 
@@ -120,7 +143,7 @@ if ($user_id) {
         error_log("Register: Created new user_id $user_id");
         echo json_encode(['success' => true]);
     } else {
-        error_log("Register: Failed to create new user");
+        error_log("Register: Failed to retrieve new user_id");
         echo json_encode(['success' => false, 'message' => 'Registration failed']);
     }
 }
