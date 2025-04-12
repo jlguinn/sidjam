@@ -1041,6 +1041,24 @@ window.flashProfileIcon = function() {
     flash();
 };
 
+async function loadPlayerState() {
+    try {
+        const response = await fetch(`dbcontrol/get_player_state.php?user_id=${window.user.id}`);
+        if (!response.ok) throw new Error(`Failed to load player_state: ${response.statusText}`);
+        const data = await response.json();
+        if (data.success) {
+            console.log("Resuming player state:", data.player_state || "No state saved");
+            return data.player_state;
+        } else {
+            console.error("Failed to load player_state:", data.error);
+            return null;
+        }
+    } catch (error) {
+        console.error("Error loading player_state:", error);
+        return null;
+    }
+}
+
 // Initialize the app (event listeners and data fetching)
 async function initializeApp() {
     const authLink = document.getElementById('auth-link');
@@ -1081,7 +1099,7 @@ async function initializeApp() {
 
     if (userInfo) {
         userInfo.addEventListener('click', (e) => {
-            // debug(`user-info clicked, target: ${e.target.id}`);
+            debug(`user-info clicked, target: ${e.target.id}`);
         });
     }
 
@@ -1104,6 +1122,9 @@ async function initializeApp() {
         const resultsResponse = await fetch(`dbcontrol/get_results.php?user_id=${window.user.id}`);
         if (!resultsResponse.ok) throw new Error(`Failed to load results: ${resultsResponse.statusText}`);
         window.sidJamData.cachedResults = await resultsResponse.json();
+
+        // Load and log player_state
+        await loadPlayerState();
     } catch (error) {
         console.error('Error loading data:', error);
         window.sidJamData.cachedResults = {};
@@ -1124,8 +1145,8 @@ async function initializeApp() {
     const currentTheme = baseColorSchemes[ui.currentThemeIndex];
     const nextIndex = (ui.currentThemeIndex + 1) % baseColorSchemes.length;
     const nextTheme = baseColorSchemes[nextIndex];
-    button.style.backgroundColor = nextTheme.exterior; // Preview next theme's exterior
-    button.querySelector('.inner-box').style.backgroundColor = nextTheme.interior; // Preview next theme's interior
+    button.style.backgroundColor = nextTheme.exterior;
+    button.querySelector('.inner-box').style.backgroundColor = nextTheme.interior;
     button.title = `Switch Theme \n  From: ${currentTheme.name}\n  To: ${nextTheme.name}`;
 
     // Ensure the profile bitmap is rendered with a valid color
