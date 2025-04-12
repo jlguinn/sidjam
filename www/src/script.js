@@ -1059,7 +1059,6 @@ async function loadPlayerState() {
     }
 }
 
-// Initialize the app (event listeners and data fetching)
 async function initializeApp() {
     const authLink = document.getElementById('auth-link');
     const preferencesLink = document.getElementById('preferences-link');
@@ -1123,13 +1122,35 @@ async function initializeApp() {
         if (!resultsResponse.ok) throw new Error(`Failed to load results: ${resultsResponse.statusText}`);
         window.sidJamData.cachedResults = await resultsResponse.json();
 
-        // Load and log player_state
-        await loadPlayerState();
+        // Load player_state and apply bracket/contenders if in Bout Mode
+        const player_state = await loadPlayerState();
+        if (player_state && player_state.mode === "bout" && player_state.contenders.contender1 && player_state.contenders.contender2) {
+            brackets.setCurrentBracket(player_state.bracket);
+            brackets.setContenders([player_state.contenders.contender1, player_state.contenders.contender2]);
+            brackets.setCurrentMode("bout");
+            brackets.setActiveContender(0);
+            brackets.setHasJammed(false);
+            brackets.setBothContendersSelected(false);
+            brackets.setIsFlameActive(false);
+            // Update UI to reflect restored state
+            brackets.updateBracketDropdown();
+            document.getElementById("bracket-select").value = player_state.bracket.replace(" - ", "-");
+            updateVsMatchupBound();
+            updateRoundInfoBound();
+            updateWinnerButtonsBound();
+            updateFlameButtonBound();
+        } else {
+            // Default behavior if no valid Bout Mode state
+            brackets.updateBracketDropdown();
+            brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateFlameButtonBound);
+        }
     } catch (error) {
         console.error('Error loading data:', error);
         window.sidJamData.cachedResults = {};
         window.sidJamData.sidFiles = [];
         window.sidJamData.pathToId = {};
+        brackets.updateBracketDropdown();
+        brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateFlameButtonBound);
     }
 
     document.getElementById("playPauseButton").disabled = false;
@@ -1153,8 +1174,6 @@ async function initializeApp() {
     const initialColor = baseColorSchemes[ui.currentThemeIndex].exteriorTextColor || '#000000';
     window.renderProfileBitmap(initialColor);
 
-    brackets.updateBracketDropdown();
-    brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateFlameButtonBound);
     checkSong2Clipping();
 }
 
