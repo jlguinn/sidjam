@@ -15,6 +15,34 @@ let peekPlayingSong = null;
 
 function debug(message) { console.log(`[DEBUG] ${message}`); }
 
+async function savePlayerState() {
+    const player_state = {
+        bracket: brackets.currentBracket,
+        contenders: {
+            contender1: brackets.currentMode === "bout" && brackets.contenders[0] ? brackets.contenders[0] : null,
+            contender2: brackets.currentMode === "bout" && brackets.contenders[1] ? brackets.contenders[1] : null,
+            nowPlaying: brackets.currentMode === "nowPlaying" ? brackets.nowPlayingSong : null
+        },
+        theme: ui.currentThemeIndex,
+        mode: brackets.currentMode
+    };
+    try {
+        const response = await fetch('dbcontrol/save_state.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ player_state })
+        });
+        const result = await response.json();
+        if (!result.success) {
+            console.error('Failed to save state:', result.message);
+        } else {
+            console.log('[DEBUG] Player state saved:', player_state);
+        }
+    } catch (error) {
+        console.error('Error saving state:', error);
+    }
+}
+
 // Function to check if #song2 clips the profile package and hide the link if needed
 function checkSong2Clipping() {
     const song2 = document.getElementById('song2');
@@ -146,16 +174,18 @@ window.togglePlayPause = () => {
     document.getElementById("ellipsis-button").disabled = false;
 };
 
-window.jamToggle = () => brackets.jamToggle(
-    player.sidPlayer,
-    loadSongBound,
-    () => ui.applyTheme(brackets.currentMode), // Pass currentMode dynamically
-    updateVsMatchupBound,
-    updateRoundInfoBound,
-    updateWinnerButtonsBound,
-    updateFlameButtonBound,
-    brackets.updateBracketDropdown
-);
+window.jamToggle = () => {
+    brackets.jamToggle(
+        player.sidPlayer,
+        loadSongBound,
+        () => ui.applyTheme(brackets.currentMode),
+        updateVsMatchupBound,
+        updateRoundInfoBound,
+        updateWinnerButtonsBound,
+        updateFlameButtonBound,
+        brackets.updateBracketDropdown
+    ).then(() => savePlayerState()); // Save after mode change
+};
 
 window.setWinner = (index) => brackets.updateWinner(
     index,
@@ -191,15 +221,21 @@ window.prevTrack = () => player.prevTrack(
     loadSongBound
 );
 
-window.changeBracket = () => brackets.changeBracket(
-    updateFlameButtonBound,
-    loadSongBound,
-    updateRoundInfoBound,
-    updateVsMatchupBound,
-    updateWinnerButtonsBound
-);
+window.changeBracket = () => {
+    brackets.changeBracket(
+        updateFlameButtonBound,
+        loadSongBound,
+        updateRoundInfoBound,
+        updateVsMatchupBound,
+        updateWinnerButtonsBound
+    );
+    savePlayerState(); // Save after bracket change
+};
 
-window.toggleColorScheme = () => ui.toggleColorScheme(brackets.currentMode);
+window.toggleColorScheme = () => {
+    ui.toggleColorScheme(brackets.currentMode);
+    savePlayerState(); // Save after theme change
+};
 
 window.toggleSongList = toggleSongList;
 
@@ -421,13 +457,14 @@ function enterNowPlayingMode(song) {
         player.setIsPlaying(false);
         player.stopTimer();
     }
-    loadSongBound(brackets.nowPlayingSong, -1, true); // Now Playing should play
+    loadSongBound(brackets.nowPlayingSong, -1, true);
     ui.applyTheme("nowPlaying");
     toggleSongList();
     updateVsMatchupBound();
     updateRoundInfoBound();
     updateWinnerButtonsBound();
     updateFlameButtonBound();
+    savePlayerState(); // Save after entering Now Playing Mode
 }
 
 // Show/hide the auth pop-up

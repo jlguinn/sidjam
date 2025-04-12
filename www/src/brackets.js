@@ -22,7 +22,7 @@ class SeededRandom {
     }
   }
 
-const seededRandom = new SeededRandom(7473646); // Fixed seed for reproducibility
+const seededRandom = new SeededRandom(256890); // Fixed seed for reproducibility
 
 const getRandom = {
     random: () => {
