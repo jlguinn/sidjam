@@ -16,11 +16,16 @@ let peekPlayingSong = null;
 function debug(message) { console.log(`[DEBUG] ${message}`); }
 
 async function savePlayerState() {
+    const specialBrackets = ["All", "Eliminated"];
+    const contenderCount = brackets.getContenderCount(brackets.currentBracket);
+    const isSpecialBracket = specialBrackets.includes(brackets.currentBracket) || contenderCount < 2;
+    const savedBracket = isSpecialBracket ? brackets.previousBracket : brackets.currentBracket;
+
     const player_state = {
-        bracket: brackets.currentBracket,
+        bracket: savedBracket,
         contenders: {
-            contender1: brackets.currentMode === "bout" && brackets.contenders[0] ? brackets.contenders[0] : null,
-            contender2: brackets.currentMode === "bout" && brackets.contenders[1] ? brackets.contenders[1] : null,
+            contender1: brackets.currentMode === "bout" ? brackets.contenders[0] : (brackets.boutState.contenders?.[0] || brackets.contenders[0] || null),
+            contender2: brackets.currentMode === "bout" ? brackets.contenders[1] : (brackets.boutState.contenders?.[1] || brackets.contenders[1] || null),
             nowPlaying: brackets.currentMode === "nowPlaying" ? brackets.nowPlayingSong : null
         },
         theme: ui.currentThemeIndex,
