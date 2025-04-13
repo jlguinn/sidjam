@@ -16,21 +16,39 @@ let peekPlayingSong = null;
 function debug(message) { console.log(`[DEBUG] ${message}`); }
 
 async function savePlayerState() {
-    const specialBrackets = ["All", "Eliminated"];
-    const contenderCount = brackets.getContenderCount(brackets.currentBracket);
-    const isSpecialBracket = specialBrackets.includes(brackets.currentBracket) || contenderCount < 2;
-    const savedBracket = isSpecialBracket ? brackets.previousBracket : brackets.currentBracket;
+    let player_state;
 
-    const player_state = {
-        bracket: savedBracket,
-        contenders: {
-            contender1: brackets.currentMode === "bout" ? brackets.contenders[0] : (brackets.boutState.contenders?.[0] || brackets.contenders[0] || null),
-            contender2: brackets.currentMode === "bout" ? brackets.contenders[1] : (brackets.boutState.contenders?.[1] || brackets.contenders[1] || null),
-            nowPlaying: brackets.currentMode === "nowPlaying" ? brackets.nowPlayingSong : null
-        },
-        theme: ui.currentThemeIndex,
-        mode: brackets.currentMode
-    };
+    if (brackets.currentMode === "nowPlaying") {
+        // Load existing state to preserve bracket and contenders
+        const existingState = await loadPlayerState();
+        player_state = existingState || {
+            bracket: "0 - 0",
+            contenders: { contender1: null, contender2: null, nowPlaying: null },
+            theme: ui.currentThemeIndex,
+            mode: "bout"
+        };
+        // Update only mode and nowPlaying
+        player_state.mode = "nowPlaying";
+        player_state.contenders.nowPlaying = brackets.nowPlayingSong;
+    } else {
+        // For Bout mode, construct state as before, respecting special brackets
+        const specialBrackets = ["All", "Eliminated"];
+        const contenderCount = brackets.getContenderCount(brackets.currentBracket);
+        const isSpecialBracket = specialBrackets.includes(brackets.currentBracket) || contenderCount < 2;
+        const savedBracket = isSpecialBracket ? brackets.previousBracket : brackets.currentBracket;
+
+        player_state = {
+            bracket: savedBracket,
+            contenders: {
+                contender1: brackets.contenders[0] || null,
+                contender2: brackets.contenders[1] || null,
+                nowPlaying: null
+            },
+            theme: ui.currentThemeIndex,
+            mode: brackets.currentMode
+        };
+    }
+
     try {
         const response = await fetch('dbcontrol/save_state.php', {
             method: 'POST',
