@@ -1,7 +1,12 @@
 import { sidPlayer, isPlaying, stopTimer, setIsPlaying } from './player.js';
 import { applyTheme } from './ui.js';
 
-const USE_DETERMINISTIC_RANDOM = true; // Set to false to use Math.random()
+const USE_DETERMINISTIC_RANDOM = false; // Set to false to use Math.random()
+if (USE_DETERMINISTIC_RANDOM) {
+    debug("Using deterministic draws...")
+} else {
+    debug("Using random draws...")
+}
 
 /* Deterministic psuedo random number generator for testing */
 class SeededRandom {
