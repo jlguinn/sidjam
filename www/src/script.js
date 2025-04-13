@@ -41,7 +41,7 @@ async function savePlayerState() {
         if (!result.success) {
             console.error('Failed to save state:', result.message);
         } else {
-            console.log('[DEBUG] Player state saved:', player_state);
+            console.log('[DEBUG] Player state saved:', JSON.stringify(player_state));
         }
     } catch (error) {
         console.error('Error saving state:', error);
@@ -234,7 +234,7 @@ window.changeBracket = () => {
         updateVsMatchupBound,
         updateWinnerButtonsBound
     );
-    savePlayerState(); // Save after bracket change
+    if (brackets.currentMode == "bout") savePlayerState(); // Save after bracket change
 };
 
 window.toggleColorScheme = () => {
@@ -1053,7 +1053,7 @@ async function loadPlayerState() {
         if (!response.ok) throw new Error(`Failed to load player_state: ${response.statusText}`);
         const data = await response.json();
         if (data.success) {
-            console.log("Resuming player state:", data.player_state || "No state saved");
+            console.log("Resuming player state:", JSON.stringify(data.player_state) || "No state saved");
             return data.player_state;
         } else {
             console.error("Failed to load player_state:", data.error);
