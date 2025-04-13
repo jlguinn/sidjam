@@ -452,7 +452,8 @@ function enterNowPlayingMode(song) {
         winner: brackets.winner,
         hasJammed: brackets.hasJammed,
         bothContendersSelected: brackets.bothContendersSelected,
-        isFlameActive: brackets.isFlameActive
+        isFlameActive: brackets.isFlameActive,
+        bracket: brackets.currentBracket
     });
     brackets.setCurrentMode("nowPlaying");
     brackets.setNowPlayingSong(song);
@@ -469,7 +470,7 @@ function enterNowPlayingMode(song) {
     updateRoundInfoBound();
     updateWinnerButtonsBound();
     updateFlameButtonBound();
-    savePlayerState(); // Save after entering Now Playing Mode
+    savePlayerState();
 }
 
 // Show/hide the auth pop-up

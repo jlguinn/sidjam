@@ -192,27 +192,30 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 setContenders([nowPlayingSong]);
                 let availableSongs = window.sidJamData.sidFiles.filter(song => song !== nowPlayingSong && (window.sidJamData.cachedResults[song] || { wins: 0, losses: 0 }).wins === 0 && (window.sidJamData.cachedResults[song] || { wins: 0, losses: 0 }).losses === 0);
                 if (availableSongs.length > 0) {
-                    // Use getRandom instead of Math.random()
                     let newSongIndex = getRandom.randint(0, availableSongs.length - 1);
                     contenders[1] = availableSongs[newSongIndex];
                     revivedToZeroZero = true;
                 }
+                setIsReviveActive(false);
             }
-            setIsReviveActive(false);
         }
 
         setCurrentMode("bout");
         setNowPlayingSong(null);
         if (!revivedToZeroZero) {
-            setContenders(boutState.contenders);
-            setActiveContender(boutState.activeContender);
-            setRoundCount(boutState.roundCount);
-            setWinner(boutState.winner);
-            setHasJammed(boutState.hasJammed);
-            setBothContendersSelected(boutState.bothContendersSelected);
-            setIsFlameActive(boutState.isFlameActive);
-            let success = pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
-            if (!success) {
+            // Restore bout state
+            setContenders(boutState.contenders || []);
+            setActiveContender(boutState.activeContender || 0);
+            setRoundCount(boutState.roundCount || 1);
+            setWinner(boutState.winner || null);
+            setHasJammed(boutState.hasJammed || false);
+            setBothContendersSelected(boutState.bothContendersSelected || false);
+            setIsFlameActive(boutState.isFlameActive || false);
+            setCurrentBracket(boutState.bracket || currentBracket);
+
+            // Validate restored bracket
+            const contenderCount = getContenderCount(currentBracket);
+            if (!contenders[0] || !contenders[1] || contenderCount < 2) {
                 newBracket = findEligibleBracket();
                 if (newBracket) {
                     setPreviousBracket(currentBracket);
@@ -223,6 +226,9 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                     debug("No eligible brackets, stopping");
                     return;
                 }
+            } else {
+                // Load restored contender
+                loadSong(contenders[activeContender], -1);
             }
         } else {
             setActiveContender(0);
@@ -242,19 +248,23 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                     debug("No eligible brackets, stopping");
                     return;
                 }
+            } else {
+                loadSong(contenders[activeContender], -1);
             }
         }
         setBoutState({});
-        loadSong(contenders[activeContender], -1);
-        applyTheme("bout"); // Apply Bout Mode theme directly with mode parameter
+        applyTheme("bout");
         updateVsMatchup();
         updateRoundInfo();
         updateWinnerButtons();
         updateFlameButton();
-        updateBracketDropdown();
-        document.getElementById("bracket-select").value = currentBracket.replace(' - ', '-');
+        if (shouldUpdateBracketDropdown) {
+            updateBracketDropdown();
+            document.getElementById("bracket-select").value = currentBracket.replace(' - ', '-');
+        }
         return;
     }
+
 
     // Treat 1-contender brackets like special brackets ("All" and "Eliminated")
     const specialBrackets = ["All", "Eliminated"];
