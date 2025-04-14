@@ -35,7 +35,7 @@ async function savePlayerState() {
         const specialBrackets = ["All", "Eliminated"];
         const contenderCount = brackets.getContenderCount(brackets.currentBracket);
         const isSpecialBracket = specialBrackets.includes(brackets.currentBracket) || contenderCount < 2;
-        const savedBracket = isSpecialBracket ? brackets.previousBracket : brackets.currentBracket;
+        const savedBracket = isSpecialBracket ? brackets.activebracket : brackets.currentBracket;
 
         player_state = {
             bracket: savedBracket,
