@@ -46,7 +46,7 @@ const getRandom = {
 
 function isSpecialBracket(bracket) {
     const specialBrackets = ["All", "Eliminated"];
-    return specialBrackets.includes(bracket) || getContenderCount(bracket) < 2;
+    return specialBrackets.includes(bracket) || getContenderCount(bracket) < 2 || currentMode != "bout";
 }
 
 // debug("brackets.js module loaded");
@@ -61,7 +61,7 @@ export let bothContendersSelected = false;
 export let isFlameActive = false;
 export let isReviveActive = false;
 export let currentBracket = "0 - 0";
-export let activebracket = "0 - 0";
+export let activeBracket = "0 - 0";
 export let currentMode = "bout";
 export let nowPlayingSong = null;
 export let boutState = {};
@@ -80,7 +80,7 @@ export function setBothContendersSelected(value) { bothContendersSelected = valu
 export function setIsFlameActive(value) { isFlameActive = value; }
 export function setIsReviveActive(value) { isReviveActive = value; }
 export function setCurrentBracket(value) { currentBracket = value; }
-export function setactivebracket(value) { activebracket = value; }
+export function setActiveBracket(value) { activeBracket = value; console.log("activeBracket = " + activeBracket)}
 export function setNowPlayingSong(value) { nowPlayingSong = value; }
 
 export function getContenderCount(bracket) {
@@ -151,7 +151,7 @@ function shuffleArray(array) {
     }
 
     if (filteredFiles.length < 2) {
-        setCurrentBracket(activebracket);
+        setCurrentBracket(activeBracket);
         updateBracketDropdown();
         return false;
     }
@@ -228,9 +228,9 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
             if (!contenders[0] || !contenders[1] || contenderCount < 2) {
                 newBracket = findEligibleBracket();
                 if (newBracket) {
-                    // Only update activebracket if currentBracket is not special
+                    // Only update activeBracket if currentBracket is not special
                     if (!isSpecialBracket(currentBracket)) {
-                        setactivebracket(currentBracket);
+                        setActiveBracket(currentBracket);
                     }
                     setCurrentBracket(newBracket);
                     shouldUpdateBracketDropdown = true;
@@ -253,9 +253,9 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
             if (!contenders[1]) {
                 newBracket = findEligibleBracket();
                 if (newBracket) {
-                    // Only update activebracket if currentBracket is not special
+                    // Only update activeBracket if currentBracket is not special
                     if (!isSpecialBracket(currentBracket)) {
-                        setactivebracket(currentBracket);
+                        setActiveBracket(currentBracket);
                     }
                     setCurrentBracket(newBracket);
                     shouldUpdateBracketDropdown = true;
@@ -285,7 +285,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
     const specialBrackets = ["All", "Eliminated"];
     let contenderCount = getContenderCount(currentBracket);
     if (specialBrackets.includes(currentBracket) || contenderCount === 1) {
-        setCurrentBracket(activebracket);
+        setCurrentBracket(activeBracket);
         shouldUpdateBracketDropdown = true;
     }
 
@@ -352,7 +352,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
             if (!success) {
                 newBracket = findEligibleBracket();
                 if (newBracket) {
-                    setactivebracket(currentBracket);
+                    setActiveBracket(currentBracket);
                     setCurrentBracket(newBracket);
                     shouldUpdateBracketDropdown = true;
                     pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
@@ -447,9 +447,9 @@ export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, upda
     let newBracket = document.getElementById("bracket-select").value.replace('-', ' - ');
     if (newBracket === currentBracket) return;
 
-    // Only update activebracket if currentBracket is not special
+    // Only update activeBracket if currentBracket is not special
     if (!isSpecialBracket(currentBracket)) {
-        setactivebracket(currentBracket);
+        setActiveBracket(currentBracket);
     }
     setCurrentBracket(newBracket);
 
@@ -467,8 +467,8 @@ export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, upda
     }
 
     if (contenderCount < 1) {
-        debug(`No contenders in ${newBracket}, reverting to ${activebracket}`);
-        setCurrentBracket(activebracket);
+        debug(`No contenders in ${newBracket}, reverting to ${activeBracket}`);
+        setCurrentBracket(activeBracket);
         updateBracketDropdown();
         return;
     }
@@ -480,7 +480,7 @@ export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, upda
     let success = pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
     if (!success) {
         debug(`Failed to pick contenders for ${newBracket}, reverting`);
-        setCurrentBracket(activebracket);
+        setCurrentBracket(activeBracket);
         updateBracketDropdown();
         return;
     }
