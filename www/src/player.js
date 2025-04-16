@@ -74,7 +74,7 @@ export function initPlayer(getPlayerState, updateWinnerButtons, updateFlameButto
     });
 }
 
-export function togglePlayPause(updateRoundInfo, updatePlayPauseButton, updateWinnerButtons, updateFlameButton, initPlayerFn) {
+export function togglePlayPause(updateRoundInfo, updatePlayPauseButton, updateWinnerButtons, updateFlameButton, initPlayerFn, updatePlayerState) {
     if (!sidPlayer) {
         initPlayerFn();
         console.log("Notice to dev partners: Ignore ScriptProcessorNode Deprecation warning. We will not be remediating this as part of sID JAm initial development.");
@@ -87,7 +87,7 @@ export function togglePlayPause(updateRoundInfo, updatePlayPauseButton, updateWi
         setIsPlaying(true);
         startTimer(updateTimer);
     }
-    window.brackets.updatePlayerState({ hasPlayed: true });
+    updatePlayerState({ hasPlayed: true }); // Use passed function
     updateRoundInfo();
     updatePlayPauseButton();
     updateWinnerButtons();
@@ -98,8 +98,8 @@ export function togglePlayPause(updateRoundInfo, updatePlayPauseButton, updateWi
     updateFlameButton();
 }
 
-export function nextTrack(loadSongFn) {
-    const state = window.brackets.getPlayerState();
+export function nextTrack(getPlayerState, loadSongFn) {
+    const state = getPlayerState();
     if (sidPlayer) {
         const songInfo = sidPlayer.getSongInfo();
         if (songInfo.actualSubsong < songInfo.maxSubsong - 1) {
@@ -111,8 +111,8 @@ export function nextTrack(loadSongFn) {
     }
 }
 
-export function prevTrack(loadSongFn) {
-    const state = window.brackets.getPlayerState();
+export function prevTrack(getPlayerState, loadSongFn) {
+    const state = getPlayerState();
     if (sidPlayer) {
         const songInfo = sidPlayer.getSongInfo();
         const filename = state.currentMode === "nowPlaying" ? state.nowPlayingSong :

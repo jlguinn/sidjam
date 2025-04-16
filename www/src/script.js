@@ -157,9 +157,9 @@ window.togglePlayPause = () => {
             brackets.getPlayerState,
             updateWinnerButtonsBound,
             updateFlameButtonBound,
-            loadSongBound // Pass loadSongBound
+            loadSongBound
         ),
-        () => brackets.updatePlayerState({ hasPlayed: true })
+        brackets.updatePlayerState // Pass updatePlayerState
     );
     document.getElementById("ellipsis-button").disabled = false;
 };
@@ -197,13 +197,13 @@ window.toggleRevive = () => brackets.toggleRevive(
 );
 
 window.nextTrack = () => player.nextTrack(
-    brackets.getPlayerState().currentMode, brackets.getPlayerState().nowPlayingSong, brackets.getPlayerState().contenders,
-    brackets.getPlayerState().activeContender, loadSongBound
+    brackets.getPlayerState,
+    loadSongBound
 );
 
 window.prevTrack = () => player.prevTrack(
-    brackets.getPlayerState().currentMode, brackets.getPlayerState().nowPlayingSong, brackets.getPlayerState().contenders,
-    brackets.getPlayerState().activeContender, loadSongBound
+    brackets.getPlayerState,
+    loadSongBound
 );
 
 window.changeBracket = () => {
