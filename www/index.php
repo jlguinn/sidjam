@@ -1,5 +1,5 @@
 <?php
-// Set session cookie lifetime to 30 days (30 * 24 * 60 * 60 seconds)
+// Set session cookie lifetime to 30 days
 session_set_cookie_params(30 * 24 * 60 * 60);
 session_start();
 require_once "dbcontrol/sidcon.php";
@@ -7,32 +7,35 @@ $cxn = mysqli_connect($host, $user, $pass, $database) or die("Connection failed:
 
 // Initialize variables
 $user_id = null;
+$username = "Guest User";
+$is_logged_in = false;
 
 // Check if user is logged in via $_SESSION['user_id']
 if (isset($_SESSION['user_id'])) {
     $user_id = $_SESSION['user_id'];
-    // Verify the user exists and sync session_id
-    $stmt = $cxn->prepare("SELECT session_id FROM siduser WHERE user_id = ?");
+    $stmt = $cxn->prepare("SELECT session_id, UserName, email FROM siduser WHERE user_id = ?");
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $result = $stmt->get_result();
     if ($row = $result->fetch_assoc()) {
-        // Ensure session_id matches
+        // Sync session_id
         if ($row['session_id'] !== $_SESSION['session_id']) {
             $stmt = $cxn->prepare("UPDATE siduser SET session_id = ?, LastAccessDate = CURDATE() WHERE user_id = ?");
             $stmt->bind_param("si", $_SESSION['session_id'], $user_id);
             $stmt->execute();
-            $stmt->close();
-            // Update the cookie to match
             setcookie('session_id', $_SESSION['session_id'], time() + (30 * 24 * 60 * 60), "/");
         }
         // Update LastAccessDate
         $stmt = $cxn->prepare("UPDATE siduser SET LastAccessDate = CURDATE() WHERE user_id = ?");
         $stmt->bind_param("i", $user_id);
         $stmt->execute();
+        // Set user data
+        $username = $row['UserName'] ?: "Guest User";
+        $_SESSION['email'] = $row['email'] ?: '';
+        $is_logged_in = !empty($row['email']);
     } else {
-        // Edge case: user_id in session but not in DB (shouldn't happen)
         unset($_SESSION['user_id']);
+        unset($_SESSION['email']);
         $user_id = null;
     }
     $stmt->close();
@@ -42,13 +45,16 @@ if (isset($_SESSION['user_id'])) {
 if (!$user_id) {
     $session_id = $_SESSION['session_id'] ?? $_COOKIE['session_id'] ?? null;
     if ($session_id) {
-        $stmt = $cxn->prepare("SELECT user_id FROM siduser WHERE session_id = ?");
+        $stmt = $cxn->prepare("SELECT user_id, UserName, email FROM siduser WHERE session_id = ?");
         $stmt->bind_param("s", $session_id);
         $stmt->execute();
         $result = $stmt->get_result();
         if ($row = $result->fetch_assoc()) {
             $user_id = $row['user_id'];
-            $_SESSION['user_id'] = $user_id; // Ensure session is set
+            $_SESSION['user_id'] = $user_id;
+            $_SESSION['email'] = $row['email'] ?: '';
+            $username = $row['UserName'] ?: "Guest User";
+            $is_logged_in = !empty($row['email']);
             // Update LastAccessDate
             $stmt = $cxn->prepare("UPDATE siduser SET LastAccessDate = CURDATE() WHERE user_id = ?");
             $stmt->bind_param("i", $user_id);
@@ -58,10 +64,10 @@ if (!$user_id) {
     }
 }
 
-// If no user_id found, create a new guest
+// Create new guest if no user_id
 if (!$user_id) {
     $new_session_id = bin2hex(random_bytes(16));
-    $stmt = $cxn->prepare("INSERT INTO siduser (session_id, RegDate, LastAccessDate) VALUES (?, CURDATE(), CURDATE())");
+    $stmt = $cxn->prepare("INSERT INTO siduser (session_id, RegDate, LastAccessDate, player_state) VALUES (?, CURDATE(), CURDATE(), NULL)");
     $stmt->bind_param("s", $new_session_id);
     $stmt->execute();
     $user_id = $cxn->insert_id;
@@ -69,24 +75,9 @@ if (!$user_id) {
 
     $_SESSION['user_id'] = $user_id;
     $_SESSION['session_id'] = $new_session_id;
+    $_SESSION['email'] = '';
     setcookie('session_id', $new_session_id, time() + (30 * 24 * 60 * 60), "/");
     error_log("Index: Created new guest user_id $user_id with session_id $new_session_id");
-}
-
-// Check if the user is logged in (registered user) and get their username
-$username = "Guest User"; // Default for guests
-$is_logged_in = false;
-if (isset($_SESSION['user_id'])) {
-    $stmt = $cxn->prepare("SELECT UserName, email FROM siduser WHERE user_id = ?"); // Fixed 'username' to 'UserName'
-    $stmt->bind_param("i", $_SESSION['user_id']);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    if ($row = $result->fetch_assoc()) {
-        $username = $row['UserName'] ?: "Guest User"; // Fixed key to 'UserName'
-        // A user is considered logged in only if they have an email (i.e., registered)
-        $is_logged_in = !empty($row['email']);
-    }
-    $stmt->close();
 }
 
 $cxn->close();
@@ -99,13 +90,13 @@ $cxn->close();
     <link rel="stylesheet" href="src/styles.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tektur:wght@400;700&display=swap">
     <script>window.WASM_SEARCH_PATH = 'src/websid/htdocs/';</script>
-    <script src="src/websid/htdocs/stdlib/scriptprocessor_player.min.js"></script>
-    <script src="src/websid/htdocs/backend_websid.js"></script>
-    <script>window.user = { id: <?php echo $user_id; ?>, session_id: "<?php echo $_SESSION['session_id']; ?>" };</script>
+    <script defer src="src/websid/htdocs/stdlib/scriptprocessor_player.min.js"></script>
+    <script defer src="src/websid/htdocs/backend_websid.js"></script>
     <script>
+        window.user = <?php echo json_encode(['id' => $user_id, 'session_id' => $_SESSION['session_id']]); ?>;
         window.isLoggedIn = <?php echo json_encode($is_logged_in); ?>;
+        console.log("sID JAm Version (ALPHA) 2025.03.19a");
     </script>
-    <script>console.log("sID JAm Version (ALPHA) 2025.03.19a");</script>
     <script type="module" src="src/script.js"></script>
 </head>
 <body>
@@ -191,8 +182,6 @@ $cxn->close();
             </div>
         </div>
     </div>
-
-    <!-- Login/Registration Pop-Up -->
     <div id="authOverlay" style="display: none;">
         <div id="authContainer">
             <button id="closeAuth" onclick="window.toggleAuthPopUp()">×</button>
@@ -201,7 +190,6 @@ $cxn->close();
                 <button id="registerTab" class="auth-tab" onclick="window.showAuthTab('register')">Register</button>
             </div>
             <div id="authForms">
-                <!-- Sign In Form -->
                 <div id="signInForm" class="auth-form active">
                     <h2>Sign In</h2>
                     <form id="signInFormElement" onsubmit="window.handleSignIn(event)">
@@ -218,31 +206,29 @@ $cxn->close();
                         <p id="signInError" class="error-message"></p>
                     </form>
                 </div>
-                <!-- Register Form -->
                 <div id="registerForm" class="auth-form" style="display: none;">
-                <h2>Register</h2>
-                <form id="registerFormElement" onsubmit="window.handleRegister(event)">
-                    <div class="form-group">
-                        <label for="registerEmail">Email:</label>
-                        <input type="email" id="registerEmail" name="email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="registerUsername">Username:</label>
-                        <input type="text" id="registerUsername" name="username" required>
-                    </div>                    
-                    <div class="form-group">
-                        <label for="registerPassword">Password:</label>
-                        <input type="password" id="registerPassword" name="password" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="registerConfirmPassword">Confirm Password:</label>
-                        <input type="password" id="registerConfirmPassword" name="confirmPassword" required>
-                    </div>
-                    <button type="submit">Register</button>
-                    <p id="registerError" class="error-message"></p>
-                </form>
-            </div>
-                <!-- Forgot Password Form -->
+                    <h2>Register</h2>
+                    <form id="registerFormElement" onsubmit="window.handleRegister(event)">
+                        <div class="form-group">
+                            <label for="registerEmail">Email:</label>
+                            <input type="email" id="registerEmail" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="registerUsername">Username:</label>
+                            <input type="text" id="registerUsername" name="username" required>
+                        </div>                    
+                        <div class="form-group">
+                            <label for="registerPassword">Password:</label>
+                            <input type="password" id="registerPassword" name="password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="registerConfirmPassword">Confirm Password:</label>
+                            <input type="password" id="registerConfirmPassword" name="confirmPassword" required>
+                        </div>
+                        <button type="submit">Register</button>
+                        <p id="registerError" class="error-message"></p>
+                    </form>
+                </div>
                 <div id="forgotPasswordForm" class="auth-form" style="display: none;">
                     <h2>Forgot Password</h2>
                     <form id="forgotPasswordFormElement" onsubmit="window.handleForgotPassword(event)">
@@ -258,7 +244,6 @@ $cxn->close();
             </div>
         </div>
     </div>
-    <!-- My Preferences Pop-Up -->
     <div id="preferencesOverlay" style="display: none;">
         <div id="preferencesContainer">
             <button id="closePreferences" onclick="window.togglePreferencesPopUp()">×</button>
@@ -269,7 +254,6 @@ $cxn->close();
                 <button id="advancedTab" class="preferences-tab" onclick="window.showPreferencesTab('advanced')">Advanced</button>
             </div>
             <div id="preferencesForms">
-                <!-- Password Tab -->
                 <div id="passwordForm" class="preferences-form active">
                     <h2>Update Password</h2>
                     <div id="updatePasswordSection">
@@ -298,7 +282,6 @@ $cxn->close();
                         <a href="#" onclick="window.handleLogout(event)">Logout</a>
                     </div>
                 </div>
-                <!-- Username Tab -->
                 <div id="usernameForm" class="preferences-form">
                     <h2>Update Username</h2>
                     <div id="updateUsernameSection">
@@ -327,7 +310,6 @@ $cxn->close();
                         <a href="#" onclick="window.handleLogout(event)">Logout</a>
                     </div>
                 </div>
-                <!-- Email Tab -->
                 <div id="emailForm" class="preferences-form">
                     <h2>Update Email</h2>
                     <div id="updateEmailSection">
@@ -360,12 +342,10 @@ $cxn->close();
                         <p class="success-message">Email Changed Successfully</p>
                         <button id="closeEmailPrompt" onclick="window.closePreferencesAndReload()">Close Prompt</button>
                     </div>
-                    <!-- Logout link -->
                     <div class="logout-link">
                         <a href="#" onclick="window.handleLogout(event)">Logout</a>
                     </div>
                 </div>
-                <!-- Advanced Tab -->
                 <div id="advancedForm" class="preferences-form">
                     <h2>Advanced Settings</h2>
                     <div id="deleteAccountSection">
@@ -386,7 +366,6 @@ $cxn->close();
                             <p id="deleteAccountError" class="error-message"></p>
                         </form>
                     </div>
-                    <!-- Logout link -->
                     <div class="logout-link">
                         <a href="#" onclick="window.handleLogout(event)">Logout</a>
                     </div>

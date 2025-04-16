@@ -1,4 +1,5 @@
 import { baseColorSchemes, getInvertedTheme } from './themes.js';
+import * as brackets from './brackets.js';
 
 export let currentThemeIndex = 0;
 
@@ -33,34 +34,23 @@ export function applyTheme(currentMode) {
     if (authLink) {
         authLink.style.color = theme.exteriorTextColor;
         const luminance = calculateLuminance(theme.exteriorTextColor);
-        debug("luminance == " + luminance);
         authLink.classList.remove('brighten-on-hover', 'darken-on-hover');
-        if (luminance > 0.92) {
-            authLink.classList.add('darken-on-hover');
-        } else {
-            authLink.classList.add('brighten-on-hover');
-        }
+        authLink.classList.add(luminance > 0.92 ? 'darken-on-hover' : 'brighten-on-hover');
     }
 
     if (profileIcon) {
         const luminance = calculateLuminance(theme.exteriorTextColor);
         profileIcon.classList.remove('brighten-on-hover', 'darken-on-hover');
-        if (luminance > 0.92) {
-            profileIcon.classList.add('darken-on-hover');
-        } else {
-            profileIcon.classList.add('brighten-on-hover');
-        }
+        profileIcon.classList.add(luminance > 0.92 ? 'darken-on-hover' : 'brighten-on-hover');
     }
 
-    // Synchronize hover effects between auth-link and profile-icon
+    // Synchronize hover effects
     if (authLink && profileIcon) {
-        // Remove any existing listeners to avoid duplicates
         authLink.removeEventListener('mouseover', syncHoverOn);
         authLink.removeEventListener('mouseout', syncHoverOff);
         profileIcon.removeEventListener('mouseover', syncHoverOn);
         profileIcon.removeEventListener('mouseout', syncHoverOff);
 
-        // Add new listeners
         authLink.addEventListener('mouseover', syncHoverOn);
         authLink.addEventListener('mouseout', syncHoverOff);
         profileIcon.addEventListener('mouseover', syncHoverOn);
@@ -72,10 +62,10 @@ export function applyTheme(currentMode) {
     document.getElementById("track-details").style.color = theme.interiorTextColor;
     document.getElementById("song-title").style.color = theme.interiorTextColor;
 
-    // Update profile bitmap with exterior text color
+    // Update profile bitmap
     window.renderProfileBitmap(theme.exteriorTextColor);
 
-    // Update color toggle button with next theme preview and hover text
+    // Update color toggle button
     const nextIndex = (currentThemeIndex + 1) % baseColorSchemes.length;
     const nextBaseTheme = baseColorSchemes[nextIndex];
     const nextTheme = currentMode === "nowPlaying" ? getInvertedTheme(nextBaseTheme) : nextBaseTheme;
@@ -101,28 +91,32 @@ function syncHoverOff() {
 }
 
 export function updateVsMatchup(currentMode, nowPlayingSong, contenders, activeContender, hasPlayed, isFlameActive) {
+    const vsMatchup = document.getElementById("vs-matchup");
+    const song1 = document.getElementById("song1");
+    const vsText = document.getElementById("vs-text");
+    const song2 = document.getElementById("song2");
+
     if (currentMode === "nowPlaying") {
-        document.getElementById("vs-matchup").classList.add("now-playing");
-        document.getElementById("song1").innerHTML = `<span>${nowPlayingSong.split('/').pop()}</span>`;
-        document.getElementById("vs-text").textContent = "";
-        document.getElementById("song2").innerHTML = "";
-        updateSongTitleHighlight(currentMode, false); // Placeholder, assumes revive not active initially
+        vsMatchup.classList.add("now-playing");
+        song1.innerHTML = `<span>${nowPlayingSong.split('/').pop()}</span>`;
+        vsText.textContent = "";
+        song2.innerHTML = "";
     } else {
-        document.getElementById("vs-matchup").classList.remove("now-playing");
-        let song0 = contenders[0].split('/').pop();
-        let song1 = contenders[1]?.split('/').pop() || "-";
-        let activeClass0 = hasPlayed && activeContender === 0 ? 'active-song' : '';
-        let activeClass1 = hasPlayed && activeContender === 1 ? 'active-song' : '';
-        if (isFlameActive && activeContender === 0) activeClass0 = 'flame-song';
-        if (isFlameActive && activeContender === 1) activeClass1 = 'flame-song';
-        document.getElementById("song1").innerHTML = `<span class="${activeClass0}" title="${contenders[0].replace('/sid/C64Music', '')}">${song0}</span>`;
-        document.getElementById("vs-text").textContent = " - vs - ";
-        document.getElementById("song2").innerHTML = `<span class="${activeClass1}" title="${contenders[1]?.replace('/sid/C64Music', '') || '-'}">${song1}</span>`;
+        vsMatchup.classList.remove("now-playing");
+        const song0 = contenders[0]?.split('/').pop() || "-";
+        const song1 = contenders[1]?.split('/').pop() || "-";
+        const activeClass0 = hasPlayed && activeContender === 0 ? 'active-song' : '';
+        const activeClass1 = hasPlayed && activeContender === 1 ? 'active-song' : '';
+        const flameClass0 = isFlameActive && activeContender === 0 ? 'flame-song' : activeClass0;
+        const flameClass1 = isFlameActive && activeContender === 1 ? 'flame-song' : activeClass1;
+        song1.innerHTML = `<span class="${flameClass0}" title="${contenders[0]?.replace('/sid/C64Music', '') || '-'}">${song0}</span>`;
+        vsText.textContent = " - vs - ";
+        song2.innerHTML = `<span class="${flameClass1}" title="${contenders[1]?.replace('/sid/C64Music', '') || '-'}">${song1}</span>`;
     }
 }
 
 export function updateRoundInfo(currentMode, hasPlayed, bothContendersSelected, winner, contenders, roundCount) {
-    let roundDiv = document.getElementById("round-info");
+    const roundDiv = document.getElementById("round-info");
     if (!roundDiv) {
         console.error("round-info element not found");
         return;
@@ -133,32 +127,22 @@ export function updateRoundInfo(currentMode, hasPlayed, bothContendersSelected, 
         return;
     }
 
-    // For guest users, show the scrolling message after the third vote until the prompt is dismissed
     if (!window.isLoggedIn && window.showPromptMessage && !window.hasShownPrompt) {
         roundDiv.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="3">Please sign in or register to save your progress...</marquee>`;
-        // Log to confirm the message is being set
-        // console.log("[DEBUG] Displaying scrolling message for guest user");
         return;
     }
 
-    // Set the flag to true after the first jAM click following the prompt
-    if (!window.isLoggedIn && window.showPromptMessage && window.hasShownPrompt) {
-        // console.log("[DEBUG] Scrolling message dismissed after jAM click");
-    }
-
-    // Standard behavior for logged-in users, before the third vote, or after the prompt has been shown
     if (!hasPlayed) {
         roundDiv.textContent = "Press Play";
     } else if (bothContendersSelected) {
         roundDiv.innerHTML = `<span class="winner-highlight">Winner: Both Contenders</span>`;
     } else if (winner !== null) {
-        roundDiv.innerHTML = `<span class="winner-highlight">Winner: ${contenders[winner].split('/').pop()}</span>`;
+        roundDiv.innerHTML = `<span class="winner-highlight">Winner: ${contenders[winner]?.split('/').pop() || '-'}</span>`;
     } else {
         roundDiv.textContent = `Round ${roundCount}`;
     }
 }
 
-// Utility function to decode HTML entities
 export function decodeHtmlEntities(str) {
     const textarea = document.createElement('textarea');
     textarea.innerHTML = str;
@@ -167,10 +151,9 @@ export function decodeHtmlEntities(str) {
 
 export function updateSongInfo(sidPlayer) {
     if (sidPlayer) {
-        let songInfo = sidPlayer.getSongInfo();
+        const songInfo = sidPlayer.getSongInfo();
         document.getElementById("song-title").textContent = decodeHtmlEntities(songInfo.songName);
-        let authorText = decodeHtmlEntities(songInfo.songAuthor.replace(/^Author:\s*/i, ''));
-        document.getElementById("song-author").textContent = "Author: " + authorText;
+        document.getElementById("song-author").textContent = "Author: " + decodeHtmlEntities(songInfo.songAuthor.replace(/^Author:\s*/i, ''));
         document.getElementById("song-released").textContent = "Released: " + decodeHtmlEntities(songInfo.songReleased);
         document.getElementById("track-info").textContent = "Track: " + (songInfo.actualSubsong + 1) + "/" + songInfo.maxSubsong;
     }
@@ -178,14 +161,14 @@ export function updateSongInfo(sidPlayer) {
 
 export function updateNavigationButtons(sidPlayer) {
     if (sidPlayer) {
-        let songInfo = sidPlayer.getSongInfo();
+        const songInfo = sidPlayer.getSongInfo();
         document.getElementById("prevButton").disabled = false;
         document.getElementById("nextButton").disabled = (songInfo.actualSubsong === songInfo.maxSubsong - 1);
     }
 }
 
 export function updatePlayPauseButton(isPlaying) {
-    let button = document.getElementById("playPauseButton");
+    const button = document.getElementById("playPauseButton");
     button.style.backgroundImage = isPlaying ? "url('/image/pause.png')" : "url('/image/play.png')";
 }
 
@@ -202,16 +185,12 @@ export function updateFlameButton(currentMode, currentBracket, nowPlayingSong, w
     const reviveButton = document.getElementById("reviveButton");
 
     if (currentMode === "nowPlaying") {
-        if (currentBracket === "Eliminated" && nowPlayingSong) {
-            let results = JSON.parse(localStorage.getItem('sidJamResults') || '{}');
-            let record = results[nowPlayingSong] || { wins: 0, losses: 0 };
-            if (record.losses >= 2) {
-                flameControls.classList.remove("hidden");
-                flameButton.style.display = "none";
-                reviveButton.style.display = "block";
-                updateReviveButton(false);
-                return;
-            }
+        if (currentBracket === "Eliminated" && nowPlayingSong && brackets.getPlayerState().isReviveActive) {
+            flameControls.classList.remove("hidden");
+            flameButton.style.display = "none";
+            reviveButton.style.display = "block";
+            updateReviveButton(brackets.getPlayerState().isReviveActive);
+            return;
         }
         flameControls.classList.add("hidden");
         flameButton.style.display = "none";
@@ -233,7 +212,7 @@ export function updateFlameButton(currentMode, currentBracket, nowPlayingSong, w
     if (winner !== null || bothContendersSelected) {
         flameButton.disabled = true;
     } else {
-        let availableSongs = window.sidJamData.sidFiles.filter(song => !contenders.includes(song));
+        const availableSongs = window.sidJamData.sidFiles.filter(song => !contenders.includes(song));
         flameButton.disabled = !hasPlayed || availableSongs.length === 0;
     }
 
@@ -255,20 +234,16 @@ export function updateSongTitleHighlight(currentMode, isReviveActive) {
 }
 
 export function toggleColorScheme(currentMode) {
-    // Cycle to the next theme
     const baseTheme = baseColorSchemes[currentThemeIndex];
     currentThemeIndex = (currentThemeIndex + 1) % baseColorSchemes.length;
     applyTheme(currentMode);
 
-    // Update button to show the *next* theme in line
     const nextIndex = (currentThemeIndex + 1) % baseColorSchemes.length;
     const nextBaseTheme = baseColorSchemes[nextIndex];
     const nextTheme = currentMode === "nowPlaying" ? getInvertedTheme(nextBaseTheme) : nextBaseTheme;
     const button = document.getElementById("colorButton");
     button.style.backgroundColor = nextTheme.exterior;
     button.querySelector('.inner-box').style.backgroundColor = nextTheme.interior;
-    // button.title = `Switch Theme\nFrom: ${baseTheme.name}${currentMode === "nowPlaying" ? " (Inverted)" : ""}\nTo: ${nextBaseTheme.name}${currentMode === "nowPlaying" ? " (Inverted)" : ""}`;
     button.title = `Switch Theme \n  From: ${baseTheme.name}\n  To: ${nextBaseTheme.name}`;
     debug(`Theme switched to ${baseTheme.name} (index ${currentThemeIndex}).`);
 }
-

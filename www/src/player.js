@@ -8,7 +8,6 @@ export function setIsPlaying(value) {
     isPlaying = value;
 }
 
-
 export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseButton, resetVoiceStates, updateNavigationButtons, updateVsMatchup, autoPlay = true) {
     if (!filename) return;
     let onFail = () => console.error("Failed to load song");
@@ -53,31 +52,32 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
     });
 }
 
-
-export function initPlayer(hasPlayed, activeContender, contenders, loadSongFn, updateWinnerButtons, updateFlameButton) {
-//    debug("sID JAm starting...");
+export function initPlayer(updateWinnerButtons, updateFlameButton) {
+    const state = window.brackets.getPlayerState();
     let BASIC_ROM, KERNAL_ROM, CHAR_ROM;
     window.backend = new SIDBackendAdapter(BASIC_ROM, CHAR_ROM, KERNAL_ROM);
     let onTrackEnd = () => debug("Track ended - stopping music");
 
     ScriptNodePlayer.initialize(window.backend, onTrackEnd).then((msg) => {
-        // debug("Player initialized: " + msg);
         sidPlayer = ScriptNodePlayer.getInstance();
-        if (contenders.length > 0) {
-            loadSongFn(contenders[activeContender], -1);
+        if (state.contenders.length > 0 && state.currentMode === "bout") {
+            window.loadSongBound(state.contenders[state.activeContender], -1);
+        } else if (state.nowPlayingSong && state.currentMode === "nowPlaying") {
+            window.loadSongBound(state.nowPlayingSong, -1);
+        } else if (state.peekPlayingSong) {
+            window.loadSongBound(state.peekPlayingSong, -1);
         } else {
-            debug("No contenders available to load");
+            debug("No contenders or songs available to load");
         }
         updateWinnerButtons();
         updateFlameButton();
     });
 }
 
-export function togglePlayPause(updateRoundInfo, updatePlayPauseButton, updateWinnerButtons, updateFlameButton, initPlayerFn, setHasPlayed) {
-    // debug("Toggle play/pause");
+export function togglePlayPause(updateRoundInfo, updatePlayPauseButton, updateWinnerButtons, updateFlameButton, initPlayerFn) {
     if (!sidPlayer) {
         initPlayerFn();
-        console.log("Notice to dev partners: Ignore ScriptProcessorNode Depracation warning. We will not be remediating this as part of sID JAm initial development. ")
+        console.log("Notice to dev partners: Ignore ScriptProcessorNode Deprecation warning. We will not be remediating this as part of sID JAm initial development.");
     } else if (isPlaying) {
         sidPlayer.pause();
         setIsPlaying(false);
@@ -87,7 +87,7 @@ export function togglePlayPause(updateRoundInfo, updatePlayPauseButton, updateWi
         setIsPlaying(true);
         startTimer(updateTimer);
     }
-    setHasPlayed(true); // Moved here to ensure it happens before UI updates
+    window.brackets.updatePlayerState({ hasPlayed: true });
     updateRoundInfo();
     updatePlayPauseButton();
     updateWinnerButtons();
@@ -98,44 +98,44 @@ export function togglePlayPause(updateRoundInfo, updatePlayPauseButton, updateWi
     updateFlameButton();
 }
 
-export function nextTrack(currentMode, nowPlayingSong, contenders, activeContender, loadSongFn) {
-    // debug("Next track");
+export function nextTrack(loadSongFn) {
+    const state = window.brackets.getPlayerState();
     if (sidPlayer) {
-        let songInfo = sidPlayer.getSongInfo();
+        const songInfo = sidPlayer.getSongInfo();
         if (songInfo.actualSubsong < songInfo.maxSubsong - 1) {
-            loadSongFn(currentMode === "nowPlaying" ? nowPlayingSong : contenders[activeContender], songInfo.actualSubsong + 1);
+            const filename = state.currentMode === "nowPlaying" ? state.nowPlayingSong :
+                            state.peekPlayingSong ? state.peekPlayingSong :
+                            state.contenders[state.activeContender];
+            loadSongFn(filename, songInfo.actualSubsong + 1);
         }
     }
 }
 
-export function prevTrack(currentMode, nowPlayingSong, contenders, activeContender, loadSongFn) {
-    // debug("Previous track");
+export function prevTrack(loadSongFn) {
+    const state = window.brackets.getPlayerState();
     if (sidPlayer) {
-        let songInfo = sidPlayer.getSongInfo();
-        if (songInfo.actualSubsong > 0) {
-            loadSongFn(currentMode === "nowPlaying" ? nowPlayingSong : contenders[activeContender], songInfo.actualSubsong - 1);
-        } else {
-            loadSongFn(currentMode === "nowPlaying" ? nowPlayingSong : contenders[activeContender], 0);
-        }
+        const songInfo = sidPlayer.getSongInfo();
+        const filename = state.currentMode === "nowPlaying" ? state.nowPlayingSong :
+                        state.peekPlayingSong ? state.peekPlayingSong :
+                        state.contenders[state.activeContender];
+        loadSongFn(filename, songInfo.actualSubsong > 0 ? songInfo.actualSubsong - 1 : 0);
     }
 }
 
 export function startTimer(updateTimer) {
-    // debug("Starting timer");
     updateTimer();
     timerInterval = setInterval(updateTimer, 1000);
 }
 
 export function stopTimer() {
-    // debug("Stopping timer");
     clearInterval(timerInterval);
 }
 
 export function updateTimer() {
     if (window.backend) {
-        let currentTime = Math.floor(window.backend.getCurrentPlaytime());
-        let minutes = Math.floor(currentTime / 60);
-        let seconds = currentTime % 60;
+        const currentTime = Math.floor(window.backend.getCurrentPlaytime());
+        const minutes = Math.floor(currentTime / 60);
+        const seconds = currentTime % 60;
         document.getElementById("timer").textContent = "Time: " +
             (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
     }
@@ -143,7 +143,7 @@ export function updateTimer() {
 
 export function toggleVoice(voiceNum) {
     if (window.backend) {
-        let checkbox = document.getElementById(`voice${voiceNum}`);
+        const checkbox = document.getElementById(`voice${voiceNum}`);
         window.backend.enableVoice(0, voiceNum - 1, checkbox.checked);
     }
 }
@@ -156,4 +156,3 @@ export function resetVoiceStates() {
         }
     }
 }
-

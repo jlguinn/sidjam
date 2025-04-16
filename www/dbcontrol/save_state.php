@@ -3,7 +3,6 @@ session_start();
 require_once "sidcon.php";
 header('Content-Type: application/json');
 
-// Ensure errors are logged, not displayed
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 
@@ -18,14 +17,24 @@ $data = json_decode(file_get_contents("php://input"), true);
 $player_state = isset($data['player_state']) ? $data['player_state'] : null;
 
 if (!$player_state) {
-    error_log("SaveState: No player_state provided");
+    error_log("SaveState: No player_state provided for user_id $user_id");
     echo json_encode(['success' => false, 'message' => 'No state data provided']);
     exit;
 }
 
-// Validate that player_state is a valid JSON object
-if (!is_array($player_state) || !isset($player_state['bracket'], $player_state['contenders'], $player_state['theme'], $player_state['mode'])) {
-    error_log("SaveState: Invalid player_state format: " . json_encode($player_state));
+// Validate player_state structure
+if (!is_array($player_state) ||
+    !isset($player_state['contenders'], $player_state['currentBracket'], $player_state['activeBracket'], 
+           $player_state['currentMode'], $player_state['theme']) ||
+    !is_array($player_state['contenders']) ||
+    !is_string($player_state['currentBracket']) ||
+    !is_string($player_state['activeBracket']) ||
+    !is_string($player_state['currentMode']) ||
+    !is_numeric($player_state['theme']) ||
+    !in_array($player_state['currentMode'], ['bout', 'nowPlaying']) ||
+    (isset($player_state['nowPlayingSong']) && !is_string($player_state['nowPlayingSong']) && !is_null($player_state['nowPlayingSong']))
+) {
+    error_log("SaveState: Invalid player_state format for user_id $user_id: " . json_encode($player_state));
     echo json_encode(['success' => false, 'message' => 'Invalid state format']);
     exit;
 }
