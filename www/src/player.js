@@ -52,8 +52,8 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
     });
 }
 
-export function initPlayer(updateWinnerButtons, updateFlameButton) {
-    const state = window.brackets.getPlayerState();
+export function initPlayer(getPlayerState, updateWinnerButtons, updateFlameButton, loadSongBound) {
+    const state = getPlayerState();
     let BASIC_ROM, KERNAL_ROM, CHAR_ROM;
     window.backend = new SIDBackendAdapter(BASIC_ROM, CHAR_ROM, KERNAL_ROM);
     let onTrackEnd = () => debug("Track ended - stopping music");
@@ -61,11 +61,11 @@ export function initPlayer(updateWinnerButtons, updateFlameButton) {
     ScriptNodePlayer.initialize(window.backend, onTrackEnd).then((msg) => {
         sidPlayer = ScriptNodePlayer.getInstance();
         if (state.contenders.length > 0 && state.currentMode === "bout") {
-            window.loadSongBound(state.contenders[state.activeContender], -1);
+            loadSongBound(state.contenders[state.activeContender], -1);
         } else if (state.nowPlayingSong && state.currentMode === "nowPlaying") {
-            window.loadSongBound(state.nowPlayingSong, -1);
+            loadSongBound(state.nowPlayingSong, -1);
         } else if (state.peekPlayingSong) {
-            window.loadSongBound(state.peekPlayingSong, -1);
+            loadSongBound(state.peekPlayingSong, -1);
         } else {
             debug("No contenders or songs available to load");
         }

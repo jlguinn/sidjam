@@ -3,6 +3,16 @@ import * as brackets from './brackets.js';
 
 export let currentThemeIndex = 0;
 
+export function setCurrentThemeIndex(index) {
+    currentThemeIndex = index;
+    debug(`Theme index set to ${index}`);
+}
+
+export function getCurrentThemeIndex() {
+    return currentThemeIndex;
+}
+
+
 export function debug(message) { console.log(`[DEBUG] ${message}`); }
 
 // Utility function to calculate luminance of a hex color
@@ -98,20 +108,20 @@ export function updateVsMatchup(currentMode, nowPlayingSong, contenders, activeC
 
     if (currentMode === "nowPlaying") {
         vsMatchup.classList.add("now-playing");
-        song1.innerHTML = `<span>${nowPlayingSong.split('/').pop()}</span>`;
+        song1.innerHTML = `<span>${nowPlayingSong ? nowPlayingSong.split('/').pop() : '-'}</span>`;
         vsText.textContent = "";
         song2.innerHTML = "";
     } else {
         vsMatchup.classList.remove("now-playing");
-        const song0 = contenders[0]?.split('/').pop() || "-";
-        const song1 = contenders[1]?.split('/').pop() || "-";
+        const songName0 = contenders[0]?.split('/').pop() || "-";
+        const songName1 = contenders[1]?.split('/').pop() || "-";
         const activeClass0 = hasPlayed && activeContender === 0 ? 'active-song' : '';
         const activeClass1 = hasPlayed && activeContender === 1 ? 'active-song' : '';
         const flameClass0 = isFlameActive && activeContender === 0 ? 'flame-song' : activeClass0;
         const flameClass1 = isFlameActive && activeContender === 1 ? 'flame-song' : activeClass1;
-        song1.innerHTML = `<span class="${flameClass0}" title="${contenders[0]?.replace('/sid/C64Music', '') || '-'}">${song0}</span>`;
+        song1.innerHTML = `<span class="${flameClass0}" title="${contenders[0]?.replace('/sid/C64Music', '') || '-'}">${songName0}</span>`;
         vsText.textContent = " - vs - ";
-        song2.innerHTML = `<span class="${flameClass1}" title="${contenders[1]?.replace('/sid/C64Music', '') || '-'}">${song1}</span>`;
+        song2.innerHTML = `<span class="${flameClass1}" title="${contenders[1]?.replace('/sid/C64Music', '') || '-'}">${songName1}</span>`;
     }
 }
 
@@ -235,15 +245,15 @@ export function updateSongTitleHighlight(currentMode, isReviveActive) {
 
 export function toggleColorScheme(currentMode) {
     const baseTheme = baseColorSchemes[currentThemeIndex];
-    currentThemeIndex = (currentThemeIndex + 1) % baseColorSchemes.length;
+    setCurrentThemeIndex((currentThemeIndex + 1) % baseColorSchemes.length);
     applyTheme(currentMode);
 
-    const nextIndex = (currentThemeIndex + 1) % baseColorSchemes.length;
+    const nextIndex = (getCurrentThemeIndex() + 1) % baseColorSchemes.length;
     const nextBaseTheme = baseColorSchemes[nextIndex];
     const nextTheme = currentMode === "nowPlaying" ? getInvertedTheme(nextBaseTheme) : nextBaseTheme;
     const button = document.getElementById("colorButton");
     button.style.backgroundColor = nextTheme.exterior;
     button.querySelector('.inner-box').style.backgroundColor = nextTheme.interior;
     button.title = `Switch Theme \n  From: ${baseTheme.name}\n  To: ${nextBaseTheme.name}`;
-    debug(`Theme switched to ${baseTheme.name} (index ${currentThemeIndex}).`);
+    debug(`Theme switched to ${baseTheme.name} (index ${getCurrentThemeIndex()}).`);
 }

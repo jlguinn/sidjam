@@ -154,13 +154,16 @@ window.togglePlayPause = () => {
         updateWinnerButtonsBound,
         updateFlameButtonBound,
         () => player.initPlayer(
-            brackets.getPlayerState().hasPlayed, brackets.getPlayerState().activeContender, brackets.getPlayerState().contenders,
-            loadSongBound, updateWinnerButtonsBound, updateFlameButtonBound
+            brackets.getPlayerState,
+            updateWinnerButtonsBound,
+            updateFlameButtonBound,
+            loadSongBound // Pass loadSongBound
         ),
         () => brackets.updatePlayerState({ hasPlayed: true })
     );
     document.getElementById("ellipsis-button").disabled = false;
 };
+
 
 window.jamToggle = () => {
     brackets.jamToggle(
@@ -1023,7 +1026,7 @@ async function initializeApp() {
         if (player_state && player_state.contenders && player_state.currentMode === "bout" && player_state.contenders[0] && player_state.contenders[1]) {
             brackets.updatePlayerState({
                 contenders: player_state.contenders,
-                currentBracket: player_state.activeBracket, // Force Bout Mode to use activeBracket
+                currentBracket: player_state.activeBracket,
                 activeBracket: player_state.activeBracket,
                 currentMode: "bout",
                 nowPlayingSong: null,
@@ -1032,7 +1035,7 @@ async function initializeApp() {
                 bothContendersSelected: false,
                 isFlameActive: false
             });
-            ui.currentThemeIndex = player_state.theme || 0;
+            ui.setCurrentThemeIndex(player_state.theme || 0); // Use setter
             brackets.updateBracketDropdown();
             document.getElementById("bracket-select").value = player_state.activeBracket.replace(" - ", "-");
             updateVsMatchupBound();
@@ -1047,8 +1050,8 @@ async function initializeApp() {
                 currentMode: "nowPlaying",
                 nowPlayingSong: player_state.nowPlayingSong
             });
-            ui.currentThemeIndex = player_state.theme || 0;
-            loadSongBound(player_state.nowPlayingSong, -1, false);
+            ui.setCurrentThemeIndex(player_state.theme || 0);
+            loadSongBound(player_state.nowPlayingSong, -1, false); // Already using loadSongBound directly
             brackets.updateBracketDropdown();
             document.getElementById("bracket-select").value = player_state.currentBracket.replace(" - ", "-");
             updateVsMatchupBound();
@@ -1056,12 +1059,13 @@ async function initializeApp() {
             updateWinnerButtonsBound();
             updateFlameButtonBound();
         } else {
+            debug("Initializing with default player state");
             brackets.updatePlayerState({
                 currentBracket: "0 - 0",
                 activeBracket: "0 - 0",
                 currentMode: "bout"
             });
-            ui.currentThemeIndex = 0;
+            ui.setCurrentThemeIndex(0); // Use setter
             brackets.updateBracketDropdown();
             brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateFlameButtonBound);
         }
@@ -1075,6 +1079,7 @@ async function initializeApp() {
             activeBracket: "0 - 0",
             currentMode: "bout"
         });
+        ui.setCurrentThemeIndex(0); // Use setter
         brackets.updateBracketDropdown();
         brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateFlameButtonBound);
     }
@@ -1087,14 +1092,14 @@ async function initializeApp() {
     ui.applyTheme(brackets.getPlayerState().currentMode);
 
     const button = document.getElementById("colorButton");
-    const currentTheme = baseColorSchemes[ui.currentThemeIndex];
-    const nextIndex = (ui.currentThemeIndex + 1) % baseColorSchemes.length;
+    const currentTheme = baseColorSchemes[ui.getCurrentThemeIndex()];
+    const nextIndex = (ui.getCurrentThemeIndex() + 1) % baseColorSchemes.length;
     const nextTheme = baseColorSchemes[nextIndex];
     button.style.backgroundColor = nextTheme.exterior;
     button.querySelector('.inner-box').style.backgroundColor = nextTheme.interior;
     button.title = `Switch Theme \n  From: ${currentTheme.name}\n  To: ${nextTheme.name}`;
 
-    const initialColor = baseColorSchemes[ui.currentThemeIndex].exteriorTextColor || '#000000';
+    const initialColor = baseColorSchemes[ui.getCurrentThemeIndex()].exteriorTextColor || '#000000';
     window.renderProfileBitmap(initialColor);
 
     checkSong2Clipping();

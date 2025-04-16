@@ -166,17 +166,15 @@ export function pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerBut
   console.log("- vs -");
   console.log(`${window.sidJamData.pathToId[playerState.contenders[1]]} ${playerState.contenders[1]}`);
 
-  let song0 = selectedContenders[0].split('/').pop();
-  let song1 = selectedContenders[1]?.split('/').pop() || "-";
-  document.getElementById("song1").innerHTML = `<span>${song0}</span>`;
-  document.getElementById("song2").innerHTML = `<span>${song1}</span>`;
-
+  // Remove direct DOM updates
+  // Let updateVsMatchup handle song1 and song2 rendering
   updateRoundInfo();
   updateVsMatchup();
   updateWinnerButtons();
   updateFlameButton();
   return true;
 }
+
 
 export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup, updateRoundInfo, updateWinnerButtons, updateFlameButton, updateBracketDropdown) {
   if (!sidPlayer) return;
