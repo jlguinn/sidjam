@@ -31,10 +31,10 @@ if ($row = $result->fetch_assoc()) {
     $player_state = $row['player_state'] ? json_decode($row['player_state'], true) : null;
     if ($player_state && (
         !is_array($player_state) ||
-        !isset($player_state['contenders'], $player_state['currentBracket'], $player_state['activeBracket'],
+        !isset($player_state['contenders'], $player_state['peekBracket'], $player_state['activeBracket'],
                $player_state['currentMode'], $player_state['theme']) ||
         !is_array($player_state['contenders']) ||
-        !is_string($player_state['currentBracket']) ||
+        !is_string($player_state['peekBracket']) ||
         !is_string($player_state['activeBracket']) ||
         !is_string($player_state['currentMode']) ||
         !is_numeric($player_state['theme']) ||

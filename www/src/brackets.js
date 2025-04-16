@@ -55,7 +55,7 @@ export let playerState = {
   bothContendersSelected: false, // Transient: Both contenders marked as winners
   isFlameActive: false, // Transient: Flame button active
   isReviveActive: false, // Transient: Revive button active
-  currentBracket: "0 - 0", // Selected bracket
+  peekBracket: "0 - 0", // Selected bracket
   activeBracket: "0 - 0", // Last bout-able bracket
   currentMode: "bout", // "bout" or "nowPlaying"
   nowPlayingSong: null, // Song in Now Playing Mode
@@ -130,15 +130,15 @@ function shuffleArray(array) {
 
 export function pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton) {
   let filteredFiles = [];
-  if (playerState.currentBracket === "All") {
+  if (playerState.peekBracket === "All") {
     filteredFiles = window.sidJamData.sidFiles;
-  } else if (playerState.currentBracket === "Eliminated") {
+  } else if (playerState.peekBracket === "Eliminated") {
     filteredFiles = window.sidJamData.sidFiles.filter(file => {
       let record = window.sidJamData.cachedResults[file] || { wins: 0, losses: 0 };
       return record.losses >= 2;
     });
   } else {
-    let [wins, losses] = playerState.currentBracket.split(' - ').map(Number);
+    let [wins, losses] = playerState.peekBracket.split(' - ').map(Number);
     filteredFiles = window.sidJamData.sidFiles.filter(file => {
       let record = window.sidJamData.cachedResults[file] || { wins: 0, losses: 0 };
       return record.wins === wins && record.losses === losses;
@@ -146,7 +146,7 @@ export function pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerBut
   }
 
   if (filteredFiles.length < 2) {
-    updatePlayerState({ currentBracket: playerState.activeBracket });
+    updatePlayerState({ peekBracket: playerState.activeBracket });
     updateBracketDropdown();
     return false;
   }
@@ -161,7 +161,7 @@ export function pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerBut
     activeContender: 0
   });
 
-  console.log(`Bracket: ${playerState.currentBracket} (${filteredFiles.length} contenders)`);
+  console.log(`Bracket: ${playerState.peekBracket} (${filteredFiles.length} contenders)`);
   console.log(`${window.sidJamData.pathToId[playerState.contenders[0]]} ${playerState.contenders[0]}`);
   console.log("- vs -");
   console.log(`${window.sidJamData.pathToId[playerState.contenders[1]]} ${playerState.contenders[1]}`);
@@ -193,7 +193,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
       if (getContenderCount("0 - 0") >= 2) {
         updatePlayerState({
           currentMode: "bout",
-          currentBracket: "0 - 0",
+          peekBracket: "0 - 0",
           contenders: [playerState.nowPlayingSong],
           isReviveActive: false
         });
@@ -209,7 +209,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
     updatePlayerState({ 
       currentMode: "bout", 
       nowPlayingSong: null,
-      currentBracket: playerState.activeBracket // Resume with activeBracket
+      peekBracket: playerState.activeBracket // Resume with activeBracket
     });
     if (!revivedToZeroZero) {
       // Restore defaults for Bout Mode
@@ -224,14 +224,14 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
       });
 
       // Validate restored bracket
-      const contenderCount = getContenderCount(playerState.currentBracket);
+      const contenderCount = getContenderCount(playerState.peekBracket);
       if (!playerState.contenders[0] || !playerState.contenders[1] || contenderCount < 2) {
         newBracket = findEligibleBracket();
         if (newBracket) {
-          if (!isSpecialBracket(playerState.currentBracket)) {
-            updatePlayerState({ activeBracket: playerState.currentBracket });
+          if (!isSpecialBracket(playerState.peekBracket)) {
+            updatePlayerState({ activeBracket: playerState.peekBracket });
           }
-          updatePlayerState({ currentBracket: newBracket, activeBracket: newBracket });
+          updatePlayerState({ peekBracket: newBracket, activeBracket: newBracket });
           shouldUpdateBracketDropdown = true;
           pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
         } else {
@@ -253,10 +253,10 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
       if (!playerState.contenders[1]) {
         newBracket = findEligibleBracket();
         if (newBracket) {
-          if (!isSpecialBracket(playerState.currentBracket)) {
-            updatePlayerState({ activeBracket: playerState.currentBracket });
+          if (!isSpecialBracket(playerState.peekBracket)) {
+            updatePlayerState({ activeBracket: playerState.peekBracket });
           }
-          updatePlayerState({ currentBracket: newBracket, activeBracket: newBracket });
+          updatePlayerState({ peekBracket: newBracket, activeBracket: newBracket });
           shouldUpdateBracketDropdown = true;
           pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
         } else {
@@ -274,16 +274,16 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
     updateFlameButton();
     if (shouldUpdateBracketDropdown) {
       updateBracketDropdown();
-      document.getElementById("bracket-select").value = playerState.currentBracket.replace(' - ', '-');
+      document.getElementById("bracket-select").value = playerState.peekBracket.replace(' - ', '-');
     }
     return;
   }
 
   // Treat 1-contender brackets like special brackets ("All" and "Eliminated")
   const specialBrackets = ["All", "Eliminated"];
-  let contenderCount = getContenderCount(playerState.currentBracket);
-  if (specialBrackets.includes(playerState.currentBracket) || contenderCount === 1) {
-    updatePlayerState({ currentBracket: playerState.activeBracket });
+  let contenderCount = getContenderCount(playerState.peekBracket);
+  if (specialBrackets.includes(playerState.peekBracket) || contenderCount === 1) {
+    updatePlayerState({ peekBracket: playerState.activeBracket });
     shouldUpdateBracketDropdown = true;
   }
 
@@ -291,7 +291,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
   setIsPlaying(false);
   stopTimer();
 
-  if (playerState.isFlameActive && playerState.currentBracket === "0 - 0") {
+  if (playerState.isFlameActive && playerState.peekBracket === "0 - 0") {
     let flamedIndex = playerState.activeContender;
     let flamedFile = playerState.contenders[flamedIndex];
 
@@ -350,7 +350,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
       if (!success) {
         newBracket = findEligibleBracket();
         if (newBracket) {
-          updatePlayerState({ activeBracket: playerState.currentBracket, currentBracket: newBracket });
+          updatePlayerState({ activeBracket: playerState.peekBracket, peekBracket: newBracket });
           shouldUpdateBracketDropdown = true;
           pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
         } else {
@@ -385,7 +385,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
     if (newBracket) {
       document.getElementById("bracket-select").value = newBracket.replace(' - ', '-');
     } else {
-      document.getElementById("bracket-select").value = playerState.currentBracket.replace(' - ', '-');
+      document.getElementById("bracket-select").value = playerState.peekBracket.replace(' - ', '-');
     }
   }
 }
@@ -438,12 +438,12 @@ export function toggleRevive(updateReviveButton, updateSongTitleHighlight) {
 
 export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, updateVsMatchup, updateWinnerButtons) {
   let newBracket = document.getElementById("bracket-select").value.replace('-', ' - ');
-  if (newBracket === playerState.currentBracket) return;
+  if (newBracket === playerState.peekBracket) return;
 
-  if (!isSpecialBracket(playerState.currentBracket)) {
-    updatePlayerState({ activeBracket: playerState.currentBracket });
+  if (!isSpecialBracket(playerState.peekBracket)) {
+    updatePlayerState({ activeBracket: playerState.peekBracket });
   }
-  updatePlayerState({ currentBracket: newBracket });
+  updatePlayerState({ peekBracket: newBracket });
 
   if (playerState.currentMode === "nowPlaying") {
     debug(`Staying in Now Playing mode, updating to ${newBracket}`);
@@ -459,7 +459,7 @@ export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, upda
 
   if (contenderCount < 1) {
     debug(`No contenders in ${newBracket}, reverting to ${playerState.activeBracket}`);
-    updatePlayerState({ currentBracket: playerState.activeBracket });
+    updatePlayerState({ peekBracket: playerState.activeBracket });
     updateBracketDropdown();
     return;
   }
@@ -473,7 +473,7 @@ export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, upda
   let success = pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
   if (!success) {
     debug(`Failed to pick contenders for ${newBracket}, reverting`);
-    updatePlayerState({ currentBracket: playerState.activeBracket });
+    updatePlayerState({ peekBracket: playerState.activeBracket });
     updateBracketDropdown();
     return;
   }
@@ -595,10 +595,10 @@ export function updateBracketDropdown() {
   eliminatedOption.text = `Eliminated (${eliminatedCount} contenders)`;
   select.appendChild(allOption);
 
-  let newValue = playerState.currentBracket.replace(" - ", "-");
-  if (!(newValue in Object.fromEntries(sortedKeys.map(key => [key.replace(" - ", "-"), key]).concat([["All", "All"], ["Eliminated", "Eliminated"]]))) || !brackets[playerState.currentBracket]) {
+  let newValue = playerState.peekBracket.replace(" - ", "-");
+  if (!(newValue in Object.fromEntries(sortedKeys.map(key => [key.replace(" - ", "-"), key]).concat([["All", "All"], ["Eliminated", "Eliminated"]]))) || !brackets[playerState.peekBracket]) {
     newValue = sortedKeys[0]?.replace(" - ", "-") || "All";
-    updatePlayerState({ currentBracket: sortedKeys[0] || "All" });
+    updatePlayerState({ peekBracket: sortedKeys[0] || "All" });
   }
   select.value = newValue;
 }

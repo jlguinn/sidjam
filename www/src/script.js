@@ -16,7 +16,7 @@ async function savePlayerState() {
     const state = brackets.getPlayerState();
     const player_state = {
         contenders: state.contenders,
-        currentBracket: state.currentBracket,
+        peekBracket: state.peekBracket,
         activeBracket: state.activeBracket,
         currentMode: state.currentMode,
         nowPlayingSong: state.nowPlayingSong,
@@ -142,7 +142,7 @@ const updateWinnerButtonsBound = () => ui.updateWinnerButtons(
 );
 
 const updateFlameButtonBound = () => ui.updateFlameButton(
-    brackets.getPlayerState().currentMode, brackets.getPlayerState().currentBracket, brackets.getPlayerState().nowPlayingSong,
+    brackets.getPlayerState().currentMode, brackets.getPlayerState().peekBracket, brackets.getPlayerState().nowPlayingSong,
     brackets.getPlayerState().winner, brackets.getPlayerState().bothContendersSelected, brackets.getPlayerState().isFlameActive,
     brackets.getPlayerState().hasPlayed, brackets.getPlayerState().contenders, player.sidPlayer
 );
@@ -315,10 +315,10 @@ function populateSongList(filter) {
     isLoading = true;
 
     let queryParams = `filter=${encodeURIComponent(filter)}&offset=${currentOffset}&limit=${SONGS_PER_FETCH}&user_id=${window.user.id}`;
-    if (state.currentBracket !== "All" && state.currentBracket !== "Eliminated") {
-        let [wins, losses] = state.currentBracket.split(' - ').map(Number);
+    if (state.peekBracket !== "All" && state.peekBracket !== "Eliminated") {
+        let [wins, losses] = state.peekBracket.split(' - ').map(Number);
         queryParams += `&wins=${wins}&losses=${losses}`;
-    } else if (state.currentBracket === "Eliminated") {
+    } else if (state.peekBracket === "Eliminated") {
         queryParams += "&wins=-1&losses=2";
     }
 
@@ -797,7 +797,7 @@ window.stopPlayer = function() {
 
 window.resetPlayer = function() {
     window.allTunes = [];
-    window.currentBracket = 0;
+    window.peekBracket = 0;
     window.currentSongIndex = 0;
     window.sidPlayer = null;
 
@@ -1026,7 +1026,7 @@ async function initializeApp() {
         if (player_state && player_state.contenders && player_state.currentMode === "bout" && player_state.contenders[0] && player_state.contenders[1]) {
             brackets.updatePlayerState({
                 contenders: player_state.contenders,
-                currentBracket: player_state.activeBracket,
+                peekBracket: player_state.activeBracket,
                 activeBracket: player_state.activeBracket,
                 currentMode: "bout",
                 nowPlayingSong: null,
@@ -1045,7 +1045,7 @@ async function initializeApp() {
         } else if (player_state && player_state.currentMode === "nowPlaying" && player_state.nowPlayingSong) {
             brackets.updatePlayerState({
                 contenders: player_state.contenders || [],
-                currentBracket: player_state.currentBracket,
+                peekBracket: player_state.peekBracket,
                 activeBracket: player_state.activeBracket,
                 currentMode: "nowPlaying",
                 nowPlayingSong: player_state.nowPlayingSong
@@ -1053,7 +1053,7 @@ async function initializeApp() {
             ui.setCurrentThemeIndex(player_state.theme || 0);
             loadSongBound(player_state.nowPlayingSong, -1, false); // Already using loadSongBound directly
             brackets.updateBracketDropdown();
-            document.getElementById("bracket-select").value = player_state.currentBracket.replace(" - ", "-");
+            document.getElementById("bracket-select").value = player_state.peekBracket.replace(" - ", "-");
             updateVsMatchupBound();
             updateRoundInfoBound();
             updateWinnerButtonsBound();
@@ -1061,7 +1061,7 @@ async function initializeApp() {
         } else {
             debug("Initializing with default player state");
             brackets.updatePlayerState({
-                currentBracket: "0 - 0",
+                peekBracket: "0 - 0",
                 activeBracket: "0 - 0",
                 currentMode: "bout"
             });
@@ -1075,7 +1075,7 @@ async function initializeApp() {
         window.sidJamData.sidFiles = [];
         window.sidJamData.pathToId = {};
         brackets.updatePlayerState({
-            currentBracket: "0 - 0",
+            peekBracket: "0 - 0",
             activeBracket: "0 - 0",
             currentMode: "bout"
         });
