@@ -1026,7 +1026,7 @@ async function initializeApp() {
         if (player_state && player_state.contenders && player_state.currentMode === "bout" && player_state.contenders[0] && player_state.contenders[1]) {
             brackets.updatePlayerState({
                 contenders: player_state.contenders,
-                peekBracket: player_state.activeBracket,
+                peekBracket: player_state.activeBracket, // Use activeBracket for Bout Mode
                 activeBracket: player_state.activeBracket,
                 currentMode: "bout",
                 nowPlayingSong: null,
@@ -1035,7 +1035,7 @@ async function initializeApp() {
                 bothContendersSelected: false,
                 isFlameActive: false
             });
-            ui.setCurrentThemeIndex(player_state.theme || 0); // Use setter
+            ui.setCurrentThemeIndex(player_state.theme || 0);
             brackets.updateBracketDropdown();
             document.getElementById("bracket-select").value = player_state.activeBracket.replace(" - ", "-");
             updateVsMatchupBound();
@@ -1045,13 +1045,13 @@ async function initializeApp() {
         } else if (player_state && player_state.currentMode === "nowPlaying" && player_state.nowPlayingSong) {
             brackets.updatePlayerState({
                 contenders: player_state.contenders || [],
-                peekBracket: player_state.peekBracket,
+                peekBracket: player_state.peekBracket, // Restore peekBracket in Now Playing Mode
                 activeBracket: player_state.activeBracket,
                 currentMode: "nowPlaying",
                 nowPlayingSong: player_state.nowPlayingSong
             });
             ui.setCurrentThemeIndex(player_state.theme || 0);
-            loadSongBound(player_state.nowPlayingSong, -1, false); // Already using loadSongBound directly
+            loadSongBound(player_state.nowPlayingSong, -1, false);
             brackets.updateBracketDropdown();
             document.getElementById("bracket-select").value = player_state.peekBracket.replace(" - ", "-");
             updateVsMatchupBound();
@@ -1065,7 +1065,7 @@ async function initializeApp() {
                 activeBracket: "0 - 0",
                 currentMode: "bout"
             });
-            ui.setCurrentThemeIndex(0); // Use setter
+            ui.setCurrentThemeIndex(0);
             brackets.updateBracketDropdown();
             brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateFlameButtonBound);
         }

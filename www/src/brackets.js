@@ -477,6 +477,10 @@ export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, upda
     updateBracketDropdown();
     return;
   }
+  
+  // Update activeBracket to newBracket since it's bout-eligible and contenders were picked
+  updatePlayerState({ activeBracket: newBracket });
+  
   updateFlameButton();
   if (loadSong) loadSong(playerState.contenders[playerState.activeContender], -1);
 }
