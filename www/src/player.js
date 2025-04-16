@@ -77,7 +77,7 @@ export function initPlayer(getPlayerState, updateWinnerButtons, updateFlameButto
 export function togglePlayPause(updateRoundInfo, updatePlayPauseButton, updateWinnerButtons, updateFlameButton, initPlayerFn, updatePlayerState) {
     if (!sidPlayer) {
         initPlayerFn();
-        console.log("Notice to dev partners: Ignore ScriptProcessorNode Deprecation warning. We will not be remediating this as part of sID JAm initial development.");
+        console.log("Note: Please ignore ScriptProcessorNode Deprecation warning. We will not be remediating at this time.");
     } else if (isPlaying) {
         sidPlayer.pause();
         setIsPlaying(false);

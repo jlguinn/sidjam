@@ -952,7 +952,7 @@ async function loadPlayerState() {
             console.log("Resuming player state:", JSON.stringify(data.player_state));
             return data.player_state;
         }
-        console.error("No valid player_state found");
+//        console.log("No valid player_state found");
         return null;
     } catch (error) {
         console.error("Error loading player_state:", error);
