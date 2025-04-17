@@ -594,10 +594,13 @@ export function updateBracketDropdown() {
   allOption.text = `All (${brackets["All"]} contenders)`;
   select.appendChild(allOption);
 
-  let eliminatedOption = document.createElement("option");
-  eliminatedOption.value = "Eliminated";
-  eliminatedOption.text = `Eliminated (${eliminatedCount} contenders)`;
-  select.appendChild(allOption);
+  // Only append "Eliminated" if there are eliminated contenders
+  if (eliminatedCount > 0) {
+    let eliminatedOption = document.createElement("option");
+    eliminatedOption.value = "Eliminated";
+    eliminatedOption.text = `Eliminated (${eliminatedCount} contenders)`;
+    select.appendChild(eliminatedOption); // Fix: Append eliminatedOption, not allOption
+  }
 
   let newValue = playerState.peekBracket.replace(" - ", "-");
   if (!(newValue in Object.fromEntries(sortedKeys.map(key => [key.replace(" - ", "-"), key]).concat([["All", "All"], ["Eliminated", "Eliminated"]]))) || !brackets[playerState.peekBracket]) {
