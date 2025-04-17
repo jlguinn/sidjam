@@ -206,40 +206,39 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
       }
     }
 
-    updatePlayerState({ 
-      currentMode: "bout", 
-      nowPlayingSong: null,
-      peekBracket: playerState.activeBracket // Resume with activeBracket
-    });
+    // Restore previous bout state instead of resetting
     if (!revivedToZeroZero) {
-      // Restore defaults for Bout Mode
       updatePlayerState({
-        contenders: [],
-        activeContender: 0,
-        roundCount: 1,
+        currentMode: "bout",
+        nowPlayingSong: null,
+        peekBracket: playerState.peekBracket, // Retain UI-selected bracket
+        activeBracket: playerState.activeBracket, // Retain last bout-eligible bracket
+        activeContender: 0, // Reset to first contender
+        roundCount: 1, // Reset round count (optional, can restore if tracked)
         winner: null,
         hasJammed: false,
         bothContendersSelected: false,
         isFlameActive: false
       });
-
-      // Validate restored bracket
-      const contenderCount = getContenderCount(playerState.peekBracket);
-      if (!playerState.contenders[0] || !playerState.contenders[1] || contenderCount < 2) {
-        newBracket = findEligibleBracket();
-        if (newBracket) {
-          if (!isSpecialBracket(playerState.peekBracket)) {
-            updatePlayerState({ activeBracket: playerState.peekBracket });
-          }
-          updatePlayerState({ peekBracket: newBracket, activeBracket: newBracket });
-          shouldUpdateBracketDropdown = true;
-          pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
-        } else {
-          debug("No eligible brackets, stopping");
-          return;
-        }
+      // Retain existing contenders if they are still valid
+      if (playerState.contenders.length === 2 && 
+          playerState.contenders.every(c => window.sidJamData.sidFiles.includes(c)) &&
+          getContenderCount(playerState.activeBracket) >= 2) {
+        loadSong(playerState.contenders[0], -1); // Load first contender
       } else {
-        loadSong(playerState.contenders[playerState.activeContender], -1);
+        // Fallback to pick new contenders if current ones are invalid
+        let success = pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
+        if (!success) {
+          newBracket = findEligibleBracket();
+          if (newBracket) {
+            updatePlayerState({ peekBracket: newBracket, activeBracket: newBracket });
+            shouldUpdateBracketDropdown = true;
+            pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
+          } else {
+            debug("No eligible brackets, stopping");
+            return;
+          }
+        }
       }
     } else {
       updatePlayerState({
@@ -253,9 +252,6 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
       if (!playerState.contenders[1]) {
         newBracket = findEligibleBracket();
         if (newBracket) {
-          if (!isSpecialBracket(playerState.peekBracket)) {
-            updatePlayerState({ activeBracket: playerState.peekBracket });
-          }
           updatePlayerState({ peekBracket: newBracket, activeBracket: newBracket });
           shouldUpdateBracketDropdown = true;
           pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
@@ -264,7 +260,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
           return;
         }
       } else {
-        loadSong(playerState.contenders[playerState.activeContender], -1);
+        loadSong(playerState.contenders[0], -1);
       }
     }
     applyTheme("bout");
