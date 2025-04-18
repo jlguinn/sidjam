@@ -124,7 +124,7 @@ export function updateVsMatchup(currentMode, nowPlayingSong, contenders, activeC
     const contenderTextColor = adjustTextColor(theme.exteriorTextColor, contenderHighlight, theme.interiorTextColor);
     const flameTextColor = adjustTextColor(theme.exteriorTextColor, flameHighlight, "#FFFFFF");
 
-    // Clear existing classes to prevent stale styles
+    // Clear existing highlight classes to prevent stale styles
     song1.classList.remove("active-song", "flame-song");
     song2.classList.remove("active-song", "flame-song");
 
@@ -142,12 +142,10 @@ export function updateVsMatchup(currentMode, nowPlayingSong, contenders, activeC
         const flameClass0 = isFlameActive && activeContender === 0 ? 'flame-song' : activeClass0;
         const flameClass1 = isFlameActive && activeContender === 1 ? 'flame-song' : activeClass1;
 
-        // Apply classes and styles
-        song1.className = flameClass0;
-        song2.className = flameClass1;
-        song1.innerHTML = `<span style="color: ${hasPlayed && activeContender === 0 ? contenderTextColor : isFlameActive && activeContender === 0 ? flameTextColor : theme.exteriorTextColor}" title="${contenders[0]?.replace('/sid/C64Music', '') || '-'}">${songName0}</span>`;
+        // Apply classes to the span for highlighting
+        song1.innerHTML = `<span class="${flameClass0}" style="color: ${hasPlayed && activeContender === 0 ? contenderTextColor : isFlameActive && activeContender === 0 ? flameTextColor : theme.exteriorTextColor}" title="${contenders[0]?.replace('/sid/C64Music', '') || '-'}">${songName0}</span>`;
         vsText.textContent = " - vs - ";
-        song2.innerHTML = `<span style="color: ${hasPlayed && activeContender === 1 ? contenderTextColor : isFlameActive && activeContender === 1 ? flameTextColor : theme.exteriorTextColor}" title="${contenders[1]?.replace('/sid/C64Music', '') || '-'}">${songName1}</span>`;
+        song2.innerHTML = `<span class="${flameClass1}" style="color: ${hasPlayed && activeContender === 1 ? contenderTextColor : isFlameActive && activeContender === 1 ? flameTextColor : theme.exteriorTextColor}" title="${contenders[1]?.replace('/sid/C64Music', '') || '-'}">${songName1}</span>`;
     }
 }
 
