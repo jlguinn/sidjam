@@ -115,14 +115,18 @@ function syncHoverOff() {
 export function updateVsMatchup(currentMode, nowPlayingSong, contenders, activeContender, hasPlayed, isFlameActive) {
     const vsMatchup = document.getElementById("vs-matchup");
     const song1 = document.getElementById("song1");
-    const vsText = document.getElementById("vs-text");
     const song2 = document.getElementById("song2");
+    const vsText = document.getElementById("vs-text");
     const baseTheme = baseColorSchemes[currentThemeIndex];
     const theme = currentMode === "nowPlaying" ? getInvertedTheme(baseTheme) : baseTheme;
     const contenderHighlight = "#00FFFF";
     const flameHighlight = "#8B0000";
     const contenderTextColor = adjustTextColor(theme.exteriorTextColor, contenderHighlight, theme.interiorTextColor);
     const flameTextColor = adjustTextColor(theme.exteriorTextColor, flameHighlight, "#FFFFFF");
+
+    // Clear existing classes to prevent stale styles
+    song1.classList.remove("active-song", "flame-song");
+    song2.classList.remove("active-song", "flame-song");
 
     if (currentMode === "nowPlaying") {
         vsMatchup.classList.add("now-playing");
@@ -137,9 +141,13 @@ export function updateVsMatchup(currentMode, nowPlayingSong, contenders, activeC
         const activeClass1 = hasPlayed && activeContender === 1 ? 'active-song' : '';
         const flameClass0 = isFlameActive && activeContender === 0 ? 'flame-song' : activeClass0;
         const flameClass1 = isFlameActive && activeContender === 1 ? 'flame-song' : activeClass1;
-        song1.innerHTML = `<span class="${flameClass0}" style="color: ${hasPlayed && activeContender === 0 ? contenderTextColor : isFlameActive && activeContender === 0 ? flameTextColor : theme.exteriorTextColor}" title="${contenders[0]?.replace('/sid/C64Music', '') || '-'}">${songName0}</span>`;
+
+        // Apply classes and styles
+        song1.className = flameClass0;
+        song2.className = flameClass1;
+        song1.innerHTML = `<span style="color: ${hasPlayed && activeContender === 0 ? contenderTextColor : isFlameActive && activeContender === 0 ? flameTextColor : theme.exteriorTextColor}" title="${contenders[0]?.replace('/sid/C64Music', '') || '-'}">${songName0}</span>`;
         vsText.textContent = " - vs - ";
-        song2.innerHTML = `<span class="${flameClass1}" style="color: ${hasPlayed && activeContender === 1 ? contenderTextColor : isFlameActive && activeContender === 1 ? flameTextColor : theme.exteriorTextColor}" title="${contenders[1]?.replace('/sid/C64Music', '') || '-'}">${songName1}</span>`;
+        song2.innerHTML = `<span style="color: ${hasPlayed && activeContender === 1 ? contenderTextColor : isFlameActive && activeContender === 1 ? flameTextColor : theme.exteriorTextColor}" title="${contenders[1]?.replace('/sid/C64Music', '') || '-'}">${songName1}</span>`;
     }
 }
 
@@ -285,4 +293,15 @@ export function toggleColorScheme(currentMode) {
     button.querySelector('.inner-box').style.backgroundColor = nextTheme.interior;
     button.title = `Switch Theme \n  From: ${baseTheme.name}\n  To: ${nextBaseTheme.name}`;
     debug(`Theme switched to ${baseTheme.name} (index ${getCurrentThemeIndex()}).`);
+
+    // Force re-render of vs-matchup to ensure text colors update
+    const playerState = brackets.getPlayerState();
+    updateVsMatchup(
+        currentMode,
+        playerState.nowPlayingSong,
+        playerState.contenders,
+        playerState.activeContender,
+        playerState.hasPlayed,
+        playerState.isFlameActive
+    );
 }
