@@ -43,6 +43,13 @@ body {
     transition: filter 0.3s ease;
 }
 
+#preferences-link a {
+    color: inherit; /* Fallback until theme applies */
+    text-decoration: underline;
+    cursor: pointer;
+    transition: filter 0.3s ease;
+}
+
 /* Style for the profile icon */
 #profile-icon {
     transition: filter 0.3s ease;
@@ -53,7 +60,9 @@ body {
 #auth-link a.brighten-on-hover:hover,
 #profile-icon.brighten-on-hover:hover,
 #auth-link a.brighten-on-hover.hover,
-#profile-icon.brighten-on-hover.hover {
+#profile-icon.brighten-on-hover.hover,
+#preferences-link a.brighten-on-hover:hover,
+#preferences-link a.brighten-on-hover.hover {
     filter: brightness(1.2);
 }
 
@@ -61,7 +70,9 @@ body {
 #auth-link a.darken-on-hover:hover,
 #profile-icon.darken-on-hover:hover,
 #auth-link a.darken-on-hover.hover,
-#profile-icon.darken-on-hover.hover {
+#profile-icon.darken-on-hover.hover,
+#preferences-link a.darken-on-hover:hover,
+#preferences-link a.darken-on-hover.hover {
     filter: brightness(0.8);
 }
 

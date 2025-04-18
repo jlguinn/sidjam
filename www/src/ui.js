@@ -51,13 +51,24 @@ export function applyTheme(currentMode) {
 
     const authLinkDiv = document.getElementById("auth-link");
     const authLink = authLinkDiv ? authLinkDiv.querySelector("a") : null;
+    const preferencesLinkDiv = document.getElementById("preferences-link");
+    const preferencesLink = preferencesLinkDiv ? preferencesLinkDiv.querySelector("a") : null;
     const profileIcon = document.getElementById("profile-icon");
 
     if (authLink) {
         authLink.style.color = theme.exteriorTextColor;
+        authLink.style.textDecoration = 'none';
         const luminance = calculateLuminance(theme.exteriorTextColor);
         authLink.classList.remove('brighten-on-hover', 'darken-on-hover');
         authLink.classList.add(luminance > 0.92 ? 'darken-on-hover' : 'brighten-on-hover');
+    }
+
+    if (preferencesLink) {
+        preferencesLink.style.color = theme.exteriorTextColor;
+        preferencesLink.style.textDecoration = 'none';
+        const luminance = calculateLuminance(theme.exteriorTextColor);
+        preferencesLink.classList.remove('brighten-on-hover', 'darken-on-hover');
+        preferencesLink.classList.add(luminance > 0.92 ? 'darken-on-hover' : 'brighten-on-hover');
     }
 
     if (profileIcon) {
@@ -75,6 +86,18 @@ export function applyTheme(currentMode) {
 
         authLink.addEventListener('mouseover', syncHoverOn);
         authLink.addEventListener('mouseout', syncHoverOff);
+        profileIcon.addEventListener('mouseover', syncHoverOn);
+        profileIcon.addEventListener('mouseout', syncHoverOff);
+    }
+
+    if (preferencesLink && profileIcon) {
+        preferencesLink.removeEventListener('mouseover', syncHoverOn);
+        preferencesLink.removeEventListener('mouseout', syncHoverOff);
+        profileIcon.removeEventListener('mouseover', syncHoverOn);
+        profileIcon.removeEventListener('mouseout', syncHoverOff);
+
+        preferencesLink.addEventListener('mouseover', syncHoverOn);
+        preferencesLink.addEventListener('mouseout', syncHoverOff);
         profileIcon.addEventListener('mouseover', syncHoverOn);
         profileIcon.addEventListener('mouseout', syncHoverOff);
     }
