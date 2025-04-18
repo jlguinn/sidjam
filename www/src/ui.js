@@ -12,7 +12,6 @@ export function getCurrentThemeIndex() {
     return currentThemeIndex;
 }
 
-
 export function debug(message) { console.log(`[DEBUG] ${message}`); }
 
 // Utility function to calculate luminance of a hex color
@@ -22,6 +21,19 @@ function calculateLuminance(hexColor) {
     const g = parseInt(hexColor.substr(2, 2), 16) / 255;
     const b = parseInt(hexColor.substr(4, 2), 16) / 255;
     return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+// Calculate contrast ratio between two colors
+function getContrastRatio(color1, color2) {
+    const l1 = calculateLuminance(color1) + 0.05;
+    const l2 = calculateLuminance(color2) + 0.05;
+    return l1 > l2 ? l1 / l2 : l2 / l1;
+}
+
+// Adjust text color based on contrast with highlight
+function adjustTextColor(textColor, highlightColor, fallbackColor) {
+    const contrastThreshold = 4.5; // WCAG AA standard
+    return getContrastRatio(textColor, highlightColor) >= contrastThreshold ? textColor : fallbackColor;
 }
 
 export function applyTheme(currentMode) {
@@ -105,10 +117,16 @@ export function updateVsMatchup(currentMode, nowPlayingSong, contenders, activeC
     const song1 = document.getElementById("song1");
     const vsText = document.getElementById("vs-text");
     const song2 = document.getElementById("song2");
+    const baseTheme = baseColorSchemes[currentThemeIndex];
+    const theme = currentMode === "nowPlaying" ? getInvertedTheme(baseTheme) : baseTheme;
+    const contenderHighlight = "#00FFFF";
+    const flameHighlight = "#8B0000";
+    const contenderTextColor = adjustTextColor(theme.exteriorTextColor, contenderHighlight, theme.interiorTextColor);
+    const flameTextColor = adjustTextColor(theme.exteriorTextColor, flameHighlight, "#FFFFFF");
 
     if (currentMode === "nowPlaying") {
         vsMatchup.classList.add("now-playing");
-        song1.innerHTML = `<span>${nowPlayingSong ? nowPlayingSong.split('/').pop() : '-'}</span>`;
+        song1.innerHTML = `<span style="color: ${theme.exteriorTextColor}">${nowPlayingSong ? nowPlayingSong.split('/').pop() : '-'}</span>`;
         vsText.textContent = "";
         song2.innerHTML = "";
     } else {
@@ -119,9 +137,9 @@ export function updateVsMatchup(currentMode, nowPlayingSong, contenders, activeC
         const activeClass1 = hasPlayed && activeContender === 1 ? 'active-song' : '';
         const flameClass0 = isFlameActive && activeContender === 0 ? 'flame-song' : activeClass0;
         const flameClass1 = isFlameActive && activeContender === 1 ? 'flame-song' : activeClass1;
-        song1.innerHTML = `<span class="${flameClass0}" title="${contenders[0]?.replace('/sid/C64Music', '') || '-'}">${songName0}</span>`;
+        song1.innerHTML = `<span class="${flameClass0}" style="color: ${hasPlayed && activeContender === 0 ? contenderTextColor : isFlameActive && activeContender === 0 ? flameTextColor : theme.exteriorTextColor}" title="${contenders[0]?.replace('/sid/C64Music', '') || '-'}">${songName0}</span>`;
         vsText.textContent = " - vs - ";
-        song2.innerHTML = `<span class="${flameClass1}" title="${contenders[1]?.replace('/sid/C64Music', '') || '-'}">${songName1}</span>`;
+        song2.innerHTML = `<span class="${flameClass1}" style="color: ${hasPlayed && activeContender === 1 ? contenderTextColor : isFlameActive && activeContender === 1 ? flameTextColor : theme.exteriorTextColor}" title="${contenders[1]?.replace('/sid/C64Music', '') || '-'}">${songName1}</span>`;
     }
 }
 
@@ -131,6 +149,10 @@ export function updateRoundInfo(currentMode, hasPlayed, bothContendersSelected, 
         console.error("round-info element not found");
         return;
     }
+    const baseTheme = baseColorSchemes[currentThemeIndex];
+    const theme = currentMode === "nowPlaying" ? getInvertedTheme(baseTheme) : baseTheme;
+    const winnerHighlight = "#90EE90";
+    const winnerTextColor = adjustTextColor(theme.exteriorTextColor, winnerHighlight, "#000000");
 
     if (currentMode === "nowPlaying") {
         roundDiv.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="3">Now Playing Mode... Click jAM to return to Bout Mode...</marquee>`;
@@ -145,9 +167,9 @@ export function updateRoundInfo(currentMode, hasPlayed, bothContendersSelected, 
     if (!hasPlayed) {
         roundDiv.textContent = "Press Play";
     } else if (bothContendersSelected) {
-        roundDiv.innerHTML = `<span class="winner-highlight">Winner: Both Contenders</span>`;
+        roundDiv.innerHTML = `<span class="winner-highlight" style="color: ${winnerTextColor}">Winner: Both Contenders</span>`;
     } else if (winner !== null) {
-        roundDiv.innerHTML = `<span class="winner-highlight">Winner: ${contenders[winner]?.split('/').pop() || '-'}</span>`;
+        roundDiv.innerHTML = `<span class="winner-highlight" style="color: ${winnerTextColor}">Winner: ${contenders[winner]?.split('/').pop() || '-'}</span>`;
     } else {
         roundDiv.textContent = `Round ${roundCount}`;
     }
@@ -236,10 +258,17 @@ export function updateReviveButton(isReviveActive) {
 
 export function updateSongTitleHighlight(currentMode, isReviveActive) {
     const songFilename = document.querySelector("#song1 span");
+    const baseTheme = baseColorSchemes[currentThemeIndex];
+    const theme = currentMode === "nowPlaying" ? getInvertedTheme(baseTheme) : baseTheme;
+    const reviveHighlight = "#90EE90";
+    const reviveTextColor = adjustTextColor(theme.exteriorTextColor, reviveHighlight, "#000000");
+
     if (isReviveActive && currentMode === "nowPlaying") {
         songFilename.classList.add("revive-highlight");
+        songFilename.style.color = reviveTextColor;
     } else {
         songFilename.classList.remove("revive-highlight");
+        songFilename.style.color = theme.exteriorTextColor;
     }
 }
 
