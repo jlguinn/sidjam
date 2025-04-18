@@ -57,7 +57,6 @@ export function applyTheme(currentMode) {
 
     if (authLink) {
         authLink.style.color = theme.exteriorTextColor;
-        authLink.style.textDecoration = 'none';
         const luminance = calculateLuminance(theme.exteriorTextColor);
         authLink.classList.remove('brighten-on-hover', 'darken-on-hover');
         authLink.classList.add(luminance > 0.92 ? 'darken-on-hover' : 'brighten-on-hover');
@@ -65,7 +64,6 @@ export function applyTheme(currentMode) {
 
     if (preferencesLink) {
         preferencesLink.style.color = theme.exteriorTextColor;
-        preferencesLink.style.textDecoration = 'none';
         const luminance = calculateLuminance(theme.exteriorTextColor);
         preferencesLink.classList.remove('brighten-on-hover', 'darken-on-hover');
         preferencesLink.classList.add(luminance > 0.92 ? 'darken-on-hover' : 'brighten-on-hover');
@@ -77,29 +75,35 @@ export function applyTheme(currentMode) {
         profileIcon.classList.add(luminance > 0.92 ? 'darken-on-hover' : 'brighten-on-hover');
     }
 
-    // Synchronize hover effects
-    if (authLink && profileIcon) {
-        authLink.removeEventListener('mouseover', syncHoverOn);
-        authLink.removeEventListener('mouseout', syncHoverOff);
+    // Synchronize hover effects for both auth and preferences links
+    const isLoggedIn = window.isLoggedIn || false;
+    const activeLink = isLoggedIn ? preferencesLink : authLink;
+    console.debug(`[applyTheme] isLoggedIn: ${isLoggedIn}, activeLink: ${activeLink ? activeLink.textContent : 'null'}`);
+    if (activeLink && profileIcon) {
+        // Remove existing listeners to prevent duplicates
+        activeLink.removeEventListener('mouseover', syncHoverOn);
+        activeLink.removeEventListener('mouseout', syncHoverOff);
         profileIcon.removeEventListener('mouseover', syncHoverOn);
         profileIcon.removeEventListener('mouseout', syncHoverOff);
 
-        authLink.addEventListener('mouseover', syncHoverOn);
-        authLink.addEventListener('mouseout', syncHoverOff);
-        profileIcon.addEventListener('mouseover', syncHoverOn);
-        profileIcon.addEventListener('mouseout', syncHoverOff);
-    }
+        // Add synchronized hover listeners
+        const hoverHandler = (e) => {
+            console.debug(`[hover] ${e.type} on ${e.target.id || e.target.tagName}, syncing hover`);
+            activeLink.classList.add('hover');
+            profileIcon.classList.add('hover');
+        };
+        const hoverOffHandler = (e) => {
+            console.debug(`[hover] ${e.type} on ${e.target.id || e.target.tagName}, removing hover`);
+            activeLink.classList.remove('hover');
+            profileIcon.classList.remove('hover');
+        };
 
-    if (preferencesLink && profileIcon) {
-        preferencesLink.removeEventListener('mouseover', syncHoverOn);
-        preferencesLink.removeEventListener('mouseout', syncHoverOff);
-        profileIcon.removeEventListener('mouseover', syncHoverOn);
-        profileIcon.removeEventListener('mouseout', syncHoverOff);
-
-        preferencesLink.addEventListener('mouseover', syncHoverOn);
-        preferencesLink.addEventListener('mouseout', syncHoverOff);
-        profileIcon.addEventListener('mouseover', syncHoverOn);
-        profileIcon.addEventListener('mouseout', syncHoverOff);
+        activeLink.addEventListener('mouseover', hoverHandler);
+        activeLink.addEventListener('mouseout', hoverOffHandler);
+        profileIcon.addEventListener('mouseover', hoverHandler);
+        profileIcon.addEventListener('mouseout', hoverOffHandler);
+    } else {
+        console.debug(`[applyTheme] No hover sync: activeLink=${activeLink ? 'exists' : 'null'}, profileIcon=${profileIcon ? 'exists' : 'null'}`);
     }
 
     // Apply interior styles
@@ -108,7 +112,7 @@ export function applyTheme(currentMode) {
     document.getElementById("song-title").style.color = theme.interiorTextColor;
 
     // Update profile bitmap based on login status
-    window.renderProfileBitmap(theme.exteriorTextColor, window.isLoggedIn || false);
+    window.renderProfileBitmap(theme.exteriorTextColor, isLoggedIn);
 
     // Update color toggle button
     const nextIndex = (currentThemeIndex + 1) % baseColorSchemes.length;

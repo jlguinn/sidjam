@@ -37,7 +37,7 @@ body {
 }
 
 #auth-link a {
-    color: #0000FF; /* Fallback color until theme applies */
+    color: inherit; /* Fallback until theme applies */
     text-decoration: underline;
     cursor: pointer;
     transition: filter 0.3s ease;
