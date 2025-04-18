@@ -84,8 +84,8 @@ export function applyTheme(currentMode) {
     document.getElementById("track-details").style.color = theme.interiorTextColor;
     document.getElementById("song-title").style.color = theme.interiorTextColor;
 
-    // Update profile bitmap
-    window.renderProfileBitmap(theme.exteriorTextColor);
+    // Update profile bitmap based on login status
+    window.renderProfileBitmap(theme.exteriorTextColor, window.isLoggedIn || false);
 
     // Update color toggle button
     const nextIndex = (currentThemeIndex + 1) % baseColorSchemes.length;

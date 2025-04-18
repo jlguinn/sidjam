@@ -1,4 +1,3 @@
-/* script.js (2) */
 window.sidJamData = {
     sidFiles: [],
     cachedResults: {},
@@ -71,6 +70,27 @@ function checkSong2Clipping() {
     }
 }
 
+const guestBitmap = [
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,1,1,1,0,0,0,0,0,0],
+    [0,0,0,0,1,1,1,1,1,1,1,0,0,0,0],
+    [0,0,0,0,1,1,1,1,1,1,1,0,0,0,0],
+    [0,0,0,1,1,1,1,1,1,1,1,1,0,0,0],
+    [0,0,0,1,1,1,1,1,1,1,1,1,0,0,0],
+    [0,0,0,1,1,1,1,1,1,1,1,1,0,0,0],
+    [0,0,0,1,1,1,1,1,1,1,1,1,0,0,0],
+    [0,0,0,0,1,1,1,1,1,1,1,0,0,0,0],
+    [0,0,0,0,1,1,1,1,1,1,1,0,0,0,0],
+    [0,0,0,0,0,1,1,1,1,1,0,0,0,0,0],
+    [0,0,0,0,0,1,1,1,1,1,0,0,0,0,0],
+    [0,0,0,1,1,1,1,1,1,1,1,1,0,0,0],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+];
+
 const profileBitmap = [
     [0,0,0,0,1,1,1,1,1,1,1,0,0,0,0],
     [0,0,1,1,0,0,0,0,0,0,0,1,1,0,0],
@@ -92,7 +112,7 @@ const profileBitmap = [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ];
 
-window.renderProfileBitmap = function(textColor) {
+window.renderProfileBitmap = function(textColor, isLoggedIn = window.isLoggedIn || false) {
     const bitmapContainer = document.getElementById('profile-bitmap');
     if (!bitmapContainer) {
         console.error('Profile bitmap container not found.');
@@ -100,12 +120,14 @@ window.renderProfileBitmap = function(textColor) {
     }
     bitmapContainer.innerHTML = '';
 
+    const bitmap = isLoggedIn ? profileBitmap : guestBitmap;
+
     for (let row = 0; row < 18; row++) {
         for (let col = 0; col < 15; col++) {
             const pixel = document.createElement('div');
             pixel.style.width = '4px';
             pixel.style.height = '4px';
-            pixel.style.backgroundColor = profileBitmap[row][col] === 1 ? textColor : 'transparent';
+            pixel.style.backgroundColor = bitmap[row][col] === 1 ? textColor : 'transparent';
             bitmapContainer.appendChild(pixel);
         }
     }
@@ -1100,7 +1122,7 @@ async function initializeApp() {
     button.title = `Switch Theme \n  From: ${currentTheme.name}\n  To: ${nextTheme.name}`;
 
     const initialColor = baseColorSchemes[ui.getCurrentThemeIndex()].exteriorTextColor || '#000000';
-    window.renderProfileBitmap(initialColor);
+    window.renderProfileBitmap(initialColor, window.isLoggedIn || false);
 
     checkSong2Clipping();
 }
