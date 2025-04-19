@@ -112,7 +112,26 @@ body {
 #flame-controls.hidden { display: none; }
 #flameButton { width: 30px; height: 60px; border: none; background: url('../image/Flame-01-june.gif'); cursor: pointer; vertical-align: middle; padding: 0; background-size: contain; background-repeat: no-repeat; background-position: center; }
 #flameButton:disabled { opacity: 0.5; cursor: not-allowed; }
-#reviveButton { padding: 5px 10px; cursor: pointer; }
+#reviveButton {
+    display: none;
+    width: 80px;
+    height: 80px;
+    position: absolute;
+    left: 100%; /* Places Revive immediately to the right of jAM */
+    margin-left: 20px; /* Small gap between jAM and Revive */
+    top: -30px; /* Align halo with middle of jAM button */
+}
+
+#reviveButton:hover {
+    filter: brightness(1.2);
+    cursor: pointer;
+}
+
+#reviveButton.disabled {
+    filter: grayscale(70%) brightness(0.7);
+    cursor: not-allowed;
+}
+
 #color-toggle {
     position: absolute;
     top: 340px; /* Just below the bottom of #player-info */

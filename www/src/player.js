@@ -78,6 +78,7 @@ export function togglePlayPause(updateRoundInfo, updatePlayPauseButton, updateWi
     if (!sidPlayer) {
         initPlayerFn();
         console.log("Note: Please ignore ScriptProcessorNode Deprecation warning. We will not be remediating at this time.");
+        window.logmsg("[>]",1);
     } else if (isPlaying) {
         sidPlayer.pause();
         setIsPlaying(false);
@@ -95,6 +96,7 @@ export function togglePlayPause(updateRoundInfo, updatePlayPauseButton, updateWi
     document.getElementById("flameButton").disabled = false;
     document.getElementById("prevButton").disabled = false;
     document.getElementById("nextButton").disabled = false;
+    document.getElementById("reviveButton").classList.remove("disabled");
     updateFlameButton();
 }
 

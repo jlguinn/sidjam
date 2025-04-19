@@ -185,7 +185,7 @@ $cxn->close();
         <div id="flame-wrapper">
             <div id="flame-controls">
                 <button id="flameButton" onclick="window.toggleFlame()" disabled></button>
-                <button id="reviveButton" style="display: none;" onclick="window.toggleRevive()">Revive</button>
+                <img src="/image/revive.png" id="reviveButton" class="disabled">
             </div>
         </div>
     </div>
