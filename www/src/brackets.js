@@ -166,12 +166,10 @@ export function pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerBut
   console.log("- vs -");
   console.log(`${window.sidJamData.pathToId[playerState.contenders[1]]} ${playerState.contenders[1]}`);
 
-  // Remove direct DOM updates
-  // Let updateVsMatchup handle song1 and song2 rendering
   updateRoundInfo();
   updateVsMatchup();
   updateWinnerButtons();
-  updateFlameButton();
+  updateFlameButton(playerState, sidPlayer);
   return true;
 }
 
@@ -267,7 +265,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
     updateVsMatchup();
     updateRoundInfo();
     updateWinnerButtons();
-    updateFlameButton();
+    updateFlameButton(playerState, sidPlayer);
     if (shouldUpdateBracketDropdown) {
       updateBracketDropdown();
       document.getElementById("bracket-select").value = playerState.peekBracket.replace(' - ', '-');
@@ -398,12 +396,12 @@ export function updateWinner(contenderIndex, updateRoundInfo, updateWinnerButton
   }
   updateRoundInfo();
   updateWinnerButtons();
-  updateFlameButton();
+  updateFlameButton(playerState, sidPlayer);
 }
 
 export function toggleFlame(updateFlameButton, updateVsMatchup, updateWinnerButtons) {
   updatePlayerState({ isFlameActive: !playerState.isFlameActive });
-  updateFlameButton();
+  updateFlameButton(playerState, sidPlayer);
   updateVsMatchup();
   updateWinnerButtons();
 }
@@ -443,7 +441,7 @@ export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, upda
 
   if (playerState.currentMode === "nowPlaying") {
     debug(`Staying in Now Playing mode, updating to ${newBracket}`);
-    updateFlameButton();
+    updateFlameButton(playerState, sidPlayer);
     return;
   }
 

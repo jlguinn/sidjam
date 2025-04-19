@@ -244,17 +244,17 @@ export function updateWinnerButtons(hasPlayed, roundCount, hasJammed, isFlameAct
     document.getElementById("jamButton").disabled = !sidPlayer;
 }
 
-export function updateFlameButton(currentMode, peekBracket, nowPlayingSong, winner, bothContendersSelected, isFlameActive, hasPlayed, contenders, sidPlayer) {
+export function updateFlameButton(playerState, sidPlayer) {
     const flameControls = document.getElementById("flame-controls");
     const flameButton = document.getElementById("flameButton");
     const reviveButton = document.getElementById("reviveButton");
 
-    if (currentMode === "nowPlaying") {
-        if (peekBracket === "Eliminated" && nowPlayingSong && brackets.getPlayerState().isReviveActive) {
+    if (playerState.currentMode === "nowPlaying") {
+        if (playerState.peekBracket === "Eliminated" && playerState.nowPlayingSong && playerState.isReviveActive) {
             flameControls.classList.remove("hidden");
             flameButton.style.display = "none";
             reviveButton.style.display = "block";
-            updateReviveButton(brackets.getPlayerState().isReviveActive);
+            updateReviveButton(playerState.isReviveActive);
             return;
         }
         flameControls.classList.add("hidden");
@@ -263,7 +263,7 @@ export function updateFlameButton(currentMode, peekBracket, nowPlayingSong, winn
         return;
     }
 
-    if (peekBracket === "0 - 0") {
+    if (playerState.peekBracket === "0 - 0") {
         flameControls.classList.remove("hidden");
         flameButton.style.display = "block";
         reviveButton.style.display = "none";
@@ -274,14 +274,14 @@ export function updateFlameButton(currentMode, peekBracket, nowPlayingSong, winn
         return;
     }
 
-    if (winner !== null || bothContendersSelected) {
+    if (playerState.winner !== null || playerState.bothContendersSelected) {
         flameButton.disabled = true;
     } else {
-        const availableSongs = window.sidJamData.sidFiles.filter(song => !contenders.includes(song));
-        flameButton.disabled = !hasPlayed || availableSongs.length === 0;
+        const availableSongs = window.sidJamData.sidFiles.filter(song => !playerState.contenders.includes(song));
+        flameButton.disabled = !playerState.hasPlayed || availableSongs.length === 0;
     }
 
-    flameButton.style.backgroundImage = isFlameActive ? "url('/image/Flame-01-june.gif')" : "url('/image/Flame-01-june.jpg')";
+    flameButton.style.backgroundImage = playerState.isFlameActive ? "url('/image/Flame-01-june.gif')" : "url('/image/Flame-01-june.jpg')";
 }
 
 export function updateReviveButton(isReviveActive) {

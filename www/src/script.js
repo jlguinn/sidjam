@@ -163,11 +163,7 @@ const updateWinnerButtonsBound = () => ui.updateWinnerButtons(
     brackets.getPlayerState().isFlameActive, player.sidPlayer
 );
 
-const updateFlameButtonBound = () => ui.updateFlameButton(
-    brackets.getPlayerState().currentMode, brackets.getPlayerState().peekBracket, brackets.getPlayerState().nowPlayingSong,
-    brackets.getPlayerState().winner, brackets.getPlayerState().bothContendersSelected, brackets.getPlayerState().isFlameActive,
-    brackets.getPlayerState().hasPlayed, brackets.getPlayerState().contenders, player.sidPlayer
-);
+const updateFlameButtonBound = () => ui.updateFlameButton(brackets.getPlayerState(), player.sidPlayer);
 
 window.togglePlayPause = () => {
     player.togglePlayPause(
