@@ -5,7 +5,7 @@ export let currentThemeIndex = 0;
 
 export function setCurrentThemeIndex(index) {
     currentThemeIndex = index;
-    debug(`Theme index set to ${index}`);
+    // debug(`Theme index set to ${index}`);
 }
 
 export function getCurrentThemeIndex() {
@@ -306,8 +306,8 @@ export function updateSongTitleHighlight(currentMode, isReviveActive) {
 }
 
 export function toggleColorScheme(currentMode) {
-    const baseTheme = baseColorSchemes[currentThemeIndex];
     setCurrentThemeIndex((currentThemeIndex + 1) % baseColorSchemes.length);
+    const currentBaseTheme = baseColorSchemes[currentThemeIndex]; // Use the updated index
     applyTheme(currentMode);
 
     const nextIndex = (getCurrentThemeIndex() + 1) % baseColorSchemes.length;
@@ -316,10 +316,9 @@ export function toggleColorScheme(currentMode) {
     const button = document.getElementById("colorButton");
     button.style.backgroundColor = nextTheme.exterior;
     button.querySelector('.inner-box').style.backgroundColor = nextTheme.interior;
-    button.title = `Switch Theme \n  From: ${baseTheme.name}\n  To: ${nextBaseTheme.name}`;
-    debug(`Theme switched to ${baseTheme.name} (index ${getCurrentThemeIndex()}).`);
+    button.title = `Switch Theme \n  From: ${currentBaseTheme.name}\n  To: ${nextBaseTheme.name}`; // Use currentBaseTheme
+    debug(`Theme switched to ${currentBaseTheme.name} (index ${getCurrentThemeIndex()}).`);
 
-    // Force re-render of vs-matchup to ensure text colors update
     const playerState = brackets.getPlayerState();
     updateVsMatchup(playerState);
 }
