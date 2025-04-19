@@ -1,7 +1,9 @@
+/*
 window.logmsg = function(msg, msgLogLevel = 0) {
     const PLAYER_LOG_LEVEL = typeof window.LOG_LEVEL === 'number' ? window.LOG_LEVEL : 0;
     if (PLAYER_LOG_LEVEL >= msgLogLevel) console.log(msg);
 };
+*/
 
 window.sidJamData = {
     sidFiles: [],
@@ -1016,7 +1018,7 @@ async function initializeApp() {
 
     if (userInfo) {
         userInfo.addEventListener('click', (e) => {
-            debug(`user-info clicked, target: ${e.target.id}`);
+            window.logmsg(`user-info clicked, target: ${e.target.id}`);
         });
     }
 
@@ -1080,7 +1082,7 @@ async function initializeApp() {
             updateWinnerButtonsBound();
             updateFlameButtonBound();
         } else {
-            debug("Initializing with default player state");
+            window.logmsg("Initializing with default player state");
             brackets.updatePlayerState({
                 contenders: [],
                 peekBracket: "0 - 0",

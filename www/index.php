@@ -3,7 +3,6 @@
 $debug_enabled = true; // Change to false to disable debugging
 $log_level = 0; // 0 terse (default); 1 verbose; 2 debugging; -1 silent
 
-
 // Set session cookie lifetime to 30 days
 session_set_cookie_params(30 * 24 * 60 * 60);
 session_start();
@@ -103,7 +102,11 @@ $cxn->close();
         window.isLoggedIn = <?php echo json_encode($is_logged_in); ?>;
         window.DEBUG_ENABLED = <?php echo json_encode($debug_enabled); ?>; 
         window.LOG_LEVEL = <?php echo json_encode($log_level); ?> 
-        console.log("sID JAm Version (ALPHA) 2025.03.19a");
+        window.logmsg = function(msg, msgLogLevel = 0) {
+            const PLAYER_LOG_LEVEL = typeof window.LOG_LEVEL === 'number' ? window.LOG_LEVEL : 0;
+            if (PLAYER_LOG_LEVEL >= msgLogLevel) console.log(msg);
+        };
+        console.log("sID JAm Version (ALPHA) 2025.04.19a");
     </script>
     <script type="module" src="src/script.js"></script>
 </head>

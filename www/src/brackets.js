@@ -3,9 +3,9 @@ import { applyTheme } from './ui.js';
 
 const USE_DETERMINISTIC_RANDOM = false;
 if (USE_DETERMINISTIC_RANDOM) {
-    debug("Using deterministic draws...");
+    window.logmsg("Using deterministic draws...");
 } else {
-    debug("Using random draws...");
+    window.logmsg("Using random draws...");
 }
 
 class SeededRandom {
@@ -69,7 +69,7 @@ export function getPlayerState() {
 
 export function updatePlayerState(updates) {
     playerState = { ...playerState, ...updates };
-    // debug(`Updated playerState: ${JSON.stringify(playerState)}`);
+    // window.logmsg(`Updated playerState: ${JSON.stringify(playerState)}`);
 }
 
 export function isSpecialBracket(bracket) {
@@ -108,13 +108,13 @@ export function findEligibleBracket() {
 
     let eligibleBrackets = Object.keys(brackets).filter(key => getContenderCount(key) >= 2);
     if (eligibleBrackets.length === 0) {
-        debug("No eligible brackets found");
+        window.logmsg("No eligible brackets found");
         return null;
     }
 
     eligibleBrackets.sort((a, b) => getContenderCount(b) - getContenderCount(a));
     let selectedBracket = eligibleBrackets[0];
-    debug(`Selected bracket: ${selectedBracket} with ${getContenderCount(selectedBracket)} contenders`);
+    window.logmsg(`Selected bracket: ${selectedBracket} with ${getContenderCount(selectedBracket)} contenders`);
     return selectedBracket;
 }
 
@@ -245,7 +245,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                         shouldUpdateBracketDropdown = true;
                         pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
                     } else {
-                        debug("No eligible brackets, stopping");
+                        window.logmsg("No eligible brackets, stopping");
                         return;
                     }
                 }
@@ -268,7 +268,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                     shouldUpdateBracketDropdown = true;
                     pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
                 } else {
-                    debug("No eligible brackets, stopping");
+                    window.logmsg("No eligible brackets, stopping");
                     return;
                 }
             } else {
@@ -318,7 +318,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
 
                 let availableSongs = window.sidJamData.sidFiles.filter(song => !playerState.contenders.includes(song));
                 if (availableSongs.length === 0) {
-                    debug("No songs to replace flamed song");
+                    window.logmsg("No songs to replace flamed song");
                     updatePlayerState({ contenders: playerState.contenders.map((c, i) => i === flamedIndex ? null : c) });
                 } else {
                     let newSongIndex = getRandom.randint(0, availableSongs.length - 1);
@@ -358,7 +358,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                     shouldUpdateBracketDropdown = true;
                     pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
                 } else {
-                    debug("No eligible brackets, stopping");
+                    window.logmsg("No eligible brackets, stopping");
                     return;
                 }
             }
@@ -460,7 +460,7 @@ export function toggleRevive(updateReviveButton, updateSongTitleHighlight) {
         })
         .catch(error => console.error('Error resetting result:', error));
     } else {
-        debug('Skipping revive: pathToId or nowPlayingSong not ready');
+        window.logmsg('Skipping revive: pathToId or nowPlayingSong not ready');
     }
 }
 
@@ -474,7 +474,7 @@ export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, upda
     updatePlayerState({ peekBracket: newBracket });
 
     if (playerState.currentMode === "nowPlaying") {
-        debug(`Staying in Now Playing mode, updating to ${newBracket}`);
+        window.logmsg(`Staying in Now Playing mode, updating to ${newBracket}`);
         updateFlameButton(playerState, sidPlayer);
         return;
     }
@@ -486,7 +486,7 @@ export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, upda
     }
 
     if (contenderCount < 1) {
-        debug(`No contenders in ${newBracket}, reverting to ${playerState.activeBracket}`);
+        window.logmsg(`No contenders in ${newBracket}, reverting to ${playerState.activeBracket}`);
         updatePlayerState({ peekBracket: playerState.activeBracket });
         updateBracketDropdown();
         return;
@@ -500,7 +500,7 @@ export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, upda
     });
     let success = pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
     if (!success) {
-        debug(`Failed to pick contenders for ${newBracket}, reverting`);
+        window.logmsg(`Failed to pick contenders for ${newBracket}, reverting`);
         updatePlayerState({ peekBracket: playerState.activeBracket });
         updateBracketDropdown();
         return;
@@ -543,12 +543,12 @@ export async function logResult() {
             body: JSON.stringify({ user_id: window.user.id, votes })
         })
         .then(response => {
-            debug(`log_result.php response status: ${response.status}`);
+            window.logmsg(`log_result.php response status: ${response.status}`);
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
             return response.json();
         })
         .then(data => {
-            debug(`log_result.php response data: ${JSON.stringify(data)}`);
+            window.logmsg(`log_result.php response data: ${JSON.stringify(data)}`);
             if (data.success) return fetch(`dbcontrol/get_results.php?user_id=${window.user.id}`);
             throw new Error('Failed to log result');
         })
@@ -566,7 +566,7 @@ export async function logResult() {
             if (voteCount === 3 && !window.isLoggedIn) {
                 window.showPromptMessage = true;
                 window.flashProfileIcon();
-                debug("Prompt triggered: flashing icon and enabling scrolling message");
+                window.logmsg("Prompt triggered: flashing icon and enabling scrolling message");
             }
         })
         .catch(error => {

@@ -5,14 +5,13 @@ export let currentThemeIndex = 0;
 
 export function setCurrentThemeIndex(index) {
     currentThemeIndex = index;
-    // debug(`Theme index set to ${index}`);
 }
 
 export function getCurrentThemeIndex() {
     return currentThemeIndex;
 }
 
-export function debug(message) { console.log(`[DEBUG] ${message}`); }
+// export function  debug(message) { console.log(`[DEBUG] ${message}`); }
 
 // Utility function to calculate luminance of a hex color
 function calculateLuminance(hexColor) {
@@ -78,7 +77,7 @@ export function applyTheme(currentMode) {
     // Synchronize hover effects for both auth and preferences links
     const isLoggedIn = window.isLoggedIn || false;
     const activeLink = isLoggedIn ? preferencesLink : authLink;
-    console.debug(`[applyTheme] isLoggedIn: ${isLoggedIn}, activeLink: ${activeLink ? activeLink.textContent : 'null'}`);
+    // // console.// debug(`[applyTheme] isLoggedIn: ${isLoggedIn}, activeLink: ${activeLink ? activeLink.textContent : 'null'}`);
     if (activeLink && profileIcon) {
         // Remove existing listeners to prevent duplicates
         activeLink.removeEventListener('mouseover', syncHoverOn);
@@ -88,12 +87,12 @@ export function applyTheme(currentMode) {
 
         // Add synchronized hover listeners
         const hoverHandler = (e) => {
-            console.debug(`[hover] ${e.type} on ${e.target.id || e.target.tagName}, syncing hover`);
+            // console.// debug(`[hover] ${e.type} on ${e.target.id || e.target.tagName}, syncing hover`);
             activeLink.classList.add('hover');
             profileIcon.classList.add('hover');
         };
         const hoverOffHandler = (e) => {
-            console.debug(`[hover] ${e.type} on ${e.target.id || e.target.tagName}, removing hover`);
+            // console.// debug(`[hover] ${e.type} on ${e.target.id || e.target.tagName}, removing hover`);
             activeLink.classList.remove('hover');
             profileIcon.classList.remove('hover');
         };
@@ -103,7 +102,7 @@ export function applyTheme(currentMode) {
         profileIcon.addEventListener('mouseover', hoverHandler);
         profileIcon.addEventListener('mouseout', hoverOffHandler);
     } else {
-        console.debug(`[applyTheme] No hover sync: activeLink=${activeLink ? 'exists' : 'null'}, profileIcon=${profileIcon ? 'exists' : 'null'}`);
+        // console.// debug(`[applyTheme] No hover sync: activeLink=${activeLink ? 'exists' : 'null'}, profileIcon=${profileIcon ? 'exists' : 'null'}`);
     }
 
     // Apply interior styles
@@ -325,7 +324,7 @@ export function toggleColorScheme(currentMode) {
     button.style.backgroundColor = nextTheme.exterior;
     button.querySelector('.inner-box').style.backgroundColor = nextTheme.interior;
     button.title = `Switch Theme \n  From: ${currentBaseTheme.name}\n  To: ${nextBaseTheme.name}`; // Use currentBaseTheme
-    debug(`Theme switched to ${currentBaseTheme.name} (index ${getCurrentThemeIndex()}).`);
+    // debug(`Theme switched to ${currentBaseTheme.name} (index ${getCurrentThemeIndex()}).`);
 
     const playerState = brackets.getPlayerState();
     updateVsMatchup(playerState);

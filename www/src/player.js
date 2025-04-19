@@ -56,7 +56,7 @@ export function initPlayer(getPlayerState, updateWinnerButtons, updateFlameButto
     const state = getPlayerState();
     let BASIC_ROM, KERNAL_ROM, CHAR_ROM;
     window.backend = new SIDBackendAdapter(BASIC_ROM, CHAR_ROM, KERNAL_ROM);
-    let onTrackEnd = () => debug("Track ended - stopping music");
+    let onTrackEnd = () => window.logmsg("Track ended - stopping music");
 
     ScriptNodePlayer.initialize(window.backend, onTrackEnd).then((msg) => {
         sidPlayer = ScriptNodePlayer.getInstance();
@@ -67,7 +67,7 @@ export function initPlayer(getPlayerState, updateWinnerButtons, updateFlameButto
         } else if (state.peekPlayingSong) {
             loadSongBound(state.peekPlayingSong, -1);
         } else {
-            debug("No contenders or songs available to load");
+            window.logmsg("No contenders or songs available to load");
         }
         updateWinnerButtons();
         updateFlameButton();
