@@ -245,7 +245,8 @@ function toggleSongList() {
                 contenders: state.contenders,
                 activeContender: 0,
                 currentMode: "bout",
-                peekPlayingSong: null
+                peekPlayingSong: null,
+                nowPlayingSongBracket: null // Reset since we're leaving Peek Mode
             });
             loadSongBound(state.contenders[0], -1, false);
         }
@@ -398,7 +399,11 @@ function playSongOnDemand(filename) {
         enterNowPlayingMode(filename);
         return;
     }
-    brackets.updatePlayerState({ peekPlayingSong: filename });
+    const songBracket = brackets.getSongBracket(filename); // Calculate bracket
+    brackets.updatePlayerState({ 
+        peekPlayingSong: filename,
+        nowPlayingSongBracket: songBracket // Update bracket
+    });
     if (player.sidPlayer && player.isPlaying) {
         player.sidPlayer.pause();
         player.setIsPlaying(false);
@@ -411,10 +416,12 @@ function playSongOnDemand(filename) {
 
 function enterNowPlayingMode(song) {
     const state = brackets.getPlayerState();
+    const songBracket = brackets.getSongBracket(song); // Calculate bracket
     brackets.updatePlayerState({
         currentMode: "nowPlaying",
         nowPlayingSong: song,
-        peekPlayingSong: null
+        peekPlayingSong: null,
+        nowPlayingSongBracket: songBracket // Update bracket
     });
     if (player.sidPlayer && player.isPlaying) {
         player.sidPlayer.pause();
@@ -1029,10 +1036,11 @@ async function initializeApp() {
         if (player_state && player_state.contenders && player_state.currentMode === "bout" && player_state.contenders[0] && player_state.contenders[1]) {
             brackets.updatePlayerState({
                 contenders: player_state.contenders,
-                peekBracket: player_state.activeBracket, // Use activeBracket for Bout Mode
+                peekBracket: player_state.activeBracket,
                 activeBracket: player_state.activeBracket,
                 currentMode: "bout",
                 nowPlayingSong: null,
+                nowPlayingSongBracket: null, // Reset since no song is playing
                 activeContender: 0,
                 hasJammed: false,
                 bothContendersSelected: false,
@@ -1046,12 +1054,14 @@ async function initializeApp() {
             updateWinnerButtonsBound();
             updateFlameButtonBound();
         } else if (player_state && player_state.currentMode === "nowPlaying" && player_state.nowPlayingSong) {
+            const nowPlayingSongBracket = brackets.getSongBracket(player_state.nowPlayingSong); // Calculate bracket
             brackets.updatePlayerState({
                 contenders: player_state.contenders || [],
-                peekBracket: player_state.peekBracket, // Restore peekBracket in Now Playing Mode
+                peekBracket: player_state.peekBracket,
                 activeBracket: player_state.activeBracket,
                 currentMode: "nowPlaying",
-                nowPlayingSong: player_state.nowPlayingSong
+                nowPlayingSong: player_state.nowPlayingSong,
+                nowPlayingSongBracket: nowPlayingSongBracket // Set the bracket
             });
             ui.setCurrentThemeIndex(player_state.theme || 0);
             loadSongBound(player_state.nowPlayingSong, -1, false);
@@ -1064,9 +1074,19 @@ async function initializeApp() {
         } else {
             debug("Initializing with default player state");
             brackets.updatePlayerState({
+                contenders: [],
                 peekBracket: "0 - 0",
                 activeBracket: "0 - 0",
-                currentMode: "bout"
+                currentMode: "bout",
+                activeContender: 0,
+                roundCount: 1,
+                winner: null,
+                hasPlayed: false,
+                hasJammed: false,
+                bothContendersSelected: false,
+                isFlameActive: false,
+                nowPlayingSong: null,
+                nowPlayingSongBracket: null // Initialize as null
             });
             ui.setCurrentThemeIndex(0);
             brackets.updateBracketDropdown();

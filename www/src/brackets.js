@@ -57,7 +57,8 @@ export let playerState = {
     activeBracket: "0 - 0",
     currentMode: "bout",
     nowPlayingSong: null,
-    peekPlayingSong: null
+    peekPlayingSong: null,
+    nowPlayingSongBracket: null
 };
 
 export function debug(message) { console.log(`[DEBUG] ${message}`); }
@@ -115,6 +116,18 @@ export function findEligibleBracket() {
     let selectedBracket = eligibleBrackets[0];
     debug(`Selected bracket: ${selectedBracket} with ${getContenderCount(selectedBracket)} contenders`);
     return selectedBracket;
+}
+
+export function getSongBracket(song) {
+    if (!song || !window.sidJamData.cachedResults) {
+        return null;
+    }
+
+    const record = window.sidJamData.cachedResults[song] || { wins: 0, losses: 0 };
+    if (record.losses >= 2) {
+        return "Eliminated";
+    }
+    return `${record.wins} - ${record.losses}`;
 }
 
 function shuffleArray(array) {
@@ -189,7 +202,9 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                     currentMode: "bout",
                     peekBracket: "0 - 0",
                     contenders: [playerState.nowPlayingSong],
-                    isReviveActive: false
+                    isReviveActive: false,
+                    nowPlayingSong: null, // Placeholder until we implement Revive
+                    nowPlayingSongBracket: null // Placeholder until we implement Revive
                 });
                 let availableSongs = window.sidJamData.sidFiles.filter(song => song !== playerState.nowPlayingSong && (window.sidJamData.cachedResults[song] || { wins: 0, losses: 0 }).wins === 0 && (window.sidJamData.cachedResults[song] || { wins: 0, losses: 0 }).losses === 0);
                 if (availableSongs.length > 0) {
@@ -204,6 +219,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
             updatePlayerState({
                 currentMode: "bout",
                 nowPlayingSong: null,
+                nowPlayingSongBracket: null, // Reset since we're leaving Now Playing Mode
                 peekBracket: playerState.peekBracket,
                 activeBracket: playerState.activeBracket,
                 activeContender: 0,
