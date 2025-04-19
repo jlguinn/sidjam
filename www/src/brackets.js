@@ -200,11 +200,12 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
             if (getContenderCount("0 - 0") >= 2) {
                 updatePlayerState({
                     currentMode: "bout",
-                    peekBracket: "0 - 0",
+                    peekBracket: "0 - 0", // After revive, peekBracket should be set to "0 - 0"
+                    activeBracket: "0 - 0", // Ensure activeBracket is also updated
                     contenders: [playerState.nowPlayingSong],
                     isReviveActive: false,
-                    nowPlayingSong: null, // Placeholder until we implement Revive
-                    nowPlayingSongBracket: null // Placeholder until we implement Revive
+                    nowPlayingSong: null,
+                    nowPlayingSongBracket: null
                 });
                 let availableSongs = window.sidJamData.sidFiles.filter(song => song !== playerState.nowPlayingSong && (window.sidJamData.cachedResults[song] || { wins: 0, losses: 0 }).wins === 0 && (window.sidJamData.cachedResults[song] || { wins: 0, losses: 0 }).losses === 0);
                 if (availableSongs.length > 0) {
@@ -216,11 +217,12 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
         }
 
         if (!revivedToZeroZero) {
+            // Ensure peekBracket is set to activeBracket when returning to Bout Mode
             updatePlayerState({
                 currentMode: "bout",
                 nowPlayingSong: null,
-                nowPlayingSongBracket: null, // Reset since we're leaving Now Playing Mode
-                peekBracket: playerState.peekBracket,
+                nowPlayingSongBracket: null,
+                peekBracket: playerState.activeBracket, // Explicitly set peekBracket to activeBracket
                 activeBracket: playerState.activeBracket,
                 activeContender: 0,
                 roundCount: 1,
@@ -233,7 +235,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 playerState.contenders.every(c => window.sidJamData.sidFiles.includes(c)) &&
                 getContenderCount(playerState.activeBracket) >= 2) {
                 loadSong(playerState.contenders[0], -1);
-                updatePlayerState({ hasPlayed: true }); // Fix: Set hasPlayed
+                updatePlayerState({ hasPlayed: true });
             } else {
                 let success = pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
                 if (!success) {
@@ -250,6 +252,8 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
             }
         } else {
             updatePlayerState({
+                peekBracket: "0 - 0", // After revive, ensure peekBracket is set correctly
+                activeBracket: "0 - 0",
                 activeContender: 0,
                 roundCount: 1,
                 winner: null,
@@ -269,7 +273,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 }
             } else {
                 loadSong(playerState.contenders[0], -1);
-                updatePlayerState({ hasPlayed: true }); // Fix: Set hasPlayed
+                updatePlayerState({ hasPlayed: true });
             }
         }
         applyTheme("bout");
@@ -277,6 +281,8 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
         updateRoundInfo(playerState);
         updateWinnerButtons(playerState, sidPlayer);
         updateFlameButton(playerState, sidPlayer);
+        // Ensure the UI reflects the updated peekBracket
+        shouldUpdateBracketDropdown = true; // Force dropdown update
         if (shouldUpdateBracketDropdown) {
             updateBracketDropdown();
             document.getElementById("bracket-select").value = playerState.peekBracket.replace(' - ', '-');
@@ -323,7 +329,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
 
                     updatePlayerState({ contenders: playerState.contenders.map((c, i) => i === flamedIndex ? newSong : c) });
                     loadSong(newSong, -1);
-                    updatePlayerState({ hasPlayed: true }); // Fix: Set hasPlayed
+                    updatePlayerState({ hasPlayed: true });
                 }
                 updatePlayerState({ isFlameActive: false });
                 updateVsMatchup(playerState);
@@ -357,7 +363,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 }
             }
             loadSong(playerState.contenders[playerState.activeContender], -1);
-            updatePlayerState({ hasPlayed: true }); // Fix: Set hasPlayed
+            updatePlayerState({ hasPlayed: true });
             updateVsMatchup(playerState);
             updateRoundInfo(playerState);
             updateWinnerButtons(playerState, sidPlayer);
@@ -374,7 +380,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
         }
         updatePlayerState({ hasJammed: true });
         loadSong(playerState.contenders[playerState.activeContender], -1);
-        updatePlayerState({ hasPlayed: true }); // Fix: Set hasPlayed
+        updatePlayerState({ hasPlayed: true });
         updateVsMatchup(playerState);
         updateRoundInfo(playerState);
         updateWinnerButtons(playerState, sidPlayer);
