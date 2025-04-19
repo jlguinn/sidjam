@@ -179,7 +179,7 @@ $cxn->close();
             <span id="bracket-label">Bracket</span>
             <div class="bracket-row">
                 <select id="bracket-select" onchange="window.changeBracket()"></select>
-                <button id="ellipsis-button" class="control-button" onclick="window.toggleSongList()" disabled>...</button>
+                <button id="ellipsis-button" onclick="(() => { window.logmsg('[...]', 1); toggleSongList(); })()" disabled>...</button>
             </div>
         </div>
         <div id="flame-wrapper">
@@ -190,14 +190,14 @@ $cxn->close();
         </div>
     </div>
     <div id="songListOverlay">
-        <div id="songListContainer">
-            <button id="closeSongList" onclick="window.toggleSongList()">×</button>
-            <input type="text" id="filterInput" placeholder="Filter songs...">
-            <div id="songListWrapper">
-                <ul id="songList"></ul>
-            </div>
+    <div id="songListContainer">
+        <button id="closeSongList" onclick="(() => { window.logmsg('(x)', 1); window.toggleSongList(); })()">×</button>
+        <input type="text" id="filterInput" placeholder="Filter songs...">
+        <div id="songListWrapper">
+            <ul id="songList"></ul>
         </div>
     </div>
+</div>
     <div id="authOverlay" style="display: none;">
         <div id="authContainer">
             <button id="closeAuth" onclick="window.toggleAuthPopUp()">×</button>

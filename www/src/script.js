@@ -265,7 +265,6 @@ window.toggleColorScheme = () => {
 window.toggleSongList = toggleSongList;
 
 function toggleSongList() {
-    window.logmsg("[...]", 1); 
     const overlay = document.getElementById("songListOverlay");
     const filterInput = document.getElementById("filterInput");
     const songListWrapper = document.getElementById("songListWrapper");
@@ -321,6 +320,7 @@ function handleFilterInput() {
 }
 
 function handleEscapeKey(event) {
+    window.logmsg("[esc]", 1);
     if (event.key === "Escape") {
         toggleSongList();
     }
@@ -385,7 +385,10 @@ function populateSongList(filter) {
                     if (state.peekPlayingSong === file) {
                         li.classList.add("playing");
                     }
-                    li.onclick = () => playSongOnDemand(file);
+                    li.onclick = () => {
+                        window.logmsg(`(>)\n ${file.replace('/sid/C64Music', '')}`, 1); // Log song click
+                        playSongOnDemand(file);
+                    };
                     songList.appendChild(li);
                 });
 
