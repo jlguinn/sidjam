@@ -238,6 +238,14 @@ export function updatePlayPauseButton(isPlaying) {
 }
 
 export function updateWinnerButtons(playerState, sidPlayer) {
+    const winnerControls = document.getElementById("winner-controls");
+    if (playerState.currentMode === "nowPlaying") {
+        winnerControls.style.display = "none";
+        document.getElementById("jamButton").disabled = !sidPlayer;
+        return;
+    }
+
+    winnerControls.style.display = "flex"; // Restore visibility in Bout Mode
     const disabled = !playerState.hasPlayed || (playerState.roundCount === 1 && !playerState.hasJammed) || playerState.isFlameActive;
     document.getElementById("winner0").disabled = disabled;
     document.getElementById("winner1").disabled = disabled;
@@ -250,7 +258,7 @@ export function updateFlameButton(playerState, sidPlayer) {
     const reviveButton = document.getElementById("reviveButton");
 
     if (playerState.currentMode === "nowPlaying") {
-        if (playerState.peekBracket === "Eliminated" && playerState.nowPlayingSong && playerState.isReviveActive) {
+        if (playerState.peekBracket === "Eliminated" && playerState.nowPlayingSong) {
             flameControls.classList.remove("hidden");
             flameButton.style.display = "none";
             reviveButton.style.display = "block";
