@@ -101,6 +101,7 @@ $cxn->close();
 </head>
 <body>
     <div id="header">
+        <button id="log-player-state" title="Log Player State">P</button>
         <div id="title-wrapper">
             <h1 id="title">sID JAm</h1>
         </div>

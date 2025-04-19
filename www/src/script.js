@@ -1147,3 +1147,7 @@ if (document.readyState === 'loading') {
 } else {
     initializeApp();
 }
+
+document.getElementById('log-player-state').addEventListener('click', () => {
+    console.log('[DEBUG] Current playerState:', JSON.stringify(brackets.getPlayerState()));
+});

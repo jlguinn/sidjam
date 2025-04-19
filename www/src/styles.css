@@ -280,3 +280,26 @@ body {
     margin: 0;
     padding: 0;
 }
+
+#log-player-state {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background-color: #333;
+    color: #fff;
+    border: 2px solid #666;
+    border-radius: 4px;
+    font-family: 'Tektur', sans-serif;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 1000;
+}
+
+#log-player-state:hover {
+    background-color: #555;
+    border-color: #999;
+}
