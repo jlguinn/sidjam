@@ -295,7 +295,7 @@ function toggleSongList() {
             // Update player state to clear Peek Mode specifics
             brackets.updatePlayerState({
                 peekPlayingSong: null,
-                nowPlayingSongBracket: null // Reset since we're leaving Peek Mode
+                // nowPlayingSongBracket: null // Reset since we're leaving Peek Mode
             });
 
             // Load and potentially play the appropriate song
@@ -306,7 +306,7 @@ function toggleSongList() {
             // No song was played in Peek Mode, just update the state without interrupting the player
             brackets.updatePlayerState({
                 peekPlayingSong: null,
-                nowPlayingSongBracket: null // Reset since we're leaving Peek Mode
+                // nowPlayingSongBracket: null 
             });
         }
 
