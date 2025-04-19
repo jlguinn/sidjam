@@ -258,7 +258,7 @@ export function updateFlameButton(playerState, sidPlayer) {
     const reviveButton = document.getElementById("reviveButton");
 
     if (playerState.currentMode === "nowPlaying") {
-        if (playerState.peekBracket === "Eliminated" && playerState.nowPlayingSong) {
+        if (playerState.nowPlayingSongBracket === "Eliminated" && playerState.nowPlayingSong) {
             flameControls.classList.remove("hidden");
             flameButton.style.display = "none";
             reviveButton.style.display = "block";
