@@ -161,6 +161,7 @@ const updateWinnerButtonsBound = () => ui.updateWinnerButtons(brackets.getPlayer
 const updateFlameButtonBound = () => ui.updateFlameButton(brackets.getPlayerState(), player.sidPlayer);
 
 window.togglePlayPause = () => {
+    const wasPlaying = player.isPlaying; // Capture state before toggle
     player.togglePlayPause(
         updateRoundInfoBound,
         () => ui.updatePlayPauseButton(player.isPlaying),
@@ -174,11 +175,19 @@ window.togglePlayPause = () => {
         ),
         brackets.updatePlayerState // Pass updatePlayerState
     );
+    // Log based on new state
+    if (player.isPlaying && !wasPlaying) {
+        window.logmsg("[>]", 1); // Log play action
+    } else if (!player.isPlaying && wasPlaying) {
+        window.logmsg("[||]", 1); // Log pause action
+    }
     document.getElementById("ellipsis-button").disabled = false;
 };
 
 
+
 window.jamToggle = () => {
+    window.logmsg("[jAM]", 1); // Log jAM button click
     brackets.jamToggle(
         player.sidPlayer,
         loadSongBound,
@@ -191,35 +200,52 @@ window.jamToggle = () => {
     ).then(() => savePlayerState());
 };
 
-window.setWinner = (index) => brackets.updateWinner(
-    index,
-    updateRoundInfoBound,
-    updateWinnerButtonsBound,
-    updateFlameButtonBound
-);
+window.setWinner = (index) => {
+    window.logmsg(index === 0 ? "[ < Winner]" : "[Winner >]", 1); // Log Winner button click
+    brackets.updateWinner(
+        index,
+        updateRoundInfoBound,
+        updateWinnerButtonsBound,
+        updateFlameButtonBound
+    );
+};
 
-window.toggleFlame = () => brackets.toggleFlame(
-    updateFlameButtonBound,
-    updateVsMatchupBound,
-    updateWinnerButtonsBound
-);
+window.toggleFlame = () => {
+    window.logmsg("[Flame]", 1); // Log Flame button click
+    brackets.toggleFlame(
+        updateFlameButtonBound,
+        updateVsMatchupBound,
+        updateWinnerButtonsBound
+    );
+};
 
-window.toggleRevive = () => brackets.toggleRevive(
-    ui.updateReviveButton,
-    () => ui.updateSongTitleHighlight(brackets.getPlayerState().currentMode, brackets.getPlayerState().isReviveActive)
-);
+window.toggleRevive = () => {
+    window.logmsg("[Revive]", 1); // Log Revive button click
+    brackets.toggleRevive(
+        ui.updateReviveButton,
+        () => ui.updateSongTitleHighlight(brackets.getPlayerState().currentMode, brackets.getPlayerState().isReviveActive)
+    );
+};
 
-window.nextTrack = () => player.nextTrack(
-    brackets.getPlayerState,
-    loadSongBound
-);
+window.nextTrack = () => {
+    window.logmsg("[>|]", 1); // Log next track button click
+    player.nextTrack(
+        brackets.getPlayerState,
+        loadSongBound
+    );
+};
 
-window.prevTrack = () => player.prevTrack(
-    brackets.getPlayerState,
-    loadSongBound
-);
+window.prevTrack = () => {
+    window.logmsg("[|<]", 1); // Log previous track button click
+    player.prevTrack(
+        brackets.getPlayerState,
+        loadSongBound
+    );
+};
 
 window.changeBracket = () => {
+    const newBracket = document.getElementById("bracket-select").value.replace('-', ' - ');
+    window.logmsg(`[Bracket: ${newBracket}]`, 1); // Log bracket change
     brackets.changeBracket(
         updateFlameButtonBound,
         loadSongBound,
@@ -231,6 +257,7 @@ window.changeBracket = () => {
 };
 
 window.toggleColorScheme = () => {
+    window.logmsg("[Theme]", 1); // Log Theme button click
     ui.toggleColorScheme(brackets.getPlayerState().currentMode);
     savePlayerState();
 };
@@ -238,6 +265,7 @@ window.toggleColorScheme = () => {
 window.toggleSongList = toggleSongList;
 
 function toggleSongList() {
+    window.logmsg("[...]", 1); 
     const overlay = document.getElementById("songListOverlay");
     const filterInput = document.getElementById("filterInput");
     const songListWrapper = document.getElementById("songListWrapper");
