@@ -32,7 +32,7 @@ async function savePlayerState() {
         if (!result.success) {
             console.error('Failed to save state:', result.message);
         } else {
-            console.log('[DEBUG] Player state saved:', JSON.stringify(player_state));
+          //  console.log('[DEBUG] Player state saved:', JSON.stringify(player_state));
         }
     } catch (error) {
         console.error('Error saving state:', error);
@@ -60,7 +60,7 @@ function checkSong2Clipping() {
     const intrinsicWidth = tempElement.offsetWidth;
     document.body.removeChild(tempElement);
 
-    const clippingThreshold = 190;
+    const clippingThreshold = 187;  // was 190
     if (intrinsicWidth > clippingThreshold) {
         if (authLink) authLink.style.display = 'none';
         if (preferencesLink) preferencesLink.style.display = 'none';
@@ -952,7 +952,7 @@ async function loadPlayerState() {
         if (!response.ok) throw new Error(`Failed to load player_state: ${response.statusText}`);
         const data = await response.json();
         if (data.success && data.player_state) {
-            console.log("Resuming player state:", JSON.stringify(data.player_state));
+            // console.log("Resuming player state:", JSON.stringify(data.player_state));
             return data.player_state;
         }
 //        console.log("No valid player_state found");

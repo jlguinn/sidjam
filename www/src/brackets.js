@@ -68,7 +68,7 @@ export function getPlayerState() {
 
 export function updatePlayerState(updates) {
     playerState = { ...playerState, ...updates };
-    debug(`Updated playerState: ${JSON.stringify(playerState)}`);
+    // debug(`Updated playerState: ${JSON.stringify(playerState)}`);
 }
 
 export function isSpecialBracket(bracket) {
