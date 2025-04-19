@@ -321,12 +321,5 @@ export function toggleColorScheme(currentMode) {
 
     // Force re-render of vs-matchup to ensure text colors update
     const playerState = brackets.getPlayerState();
-    updateVsMatchup(
-        currentMode,
-        playerState.nowPlayingSong,
-        playerState.contenders,
-        playerState.activeContender,
-        playerState.hasPlayed,
-        playerState.isFlameActive
-    );
+    updateVsMatchup(playerState);
 }
