@@ -1,4 +1,9 @@
 <?php
+// Define debug toggle (hardcoded for now)
+$debug_enabled = true; // Change to false to disable debugging
+$log_level = 0; // 0 terse (default); 1 verbose; 2 debugging; -1 silent
+
+
 // Set session cookie lifetime to 30 days
 session_set_cookie_params(30 * 24 * 60 * 60);
 session_start();
@@ -81,6 +86,7 @@ if (!$user_id) {
 }
 
 $cxn->close();
+
 ?>
 <!DOCTYPE html>
 <html>
@@ -95,13 +101,17 @@ $cxn->close();
     <script>
         window.user = <?php echo json_encode(['id' => $user_id, 'session_id' => $_SESSION['session_id']]); ?>;
         window.isLoggedIn = <?php echo json_encode($is_logged_in); ?>;
+        window.DEBUG_ENABLED = <?php echo json_encode($debug_enabled); ?>; 
+        window.LOG_LEVEL = <?php echo json_encode($log_level); ?> 
         console.log("sID JAm Version (ALPHA) 2025.03.19a");
     </script>
     <script type="module" src="src/script.js"></script>
 </head>
 <body>
     <div id="header">
+        <?php if ($debug_enabled): ?> <!-- Conditionally render "P" button -->
         <button id="log-player-state" title="Log Player State">P</button>
+        <?php endif; ?>
         <div id="title-wrapper">
             <h1 id="title">sID JAm</h1>
         </div>

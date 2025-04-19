@@ -1,3 +1,8 @@
+window.logmsg = function(msg, msgLogLevel = 0) {
+    const PLAYER_LOG_LEVEL = typeof window.LOG_LEVEL === 'number' ? window.LOG_LEVEL : 0;
+    if (PLAYER_LOG_LEVEL >= msgLogLevel) console.log(msg);
+};
+
 window.sidJamData = {
     sidFiles: [],
     cachedResults: {},
@@ -10,6 +15,9 @@ import { baseColorSchemes } from './themes.js';
 import * as brackets from './brackets.js';
 
 function debug(message) { console.log(`[DEBUG] ${message}`); }
+
+window.logmsg("Default logMsg");
+window.logmsg("Verbose logMsg", 1);
 
 async function savePlayerState() {
     const state = brackets.getPlayerState();
