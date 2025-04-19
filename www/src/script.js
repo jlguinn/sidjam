@@ -145,24 +145,9 @@ const loadSongBound = (filename, trackNumber, autoPlay = true) => player.loadSon
     autoPlay
 );
 
-const updateVsMatchupBound = () => {
-    const state = brackets.getPlayerState();
-    ui.updateVsMatchup(
-        state.currentMode, state.nowPlayingSong, state.contenders, state.activeContender, state.hasPlayed, state.isFlameActive
-    );
-    checkSong2Clipping();
-};
-
-const updateRoundInfoBound = () => ui.updateRoundInfo(
-    brackets.getPlayerState().currentMode, brackets.getPlayerState().hasPlayed, brackets.getPlayerState().bothContendersSelected,
-    brackets.getPlayerState().winner, brackets.getPlayerState().contenders, brackets.getPlayerState().roundCount
-);
-
-const updateWinnerButtonsBound = () => ui.updateWinnerButtons(
-    brackets.getPlayerState().hasPlayed, brackets.getPlayerState().roundCount, brackets.getPlayerState().hasJammed,
-    brackets.getPlayerState().isFlameActive, player.sidPlayer
-);
-
+const updateVsMatchupBound = () => ui.updateVsMatchup(brackets.getPlayerState());
+const updateRoundInfoBound = () => ui.updateRoundInfo(brackets.getPlayerState());
+const updateWinnerButtonsBound = () => ui.updateWinnerButtons(brackets.getPlayerState(), player.sidPlayer);
 const updateFlameButtonBound = () => ui.updateFlameButton(brackets.getPlayerState(), player.sidPlayer);
 
 window.togglePlayPause = () => {

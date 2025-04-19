@@ -139,13 +139,13 @@ function syncHoverOff() {
     if (profileIcon) profileIcon.classList.remove('hover');
 }
 
-export function updateVsMatchup(currentMode, nowPlayingSong, contenders, activeContender, hasPlayed, isFlameActive) {
+export function updateVsMatchup(playerState) {
     const vsMatchup = document.getElementById("vs-matchup");
     const song1 = document.getElementById("song1");
     const song2 = document.getElementById("song2");
     const vsText = document.getElementById("vs-text");
     const baseTheme = baseColorSchemes[currentThemeIndex];
-    const theme = currentMode === "nowPlaying" ? getInvertedTheme(baseTheme) : baseTheme;
+    const theme = playerState.currentMode === "nowPlaying" ? getInvertedTheme(baseTheme) : baseTheme;
     const contenderHighlight = "#00FFFF";
     const flameHighlight = "#8B0000";
     const contenderTextColor = adjustTextColor(theme.exteriorTextColor, contenderHighlight, theme.interiorTextColor);
@@ -155,39 +155,39 @@ export function updateVsMatchup(currentMode, nowPlayingSong, contenders, activeC
     song1.classList.remove("active-song", "flame-song");
     song2.classList.remove("active-song", "flame-song");
 
-    if (currentMode === "nowPlaying") {
+    if (playerState.currentMode === "nowPlaying") {
         vsMatchup.classList.add("now-playing");
-        song1.innerHTML = `<span style="color: ${theme.exteriorTextColor}">${nowPlayingSong ? nowPlayingSong.split('/').pop() : '-'}</span>`;
+        song1.innerHTML = `<span style="color: ${theme.exteriorTextColor}">${playerState.nowPlayingSong ? playerState.nowPlayingSong.split('/').pop() : '-'}</span>`;
         vsText.textContent = "";
         song2.innerHTML = "";
     } else {
         vsMatchup.classList.remove("now-playing");
-        const songName0 = contenders[0]?.split('/').pop() || "-";
-        const songName1 = contenders[1]?.split('/').pop() || "-";
-        const activeClass0 = hasPlayed && activeContender === 0 ? 'active-song' : '';
-        const activeClass1 = hasPlayed && activeContender === 1 ? 'active-song' : '';
-        const flameClass0 = isFlameActive && activeContender === 0 ? 'flame-song' : activeClass0;
-        const flameClass1 = isFlameActive && activeContender === 1 ? 'flame-song' : activeClass1;
+        const songName0 = playerState.contenders[0]?.split('/').pop() || "-";
+        const songName1 = playerState.contenders[1]?.split('/').pop() || "-";
+        const activeClass0 = playerState.hasPlayed && playerState.activeContender === 0 ? 'active-song' : '';
+        const activeClass1 = playerState.hasPlayed && playerState.activeContender === 1 ? 'active-song' : '';
+        const flameClass0 = playerState.isFlameActive && playerState.activeContender === 0 ? 'flame-song' : activeClass0;
+        const flameClass1 = playerState.isFlameActive && playerState.activeContender === 1 ? 'flame-song' : activeClass1;
 
         // Apply classes to the span for highlighting
-        song1.innerHTML = `<span class="${flameClass0}" style="color: ${hasPlayed && activeContender === 0 ? contenderTextColor : isFlameActive && activeContender === 0 ? flameTextColor : theme.exteriorTextColor}" title="${contenders[0]?.replace('/sid/C64Music', '') || '-'}">${songName0}</span>`;
+        song1.innerHTML = `<span class="${flameClass0}" style="color: ${playerState.hasPlayed && playerState.activeContender === 0 ? contenderTextColor : playerState.isFlameActive && playerState.activeContender === 0 ? flameTextColor : theme.exteriorTextColor}" title="${playerState.contenders[0]?.replace('/sid/C64Music', '') || '-'}">${songName0}</span>`;
         vsText.textContent = " - vs - ";
-        song2.innerHTML = `<span class="${flameClass1}" style="color: ${hasPlayed && activeContender === 1 ? contenderTextColor : isFlameActive && activeContender === 1 ? flameTextColor : theme.exteriorTextColor}" title="${contenders[1]?.replace('/sid/C64Music', '') || '-'}">${songName1}</span>`;
+        song2.innerHTML = `<span class="${flameClass1}" style="color: ${playerState.hasPlayed && playerState.activeContender === 1 ? contenderTextColor : playerState.isFlameActive && playerState.activeContender === 1 ? flameTextColor : theme.exteriorTextColor}" title="${playerState.contenders[1]?.replace('/sid/C64Music', '') || '-'}">${songName1}</span>`;
     }
 }
 
-export function updateRoundInfo(currentMode, hasPlayed, bothContendersSelected, winner, contenders, roundCount) {
+export function updateRoundInfo(playerState) {
     const roundDiv = document.getElementById("round-info");
     if (!roundDiv) {
         console.error("round-info element not found");
         return;
     }
     const baseTheme = baseColorSchemes[currentThemeIndex];
-    const theme = currentMode === "nowPlaying" ? getInvertedTheme(baseTheme) : baseTheme;
+    const theme = playerState.currentMode === "nowPlaying" ? getInvertedTheme(baseTheme) : baseTheme;
     const winnerHighlight = "#90EE90";
     const winnerTextColor = adjustTextColor(theme.exteriorTextColor, winnerHighlight, "#000000");
 
-    if (currentMode === "nowPlaying") {
+    if (playerState.currentMode === "nowPlaying") {
         roundDiv.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="3">Now Playing Mode... Click jAM to return to Bout Mode...</marquee>`;
         return;
     }
@@ -197,14 +197,14 @@ export function updateRoundInfo(currentMode, hasPlayed, bothContendersSelected, 
         return;
     }
 
-    if (!hasPlayed) {
+    if (!playerState.hasPlayed) {
         roundDiv.textContent = "Press Play";
-    } else if (bothContendersSelected) {
+    } else if (playerState.bothContendersSelected) {
         roundDiv.innerHTML = `<span class="winner-highlight" style="color: ${winnerTextColor}">Winner: Both Contenders</span>`;
-    } else if (winner !== null) {
-        roundDiv.innerHTML = `<span class="winner-highlight" style="color: ${winnerTextColor}">Winner: ${contenders[winner]?.split('/').pop() || '-'}</span>`;
+    } else if (playerState.winner !== null) {
+        roundDiv.innerHTML = `<span class="winner-highlight" style="color: ${winnerTextColor}">Winner: ${playerState.contenders[playerState.winner]?.split('/').pop() || '-'}</span>`;
     } else {
-        roundDiv.textContent = `Round ${roundCount}`;
+        roundDiv.textContent = `Round ${playerState.roundCount}`;
     }
 }
 
@@ -237,8 +237,8 @@ export function updatePlayPauseButton(isPlaying) {
     button.style.backgroundImage = isPlaying ? "url('/image/pause.png')" : "url('/image/play.png')";
 }
 
-export function updateWinnerButtons(hasPlayed, roundCount, hasJammed, isFlameActive, sidPlayer) {
-    const disabled = !hasPlayed || (roundCount === 1 && !hasJammed) || isFlameActive;
+export function updateWinnerButtons(playerState, sidPlayer) {
+    const disabled = !playerState.hasPlayed || (playerState.roundCount === 1 && !playerState.hasJammed) || playerState.isFlameActive;
     document.getElementById("winner0").disabled = disabled;
     document.getElementById("winner1").disabled = disabled;
     document.getElementById("jamButton").disabled = !sidPlayer;
