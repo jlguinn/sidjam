@@ -100,13 +100,15 @@ $cxn->close();
     <script>
         window.user = <?php echo json_encode(['id' => $user_id, 'session_id' => $_SESSION['session_id']]); ?>;
         window.isLoggedIn = <?php echo json_encode($is_logged_in); ?>;
-        window.DEBUG_ENABLED = <?php echo json_encode($debug_enabled); ?>; 
+        window.DEBUG_ENABLED = <?php echo json_encode($debug_enabled); ?>;
         window.LOG_LEVEL = <?php echo json_encode($log_level); ?> 
         window.logmsg = function(msg, msgLogLevel = 0) {
             const PLAYER_LOG_LEVEL = typeof window.LOG_LEVEL === 'number' ? window.LOG_LEVEL : 0;
             if (PLAYER_LOG_LEVEL >= msgLogLevel) console.log(msg);
         };
         console.log("sID JAm Version (ALPHA) 2025.04.19a");
+        window.logmsg("Hello world!");
+        window.logmsg(`Log Level: ${window.LOG_LEVEL === 1 ? "VERBOSE" : window.LOG_LEVEL === 2 ? "DEBUGGING" : window.LOG_LEVEL === 0 ? "TERSE" : window.LOG_LEVEL === -1 ? "SILENT" : window.LOG_LEVEL.toString()}`, 1);
     </script>
     <script type="module" src="src/script.js"></script>
 </head>
