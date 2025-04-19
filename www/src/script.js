@@ -271,6 +271,8 @@ function toggleSongList() {
 
     if (overlay.style.display === "block") {
         const state = brackets.getPlayerState();
+
+        // If a song was played in Peek Mode, stop it and resume the previous song
         if (state.peekPlayingSong) {
             if (player.sidPlayer) {
                 player.sidPlayer.pause();
@@ -278,15 +280,37 @@ function toggleSongList() {
                 player.stopTimer();
                 console.log("[DEBUG] Stopped peeked song");
             }
+
+            // Determine the song to resume based on the current mode
+            let songToLoad = null;
+            let shouldAutoPlay = true;
+            if (state.currentMode === "bout" && state.contenders.length > 0) {
+                songToLoad = state.contenders[state.activeContender];
+                shouldAutoPlay = state.hasPlayed; // Only auto-play if the song was previously played
+            } else if (state.currentMode === "nowPlaying" && state.nowPlayingSong) {
+                songToLoad = state.nowPlayingSong;
+                shouldAutoPlay = true; // Always auto-play in Now Playing Mode
+            }
+
+            // Update player state to clear Peek Mode specifics
             brackets.updatePlayerState({
-                contenders: state.contenders,
-                activeContender: 0,
-                currentMode: "bout",
                 peekPlayingSong: null,
                 nowPlayingSongBracket: null // Reset since we're leaving Peek Mode
             });
-            loadSongBound(state.contenders[0], -1, false);
+
+            // Load and potentially play the appropriate song
+            if (songToLoad) {
+                loadSongBound(songToLoad, -1, shouldAutoPlay);
+            }
+        } else {
+            // No song was played in Peek Mode, just update the state without interrupting the player
+            brackets.updatePlayerState({
+                peekPlayingSong: null,
+                nowPlayingSongBracket: null // Reset since we're leaving Peek Mode
+            });
         }
+
+        // Hide the overlay and clean up
         overlay.style.display = "none";
         currentOffset = 0;
         currentFilter = "";
@@ -295,6 +319,9 @@ function toggleSongList() {
         songListWrapper.dataset.observerSet = "";
         document.removeEventListener('keydown', handleEscapeKey);
         filterInput.removeEventListener('input', handleFilterInput);
+
+        // Update UI to reflect the resumed mode
+        ui.applyTheme(state.currentMode);
         updateVsMatchupBound();
         updateRoundInfoBound();
         updateWinnerButtonsBound();
