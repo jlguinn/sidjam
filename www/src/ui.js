@@ -293,7 +293,12 @@ export function updateFlameButton(playerState, sidPlayer) {
 
 export function updateReviveButton(isReviveActive) {
     const reviveButton = document.getElementById("reviveButton");
-    reviveButton.style.backgroundColor = isReviveActive ? "#90ee90" : "";
+    // reviveButton.style.backgroundColor = isReviveActive ? "#90ee90" : "";
+    if (isReviveActive) {
+        reviveButton.classList.add("active");
+    } else {
+        reviveButton.classList.remove("active");
+    }
 }
 
 export function updateSongTitleHighlight(currentMode, isReviveActive) {

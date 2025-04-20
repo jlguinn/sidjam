@@ -122,6 +122,13 @@ body {
     top: -30px; /* Align halo with middle of jAM button */
 }
 
+/* Define the throb animation */
+@keyframes throb {
+    0% { filter: brightness(1.0); }
+    50% { filter: brightness(1.3); }
+    100% { filter: brightness(1.0); }
+}
+
 #reviveButton:hover {
     filter: brightness(1.2);
     cursor: pointer;
@@ -130,6 +137,14 @@ body {
 #reviveButton.disabled {
     filter: grayscale(70%) brightness(0.7);
     cursor: not-allowed;
+}
+
+#reviveButton.active {
+    animation: throb 2s infinite ease-in-out; /* Gentle 2-second throb */
+}
+
+.revive-highlight {
+    color: #90ee90; /* Same green as previously used for background */
 }
 
 #color-toggle {

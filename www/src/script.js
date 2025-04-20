@@ -220,7 +220,7 @@ window.toggleFlame = () => {
 };
 
 window.toggleRevive = () => {
-    window.logmsg("[Revive]", 1); // Log Revive button click
+    window.logmsg("[Revive]", 1);
     brackets.toggleRevive(
         ui.updateReviveButton,
         () => ui.updateSongTitleHighlight(brackets.getPlayerState().currentMode, brackets.getPlayerState().isReviveActive)
