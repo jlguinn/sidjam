@@ -82,8 +82,25 @@ body {
 #vs-matchup.now-playing #song1 { flex: none; text-align: center; width: 100%; }
 #vs-text { flex: none; padding: 0 5px; }
 #song2 { text-align: left; flex: 1; }
-#round-info { text-align: center; margin-bottom: 10px; transition: color 0.3s; }
-#round-info marquee { width: 220px; display: inline-block; margin: 0 auto; }
+#round-info {
+    text-align: center;
+    margin-bottom: 10px;
+    transition: color 0.3s;
+    min-height: 31px; /* Match the tallest content (winner-highlight: 24px line-height + 4px padding) */
+    line-height: 24px; /* Match the inherited line-height */
+}
+
+#round-info span, #round-info marquee {
+    margin: 0;
+    padding: 0;
+    line-height: inherit;
+}
+
+#round-info marquee {
+    width: 220px;
+    display: inline-block;
+    margin: 0 auto;
+}
 #player-info { background-color: #fff; padding: 10px; border-radius: 5px; margin-bottom: 10px; text-align: center; transition: background-color 0.3s; width: 600px; margin-left: auto; margin-right: auto; }
 #song-title { margin-bottom: 10px; }
 .revive-highlight { background-color: #90ee90; padding: 2px 5px; border-radius: 3px; }
