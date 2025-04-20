@@ -140,7 +140,7 @@ body {
 }
 
 #reviveButton.active {
-    animation: throb 2s infinite ease-in-out; /* Gentle 2-second throb */
+    animation: throb 0.7s infinite ease-in-out; /* Gentle 2-second throb */
 }
 
 .revive-highlight {

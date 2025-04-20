@@ -441,27 +441,12 @@ export function toggleFlame(updateFlameButton, updateVsMatchup, updateWinnerButt
 }
 
 export function toggleRevive(updateReviveButton, updateSongTitleHighlight) {
+    // Toggle the revive state
     updatePlayerState({ isReviveActive: !playerState.isReviveActive });
-    if (playerState.isReviveActive && playerState.nowPlayingSong && window.sidJamData.pathToId[playerState.nowPlayingSong]) {
-        fetch('dbcontrol/reset_result.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: window.sidJamData.pathToId[playerState.nowPlayingSong] })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) return fetch('dbcontrol/get_results.php');
-        })
-        .then(response => response.json())
-        .then(data => {
-            window.sidJamData.cachedResults = data;
-            updateReviveButton();
-            updateSongTitleHighlight();
-        })
-        .catch(error => console.error('Error resetting result:', error));
-    } else {
-        window.logmsg('Skipping revive: pathToId or nowPlayingSong not ready');
-    }
+
+    // Update the UI to reflect the new state (apply throbbing effect and song title highlight)
+    updateReviveButton(playerState.isReviveActive);
+    // updateSongTitleHighlight(playerState.currentMode, playerState.isReviveActive);
 }
 
 export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, updateVsMatchup, updateWinnerButtons) {
