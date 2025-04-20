@@ -175,6 +175,8 @@ export function updateVsMatchup(playerState) {
     }
 }
 
+let reviveMessageTimeout = null;
+
 export function updateRoundInfo(playerState) {
     const roundDiv = document.getElementById("round-info");
     if (!roundDiv) {
@@ -186,8 +188,29 @@ export function updateRoundInfo(playerState) {
     const winnerHighlight = "#90EE90";
     const winnerTextColor = adjustTextColor(theme.exteriorTextColor, winnerHighlight, "#000000");
 
+    // Clear any existing timeout to prevent stale updates
+    if (reviveMessageTimeout) {
+        clearTimeout(reviveMessageTimeout);
+        reviveMessageTimeout = null;
+    }
+
     if (playerState.currentMode === "nowPlaying") {
-        roundDiv.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="3">Now Playing Mode... Click jAM to return to Bout Mode...</marquee>`;
+        if (playerState.isReviveActive) {
+            // Step 1: Show "Revive Activated" with blinking effect
+            roundDiv.innerHTML = `<span class="revive-activated" style="color: ${theme.exteriorTextColor}">Revive Activated</span>`;
+
+            // Step 2: After 2 seconds (blink duration), switch to the instructional marquee
+            reviveMessageTimeout = setTimeout(() => {
+                // Only update if still in "nowPlaying" mode and isReviveActive is still true
+                if (playerState.currentMode === "nowPlaying" && playerState.isReviveActive) {
+                    roundDiv.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="3">Click jAM to revive this contender or click Revive again to cancel...</marquee>`;
+                }
+                reviveMessageTimeout = null;
+            }, 2000); // Matches the 2s duration of the blink animation
+        } else {
+            // Step 3: Default "Now Playing" marquee when Revive is not active
+            roundDiv.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="3">Now Playing Mode... Click jAM to return to Bout Mode...</marquee>`;
+        }
         return;
     }
 
@@ -301,20 +324,19 @@ export function updateReviveButton(isReviveActive) {
     }
 }
 
-export function updateSongTitleHighlight(currentMode, isReviveActive) {
-    const songFilename = document.querySelector("#song1 span");
+export function updateSongTitleHighlight(mode, isReviveActive) {
+    const songTitle = document.getElementById("song-title");
     const baseTheme = baseColorSchemes[currentThemeIndex];
-    const theme = currentMode === "nowPlaying" ? getInvertedTheme(baseTheme) : baseTheme;
-    const reviveHighlight = "#90EE90";
-    const reviveTextColor = adjustTextColor(theme.exteriorTextColor, reviveHighlight, "#000000");
+    const theme = mode === "nowPlaying" ? getInvertedTheme(baseTheme) : baseTheme;
 
-    if (isReviveActive && currentMode === "nowPlaying") {
-        songFilename.classList.add("revive-highlight");
-        songFilename.style.color = reviveTextColor;
+    songTitle.style.color = theme.exteriorTextColor;
+    if (isReviveActive) {
+        songTitle.classList.add("reviveHighlight");
     } else {
-        songFilename.classList.remove("revive-highlight");
-        songFilename.style.color = theme.exteriorTextColor;
+        songTitle.classList.remove("reviveHighlight");
     }
+
+    updateRoundInfo(brackets.getPlayerState());
 }
 
 export function toggleColorScheme(currentMode) {

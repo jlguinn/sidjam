@@ -441,12 +441,9 @@ export function toggleFlame(updateFlameButton, updateVsMatchup, updateWinnerButt
 }
 
 export function toggleRevive(updateReviveButton, updateSongTitleHighlight) {
-    // Toggle the revive state
     updatePlayerState({ isReviveActive: !playerState.isReviveActive });
-
-    // Update the UI to reflect the new state (apply throbbing effect and song title highlight)
     updateReviveButton(playerState.isReviveActive);
-    // updateSongTitleHighlight(playerState.currentMode, playerState.isReviveActive);
+    updateSongTitleHighlight(playerState.currentMode, playerState.isReviveActive);
 }
 
 export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, updateVsMatchup, updateWinnerButtons) {
