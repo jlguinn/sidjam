@@ -129,6 +129,21 @@ body {
     100% { filter: brightness(1.0); }
 }
 
+@keyframes flitter {
+    0% { transform: translate(0, 0); }
+    10% { transform: translate(1.5px, -1.8px); }
+    20% { transform: translate(-1.2px, 0.5px); }
+    30% { transform: translate(0.8px, 1.7px); }
+    40% { transform: translate(-1.9px, -0.3px); }
+    50% { transform: translate(1.3px, 1.2px); }
+    60% { transform: translate(-0.5px, -1.5px); }
+    70% { transform: translate(1.8px, 0.2px); }
+    80% { transform: translate(-1.0px, 1.9px); }
+    90% { transform: translate(0.3px, -1.1px); }
+    100% { transform: translate(0, 0); }
+}
+
+
 #reviveButton:hover {
     filter: brightness(1.2);
     cursor: pointer;
@@ -140,7 +155,9 @@ body {
 }
 
 #reviveButton.active {
-    animation: throb 0.7s infinite ease-in-out; /* Gentle 2-second throb */
+    animation: 
+        throb 0.7s infinite ease-in-out, /* Existing throbbing effect */
+        flitter 2.82s infinite ease-in-out; /* New flittering effect */
 }
 
 .revive-highlight {
