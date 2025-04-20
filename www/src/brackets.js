@@ -118,6 +118,39 @@ export function findEligibleBracket() {
     return selectedBracket;
 }
 
+export function findReviveFallbackBracket() {
+    let brackets = {};
+    window.sidJamData.sidFiles.forEach(file => {
+        let record = window.sidJamData.cachedResults[file] || { wins: 0, losses: 0 };
+        if (record.losses < 2) {
+            let key = `${record.wins} - ${record.losses}`;
+            brackets[key] = (brackets[key] || 0) + 1;
+        }
+    });
+
+    let nonEmptyBrackets = Object.keys(brackets).filter(key => {
+        if (key === "0 - 0") return false; // Exclude 0-0 since we know it's empty
+        return brackets[key] >= 1; // Need at least 1 contender
+    });
+
+    if (nonEmptyBrackets.length === 0) {
+        window.logmsg("No non-empty brackets found for Revive fallback");
+        return null;
+    }
+
+    // Sort by wins ASC, losses DESC
+    nonEmptyBrackets.sort((a, b) => {
+        const [aWins, aLosses] = a.split(" - ").map(Number);
+        const [bWins, bLosses] = b.split(" - ").map(Number);
+        if (aWins !== bWins) return aWins - bWins; // Sort by wins ASC
+        return bLosses - aLosses; // If wins are equal, sort by losses DESC
+    });
+
+    const selectedBracket = nonEmptyBrackets[0];
+    window.logmsg(`Revive fallback bracket: ${selectedBracket} with ${brackets[selectedBracket]} contenders`);
+    return selectedBracket;
+}
+
 export function getSongBracket(song) {
     if (!song || !window.sidJamData.cachedResults) {
         return null;
@@ -197,6 +230,27 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
     if (playerState.currentMode === "nowPlaying") {
         let revivedToZeroZero = false;
         if (playerState.isReviveActive) {
+            // Reset the song's win-loss record to 0-0
+            const sidId = window.sidJamData.pathToId[playerState.nowPlayingSong];
+            const reviveResponse = await fetch(`dbcontrol/revive_song.php?user_id=${window.user.id}&sid_id=${sidId}`);
+            if (!reviveResponse.ok) {
+                window.logmsg(`Failed to revive song: ${reviveResponse.status}`);
+                return;
+            }
+            const reviveData = await reviveResponse.json();
+            if (!reviveData.success) {
+                window.logmsg("Failed to revive song");
+                return;
+            }
+
+            // Refresh cachedResults to reflect the updated record
+            const resultsResponse = await fetch(`dbcontrol/get_results.php?user_id=${window.user.id}`);
+            if (!resultsResponse.ok) {
+                window.logmsg(`Failed to refresh results: ${resultsResponse.status}`);
+                return;
+            }
+            window.sidJamData.cachedResults = await resultsResponse.json();
+
             if (getContenderCount("0 - 0") >= 2) {
                 updatePlayerState({
                     currentMode: "bout",
@@ -217,36 +271,100 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
         }
 
         if (!revivedToZeroZero) {
-            // Ensure peekBracket is set to activeBracket when returning to Bout Mode
-            updatePlayerState({
-                currentMode: "bout",
-                nowPlayingSong: null,
-                nowPlayingSongBracket: null,
-                peekBracket: playerState.activeBracket, // Explicitly set peekBracket to activeBracket
-                activeBracket: playerState.activeBracket,
-                activeContender: 0,
-                roundCount: 1,
-                winner: null,
-                hasJammed: false,
-                bothContendersSelected: false,
-                isFlameActive: false
-            });
-            if (playerState.contenders.length === 2 && 
-                playerState.contenders.every(c => window.sidJamData.sidFiles.includes(c)) &&
-                getContenderCount(playerState.activeBracket) >= 2) {
+            if (playerState.isReviveActive) {
+                // "0 - 0" is empty or has only the revived song, find a fallback bracket
+                newBracket = findReviveFallbackBracket();
+                if (!newBracket) {
+                    window.logmsg("No fallback bracket found, switching to Now Playing Mode");
+                    updatePlayerState({
+                        currentMode: "nowPlaying",
+                        nowPlayingSong: playerState.contenders[0],
+                        nowPlayingSongBracket: "0 - 0",
+                        contenders: [],
+                        peekBracket: "0 - 0",
+                        activeBracket: "0 - 0",
+                        isReviveActive: false
+                    });
+                    updateRoundInfo({ message: "Revived song is the only contender. Playing in Now Playing Mode..." });
+                    loadSong(playerState.nowPlayingSong, -1);
+                    updateFlameButton(playerState, sidPlayer);
+                    applyTheme("nowPlaying");
+                    updateVsMatchup(playerState);
+                    updateRoundInfo(playerState);
+                    updateWinnerButtons(playerState, sidPlayer);
+                    shouldUpdateBracketDropdown = true;
+                    if (shouldUpdateBracketDropdown) {
+                        updateBracketDropdown();
+                        document.getElementById("bracket-select").value = playerState.peekBracket.replace(' - ', '-');
+                    }
+                    return;
+                }
+
+                updatePlayerState({
+                    currentMode: "bout",
+                    peekBracket: newBracket,
+                    activeBracket: newBracket,
+                    contenders: [playerState.nowPlayingSong], // Keep the revived song as the first contender
+                    isReviveActive: false,
+                    nowPlayingSong: null,
+                    nowPlayingSongBracket: null,
+                    activeContender: 0,
+                    roundCount: 1,
+                    winner: null,
+                    hasJammed: false,
+                    bothContendersSelected: false,
+                    isFlameActive: false
+                });
+
+                // Pick a second contender from the fallback bracket
+                let availableSongs = window.sidJamData.sidFiles.filter(song => {
+                    if (song === playerState.contenders[0]) return false; // Exclude the revived song
+                    let record = window.sidJamData.cachedResults[song] || { wins: 0, losses: 0 };
+                    return `${record.wins} - ${record.losses}` === newBracket && record.losses < 2;
+                });
+                if (availableSongs.length > 0) {
+                    let newSongIndex = getRandom.randint(0, availableSongs.length - 1);
+                    playerState.contenders[1] = availableSongs[newSongIndex];
+                } else {
+                    window.logmsg("Failed to pick second contender from fallback bracket");
+                    return;
+                }
+
                 loadSong(playerState.contenders[0], -1);
                 updatePlayerState({ hasPlayed: true });
+                shouldUpdateBracketDropdown = true;
             } else {
-                let success = pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
-                if (!success) {
-                    newBracket = findEligibleBracket();
-                    if (newBracket) {
-                        updatePlayerState({ peekBracket: newBracket, activeBracket: newBracket });
-                        shouldUpdateBracketDropdown = true;
-                        pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
-                    } else {
-                        window.logmsg("No eligible brackets, stopping");
-                        return;
+                // Ensure peekBracket is set to activeBracket when returning to Bout Mode
+                updatePlayerState({
+                    currentMode: "bout",
+                    nowPlayingSong: null,
+                    nowPlayingSongBracket: null,
+                    peekBracket: playerState.activeBracket, // Explicitly set peekBracket to activeBracket
+                    activeBracket: playerState.activeBracket,
+                    activeContender: 0,
+                    roundCount: 1,
+                    winner: null,
+                    hasJammed: false,
+                    bothContendersSelected: false,
+                    isFlameActive: false
+                });
+                if (playerState.contenders.length === 2 && 
+                    playerState.contenders.every(c => window.sidJamData.sidFiles.includes(c)) &&
+                    getContenderCount(playerState.activeBracket) >= 2) {
+                    loadSong(playerState.contenders[0], -1);
+                    updatePlayerState({ hasPlayed: true });
+                } else {
+                    let success = pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
+                    if (!success) {
+                        newBracket = findEligibleBracket();
+                        if (newBracket) {
+                            updatePlayerState({ peekBracket: newBracket, activeBracket: newBracket });
+                            shouldUpdateBracketDropdown = true;
+                            pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
+                        } else {
+                            window.logmsg("No eligible brackets, stopping");
+                            return;
+                        }
                     }
                 }
             }
