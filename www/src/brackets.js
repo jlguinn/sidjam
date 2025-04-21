@@ -254,8 +254,8 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
             if (getContenderCount("0 - 0") >= 2) {
                 updatePlayerState({
                     currentMode: "bout",
-                    peekBracket: "0 - 0", // After revive, peekBracket should be set to "0 - 0"
-                    activeBracket: "0 - 0", // Ensure activeBracket is also updated
+                    activeBracket: "0 - 0", // After revive, activeBracket should be set to "0 - 0"
+                    peekBracket: "0 - 0", // Ensure peekBracket is also updated
                     contenders: [playerState.nowPlayingSong],
                     isReviveActive: false,
                     nowPlayingSong: null,
@@ -272,31 +272,9 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
 
         if (!revivedToZeroZero) {
             if (playerState.isReviveActive) {
-                // "0 - 0" is empty or has only the revived song, find a fallback bracket
                 newBracket = findReviveFallbackBracket();
                 if (!newBracket) {
-                    window.logmsg("No fallback bracket found, switching to Now Playing Mode");
-                    updatePlayerState({
-                        currentMode: "nowPlaying",
-                        nowPlayingSong: playerState.contenders[0],
-                        nowPlayingSongBracket: "0 - 0",
-                        contenders: [],
-                        peekBracket: "0 - 0",
-                        activeBracket: "0 - 0",
-                        isReviveActive: false
-                    });
-                    updateRoundInfo({ message: "Revived song is the only contender. Playing in Now Playing Mode..." });
-                    loadSong(playerState.nowPlayingSong, -1);
-                    updateFlameButton(playerState, sidPlayer);
-                    applyTheme("nowPlaying");
-                    updateVsMatchup(playerState);
-                    updateRoundInfo(playerState);
-                    updateWinnerButtons(playerState, sidPlayer);
-                    shouldUpdateBracketDropdown = true;
-                    if (shouldUpdateBracketDropdown) {
-                        updateBracketDropdown();
-                        document.getElementById("bracket-select").value = playerState.peekBracket.replace(' - ', '-');
-                    }
+                    console.error("No fallback bracket found. Fatal!");
                     return;
                 }
 
@@ -472,7 +450,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
             if (!success) {
                 newBracket = findEligibleBracket();
                 if (newBracket) {
-                    updatePlayerState({ activeBracket: playerState.peekBracket, peekBracket: newBracket });
+                    updatePlayerState({ peekBracket: newBracket, activeBracket: newBracket });
                     shouldUpdateBracketDropdown = true;
                     pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
                 } else {
