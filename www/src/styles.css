@@ -36,6 +36,13 @@ body {
     margin-bottom: 5px;
 }
 
+#auth-link a,
+#profile-icon,
+#preferences-link a {
+    transform: scale(1);
+    transition: filter 0.3s ease, transform 0.3s ease;
+}
+
 #auth-link a {
     color: inherit; /* Fallback until theme applies */
     text-decoration: underline;
@@ -63,7 +70,9 @@ body {
 #profile-icon.brighten-on-hover.hover,
 #preferences-link a.brighten-on-hover:hover,
 #preferences-link a.brighten-on-hover.hover {
-    filter: brightness(1.2);
+    filter: brightness(1.3);
+    transform: scale(1.05);
+    transition: filter 0.3s ease, transform 0.3s ease;
 }
 
 /* Darken on hover (for bright text/icons) */
@@ -73,7 +82,9 @@ body {
 #profile-icon.darken-on-hover.hover,
 #preferences-link a.darken-on-hover:hover,
 #preferences-link a.darken-on-hover.hover {
-    filter: brightness(0.8);
+    filter: brightness(0.7);
+    transform: scale(1.05);
+    transition: filter 0.3s ease, transform 0.3s ease;
 }
 
 #vs-matchup { display: flex; justify-content: center; align-items: center; font-weight: bold; margin-bottom: 5px; transition: color 0.3s; }

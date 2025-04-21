@@ -58,20 +58,20 @@ export function applyTheme(currentMode) {
         authLink.style.color = theme.exteriorTextColor;
         const luminance = calculateLuminance(theme.exteriorTextColor);
         authLink.classList.remove('brighten-on-hover', 'darken-on-hover');
-        authLink.classList.add(luminance > 0.92 ? 'darken-on-hover' : 'brighten-on-hover');
+        authLink.classList.add(luminance > 0.5 ? 'darken-on-hover' : 'brighten-on-hover');
     }
 
     if (preferencesLink) {
         preferencesLink.style.color = theme.exteriorTextColor;
         const luminance = calculateLuminance(theme.exteriorTextColor);
         preferencesLink.classList.remove('brighten-on-hover', 'darken-on-hover');
-        preferencesLink.classList.add(luminance > 0.92 ? 'darken-on-hover' : 'brighten-on-hover');
+        preferencesLink.classList.add(luminance > 0.5 ? 'darken-on-hover' : 'brighten-on-hover');
     }
 
     if (profileIcon) {
         const luminance = calculateLuminance(theme.exteriorTextColor);
         profileIcon.classList.remove('brighten-on-hover', 'darken-on-hover');
-        profileIcon.classList.add(luminance > 0.92 ? 'darken-on-hover' : 'brighten-on-hover');
+        profileIcon.classList.add(luminance > 0.5 ? 'darken-on-hover' : 'brighten-on-hover');
     }
 
     // Synchronize hover effects for both auth and preferences links

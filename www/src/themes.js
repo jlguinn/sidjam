@@ -1,5 +1,9 @@
 // File: themes.js
 export const baseColorSchemes = [
+    { name: "Firecracker", interior: "#FF6347", exterior: "#FFFF00", interiorTextColor: "#000000", exteriorTextColor: "#FF6347" },
+    { name: "Purple Haze", interior: "#9400D3", exterior: "#FFFF00", interiorTextColor: "#FFFFFF", exteriorTextColor: "#9400D3" },
+
+    // XXXXXXXXXXXX CUT LINE XXXXXXXXXXXXX//
     // Retro & Vibrant Themes (30)
     { name: "Pixel Peach", interior: "#FFEFD5", exterior: "#FF6F61", interiorTextColor: "#4A2F2F", exteriorTextColor: "#FFFFFF" },
     { name: "Arcade Glow", interior: "#E0FFFF", exterior: "#00B7EB", interiorTextColor: "#2F4F4F", exteriorTextColor: "#000000" },
@@ -33,7 +37,7 @@ export const baseColorSchemes = [
     { name: "Bitstream Blue", interior: "#E6F0FA", exterior: "#00BFFF", interiorTextColor: "#2F4F4F", exteriorTextColor: "#000000" },
 
 
-    // XXXXXXXXXXXX CUT LINE XXXXXXXXXXXXX//
+    
     // Cozy & Aesthetic Themes (50)
     { name: "Autumn Hearth", interior: "#F4E1D2", exterior: "#8B4513", interiorTextColor: "#3C2F2F", exteriorTextColor: "#F4E1D2" },
     { name: "Winter Cabin", interior: "#D9E4DD", exterior: "#2F4F4F", interiorTextColor: "#2F4F4F", exteriorTextColor: "#D9E4DD" },
@@ -108,18 +112,16 @@ export const baseColorSchemes = [
     { name: "Punk Riot", interior: "#FF1493", exterior: "#000000", interiorTextColor: "#FFFFFF", exteriorTextColor: "#FF1493" },
     { name: "Funky Fusion", interior: "#FFA500", exterior: "#00CED1", interiorTextColor: "#000000", exteriorTextColor: "#FFFFFF" },
     { name: "Glitch Core", interior: "#00FF7F", exterior: "#FF00FF", interiorTextColor: "#000000", exteriorTextColor: "#FFFFFF" },
-    { name: "Firecracker", interior: "#FF6347", exterior: "#FFFF00", interiorTextColor: "#000000", exteriorTextColor: "#FF6347" },
     { name: "Electro Pop", interior: "#FF69B4", exterior: "#1E90FF", interiorTextColor: "#000000", exteriorTextColor: "#FFFFFF" },
     { name: "Neon Jungle", interior: "#00FF00", exterior: "#9400D3", interiorTextColor: "#000000", exteriorTextColor: "#FFFFFF" },
     { name: "Radical Red", interior: "#FF4500", exterior: "#FFD700", interiorTextColor: "#000000", exteriorTextColor: "#FFFFFF" },
     { name: "Aqua Shock", interior: "#00CED1", exterior: "#FF1493", interiorTextColor: "#000000", exteriorTextColor: "#FFFFFF" },
-    { name: "Purple Haze", interior: "#9400D3", exterior: "#FFFF00", interiorTextColor: "#FFFFFF", exteriorTextColor: "#9400D3" },
+
     { name: "Blazing Blue", interior: "#1E90FF", exterior: "#FF4500", interiorTextColor: "#FFFFFF", exteriorTextColor: "#1E90FF" },
     { name: "Hot Coral", interior: "#FF7F50", exterior: "#00FF7F", interiorTextColor: "#000000", exteriorTextColor: "#FFFFFF" },
     { name: "Emerald Flash", interior: "#00FF7F", exterior: "#FF6347", interiorTextColor: "#000000", exteriorTextColor: "#FFFFFF" },
-    { name: "Pink Panther", interior: "#FF69B4", exterior: "#000080", interiorTextColor: "#FFFFFF", exteriorTextColor: "#FF69B4" },
+
     { name: "Orange Crush", interior: "#FFA500", exterior: "#32CD32", interiorTextColor: "#000000", exteriorTextColor: "#FFFFFF" },
-    { name: "Violet Volt", interior: "#9400D3", exterior: "#00FFFF", interiorTextColor: "#FFFFFF", exteriorTextColor: "#9400D3" },
     { name: "Turquoise Twist", interior: "#00CED1", exterior: "#FF4500", interiorTextColor: "#000000", exteriorTextColor: "#FFFFFF" },
     { name: "Gold Rush", interior: "#FFD700", exterior: "#FF00FF", interiorTextColor: "#000000", exteriorTextColor: "#FFD700" },
     { name: "Crimson Bolt", interior: "#DC143C", exterior: "#00FF00", interiorTextColor: "#FFFFFF", exteriorTextColor: "#DC143C" },
