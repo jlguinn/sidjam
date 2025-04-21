@@ -412,12 +412,12 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
     setIsPlaying(false);
     stopTimer();
 
-    if (playerState.isFlameActive && playerState.peekBracket === "0 - 0") {
+    if (playerState.isFlameActive && playerState.activeBracket === "0 - 0") {
         let flamedIndex = playerState.activeContender;
         let flamedFile = playerState.contenders[flamedIndex];
 
-        console.log(`Flamed!: ${window.sidJamData.pathToId[flamedFile]}`);
-        console.log(`${flamedFile}`);
+        window.logmsg(`Flamed!: ${window.sidJamData.pathToId[flamedFile]}`);
+        window.logmsg(`${flamedFile}`);
 
         let votes = [{ id: window.sidJamData.pathToId[flamedFile], increment: -2 }];
         try {
@@ -512,28 +512,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
         } else {
             document.getElementById("bracket-select").value = playerState.peekBracket.replace(' - ', '-');
         }
-    }
-
-    const specialBrackets = ["All", "Eliminated"];
-    let contenderCount = getContenderCount(playerState.peekBracket);
-    if (specialBrackets.includes(playerState.peekBracket) || contenderCount === 1) {
-        updatePlayerState({
-            currentMode: "nowPlaying",
-            nowPlayingSong: playerState.contenders[playerState.activeContender],
-            peekPlayingSong: null,
-            contenders: [],
-            activeContender: 0,
-            hasPlayed: false,
-            bothContendersSelected: false
-        });
-        applyTheme("nowPlaying");
-        updateVsMatchup(playerState);
-        updateRoundInfo(playerState);
-        updateWinnerButtons(playerState, sidPlayer);
-        updateFlameButton(playerState, sidPlayer);
-        updateBracketDropdown();
-        return true;
-    }
+   }
 }
 
 export function updateWinner(contenderIndex, updateRoundInfo, updateWinnerButtons, updateFlameButton) {
