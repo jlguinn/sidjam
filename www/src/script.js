@@ -1190,9 +1190,6 @@ async function initializeApp() {
     button.querySelector('.inner-box').style.backgroundColor = nextTheme.interior;
     button.title = `Switch Theme \n  From: ${currentTheme.name}\n  To: ${nextTheme.name}`;
 
-    const initialColor = baseColorSchemes[ui.getCurrentThemeIndex()].exteriorTextColor || '#000000';
-    window.renderProfileBitmap(initialColor, window.isLoggedIn || false);
-
     checkSong2Clipping();
 }
 

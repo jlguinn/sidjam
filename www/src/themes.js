@@ -1,9 +1,5 @@
 // File: themes.js
 export const baseColorSchemes = [
-    { name: "Firecracker", interior: "#FF6347", exterior: "#FFFF00", interiorTextColor: "#000000", exteriorTextColor: "#FF6347" },
-    { name: "Purple Haze", interior: "#9400D3", exterior: "#FFFF00", interiorTextColor: "#FFFFFF", exteriorTextColor: "#9400D3" },
-
-    // XXXXXXXXXXXX CUT LINE XXXXXXXXXXXXX//
     // Retro & Vibrant Themes (30)
     { name: "Pixel Peach", interior: "#FFEFD5", exterior: "#FF6F61", interiorTextColor: "#4A2F2F", exteriorTextColor: "#FFFFFF" },
     { name: "Arcade Glow", interior: "#E0FFFF", exterior: "#00B7EB", interiorTextColor: "#2F4F4F", exteriorTextColor: "#000000" },
@@ -36,9 +32,8 @@ export const baseColorSchemes = [
     { name: "C64 Candy", interior: "#FFEFD5", exterior: "#FF4500", interiorTextColor: "#4A2F2F", exteriorTextColor: "#FFFFFF" },
     { name: "Bitstream Blue", interior: "#E6F0FA", exterior: "#00BFFF", interiorTextColor: "#2F4F4F", exteriorTextColor: "#000000" },
 
-
-    
     // Cozy & Aesthetic Themes (50)
+    /*
     { name: "Autumn Hearth", interior: "#F4E1D2", exterior: "#8B4513", interiorTextColor: "#3C2F2F", exteriorTextColor: "#F4E1D2" },
     { name: "Winter Cabin", interior: "#D9E4DD", exterior: "#2F4F4F", interiorTextColor: "#2F4F4F", exteriorTextColor: "#D9E4DD" },
     { name: "Lavender Dusk", interior: "#E6E6FA", exterior: "#483D8B", interiorTextColor: "#483D8B", exteriorTextColor: "#E6E6FA" },
@@ -70,10 +65,12 @@ export const baseColorSchemes = [
     { name: "Mulled Wine", interior: "#FDF5E6", exterior: "#800020", interiorTextColor: "#4A2F2F", exteriorTextColor: "#FDF5E6" },
     { name: "Pebble Shore", interior: "#F5F5F5", exterior: "#696969", interiorTextColor: "#2F4F4F", exteriorTextColor: "#F5F5F5" },
     { name: "Cinnamon Dust", interior: "#FFF8DC", exterior: "#A0522D", interiorTextColor: "#5C4033", exteriorTextColor: "#FFF8DC" },
+    { name: "Spring Dew", interior: "#F0FFF0", exterior: "#98FB98", interiorTextColor: "#355E3B", exteriorTextColor: "#F0FFF0" },
     { name: "Amber Twilight", interior: "#FFFACD", exterior: "#FF4500", interiorTextColor: "#8B4513", exteriorTextColor: "#FFFACD" },
     { name: "Birch Whisper", interior: "#F8F8FF", exterior: "#D2B48C", interiorTextColor: "#5C4033", exteriorTextColor: "#F8F8FF" },
     { name: "Tidal Calm", interior: "#E6F0FA", exterior: "#4169E1", interiorTextColor: "#2F4F4F", exteriorTextColor: "#E6F0FA" },
     { name: "Maple Glaze", interior: "#FAEBD7", exterior: "#8B0000", interiorTextColor: "#4A2F2F", exteriorTextColor: "#FAEBD7" },
+    { name: "Linen Breeze", interior: "#FFF5EE", exterior: "#F5F5DC", interiorTextColor: "#3C2F2F", exteriorTextColor: "#5C4033" },
     { name: "Pistachio Dream", interior: "#F5FFFA", exterior: "#9ACD32", interiorTextColor: "#355E3B", exteriorTextColor: "#F5FFFA" },
     { name: "Crimson Haze", interior: "#FFF0F5", exterior: "#DC143C", interiorTextColor: "#4A2F2F", exteriorTextColor: "#FFF0F5" },
     { name: "Stone Hearth", interior: "#F8F8FF", exterior: "#2F4F4F", interiorTextColor: "#2F4F4F", exteriorTextColor: "#F8F8FF" },
@@ -83,18 +80,19 @@ export const baseColorSchemes = [
     { name: "Ashen Pine", interior: "#F5F5F5", exterior: "#2E8B57", interiorTextColor: "#355E3B", exteriorTextColor: "#F5F5F5" },
     { name: "Violet Whisper", interior: "#F8F0F8", exterior: "#8A2BE2", interiorTextColor: "#483D8B", exteriorTextColor: "#F8F0F8" },
     { name: "Caramel Dusk", interior: "#FFF5EE", exterior: "#CD853F", interiorTextColor: "#5C4033", exteriorTextColor: "#FFF5EE" },
+    { name: "Seashell Glow", interior: "#FFF8E7", exterior: "#FFDEAD", interiorTextColor: "#8B5A2B", exteriorTextColor: "#FFF8E7" },
     { name: "Mauve Mist", interior: "#F8F1F1", exterior: "#9370DB", interiorTextColor: "#483D8B", exteriorTextColor: "#F8F1F1" },
     { name: "Parchment Fire", interior: "#FDF5E6", exterior: "#FF4500", interiorTextColor: "#8B4513", exteriorTextColor: "#FDF5E6" },
     { name: "Twilight Fern", interior: "#F0FFF0", exterior: "#006400", interiorTextColor: "#355E3B", exteriorTextColor: "#F0FFF0" },
-
+*/
     // Bold & Audacious Themes (50)
+    /*
+    { name: "Neon Pulse", interior: "#00FFFF", exterior: "#FF00FF", interiorTextColor: "#000000", exteriorTextColor: "#FFFFFF" },
+    { name: "Electric Lime", interior: "#32CD32", exterior: "#1E90FF", interiorTextColor: "#000000", exteriorTextColor: "#FFFFFF" },
     { name: "Cosmic Clash", interior: "#FFD700", exterior: "#4B0082", interiorTextColor: "#2F0047", exteriorTextColor: "#FFD700" },
     { name: "Flamingo Fiesta", interior: "#FF69B4", exterior: "#00CED1", interiorTextColor: "#000000", exteriorTextColor: "#FFFFFF" },
     { name: "Retro Arcade", interior: "#FF4500", exterior: "#000080", interiorTextColor: "#FFFFFF", exteriorTextColor: "#FF4500" },
     { name: "Disco Fever", interior: "#FFA500", exterior: "#9400D3", interiorTextColor: "#FFFFFF", exteriorTextColor: "#FFFF00" },
-
-    { name: "Neon Pulse", interior: "#00FFFF", exterior: "#FF00FF", interiorTextColor: "#000000", exteriorTextColor: "#FFFFFF" },
-    { name: "Electric Lime", interior: "#32CD32", exterior: "#1E90FF", interiorTextColor: "#000000", exteriorTextColor: "#FFFFFF" },
     { name: "Cyber Punk", interior: "#00FF7F", exterior: "#2F0047", interiorTextColor: "#000000", exteriorTextColor: "#00FF7F" },
     { name: "Lava Flow", interior: "#FF6347", exterior: "#1C2526", interiorTextColor: "#FFFFFF", exteriorTextColor: "#FF6347" },
     { name: "Bubblegum Blast", interior: "#FF1493", exterior: "#00B7EB", interiorTextColor: "#000000", exteriorTextColor: "#FFFFFF" },
@@ -112,16 +110,18 @@ export const baseColorSchemes = [
     { name: "Punk Riot", interior: "#FF1493", exterior: "#000000", interiorTextColor: "#FFFFFF", exteriorTextColor: "#FF1493" },
     { name: "Funky Fusion", interior: "#FFA500", exterior: "#00CED1", interiorTextColor: "#000000", exteriorTextColor: "#FFFFFF" },
     { name: "Glitch Core", interior: "#00FF7F", exterior: "#FF00FF", interiorTextColor: "#000000", exteriorTextColor: "#FFFFFF" },
+    { name: "Firecracker", interior: "#FF6347", exterior: "#FFFF00", interiorTextColor: "#000000", exteriorTextColor: "#FF6347" },
     { name: "Electro Pop", interior: "#FF69B4", exterior: "#1E90FF", interiorTextColor: "#000000", exteriorTextColor: "#FFFFFF" },
     { name: "Neon Jungle", interior: "#00FF00", exterior: "#9400D3", interiorTextColor: "#000000", exteriorTextColor: "#FFFFFF" },
     { name: "Radical Red", interior: "#FF4500", exterior: "#FFD700", interiorTextColor: "#000000", exteriorTextColor: "#FFFFFF" },
     { name: "Aqua Shock", interior: "#00CED1", exterior: "#FF1493", interiorTextColor: "#000000", exteriorTextColor: "#FFFFFF" },
-
+    { name: "Purple Haze", interior: "#9400D3", exterior: "#FFFF00", interiorTextColor: "#FFFFFF", exteriorTextColor: "#9400D3" },
     { name: "Blazing Blue", interior: "#1E90FF", exterior: "#FF4500", interiorTextColor: "#FFFFFF", exteriorTextColor: "#1E90FF" },
     { name: "Hot Coral", interior: "#FF7F50", exterior: "#00FF7F", interiorTextColor: "#000000", exteriorTextColor: "#FFFFFF" },
     { name: "Emerald Flash", interior: "#00FF7F", exterior: "#FF6347", interiorTextColor: "#000000", exteriorTextColor: "#FFFFFF" },
-
+    { name: "Pink Panther", interior: "#FF69B4", exterior: "#000080", interiorTextColor: "#FFFFFF", exteriorTextColor: "#FF69B4" },
     { name: "Orange Crush", interior: "#FFA500", exterior: "#32CD32", interiorTextColor: "#000000", exteriorTextColor: "#FFFFFF" },
+    { name: "Violet Volt", interior: "#9400D3", exterior: "#00FFFF", interiorTextColor: "#FFFFFF", exteriorTextColor: "#9400D3" },
     { name: "Turquoise Twist", interior: "#00CED1", exterior: "#FF4500", interiorTextColor: "#000000", exteriorTextColor: "#FFFFFF" },
     { name: "Gold Rush", interior: "#FFD700", exterior: "#FF00FF", interiorTextColor: "#000000", exteriorTextColor: "#FFD700" },
     { name: "Crimson Bolt", interior: "#DC143C", exterior: "#00FF00", interiorTextColor: "#FFFFFF", exteriorTextColor: "#DC143C" },
@@ -135,6 +135,7 @@ export const baseColorSchemes = [
     { name: "Pink Pop", interior: "#FF69B4", exterior: "#00FF7F", interiorTextColor: "#000000", exteriorTextColor: "#FFFFFF" },
     { name: "Yellow Yell", interior: "#FFFF00", exterior: "#9400D3", interiorTextColor: "#000000", exteriorTextColor: "#FFFF00" },
     { name: "Cyan Craze", interior: "#00FFFF", exterior: "#FF4500", interiorTextColor: "#000000", exteriorTextColor: "#FFFFFF" },
+     */
     { name: "Purple Punch", interior: "#9400D3", exterior: "#32CD32", interiorTextColor: "#FFFFFF", exteriorTextColor: "#9400D3" }
 ];
 
