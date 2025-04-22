@@ -32,7 +32,16 @@ function getContrastRatio(color1, color2) {
 // Adjust text color based on contrast with highlight
 function adjustTextColor(textColor, highlightColor, fallbackColor) {
     const contrastThreshold = 4.5; // WCAG AA standard
-    return getContrastRatio(textColor, highlightColor) >= contrastThreshold ? textColor : fallbackColor;
+    // Check primary text color
+    if (getContrastRatio(textColor, highlightColor) >= contrastThreshold) {
+        return textColor;
+    }
+    // Check fallback color
+    if (getContrastRatio(fallbackColor, highlightColor) >= contrastThreshold) {
+        return fallbackColor;
+    }
+    // Final fallback to black for readability
+    return "#000000";
 }
 
 export function applyTheme(currentMode) {
@@ -148,7 +157,7 @@ export function updateVsMatchup(playerState) {
     const contenderHighlight = "#00FFFF";
     const flameHighlight = "#8B0000";
     const contenderTextColor = adjustTextColor(theme.exteriorTextColor, contenderHighlight, theme.interiorTextColor);
-    const flameTextColor = adjustTextColor(theme.exteriorTextColor, flameHighlight, "#FFFFFF");
+    const flameTextColor =  "#FFFFFF";
 
     // Clear existing highlight classes to prevent stale styles
     song1.classList.remove("active-song", "flame-song");
@@ -168,10 +177,18 @@ export function updateVsMatchup(playerState) {
         const flameClass0 = playerState.isFlameActive && playerState.activeContender === 0 ? 'flame-song' : activeClass0;
         const flameClass1 = playerState.isFlameActive && playerState.activeContender === 1 ? 'flame-song' : activeClass1;
 
-        // Apply classes to the span for highlighting
-        song1.innerHTML = `<span class="${flameClass0}" style="color: ${playerState.hasPlayed && playerState.activeContender === 0 ? contenderTextColor : playerState.isFlameActive && playerState.activeContender === 0 ? flameTextColor : theme.exteriorTextColor}" title="${playerState.contenders[0]?.replace('/sid/C64Music', '') || '-'}">${songName0}</span>`;
+        // Determine styles for song1
+        const song1Class = playerState.isFlameActive && playerState.activeContender === 0 ? 'flame-song' : (playerState.hasPlayed && playerState.activeContender === 0 ? 'active-song' : '');
+        const song1TextColor = playerState.isFlameActive && playerState.activeContender === 0 ? flameTextColor : (playerState.hasPlayed && playerState.activeContender === 0 ? contenderTextColor : theme.exteriorTextColor);
+
+        // Determine styles for song2
+        const song2Class = playerState.isFlameActive && playerState.activeContender === 1 ? 'flame-song' : (playerState.hasPlayed && playerState.activeContender === 1 ? 'active-song' : '');
+        const song2TextColor = playerState.isFlameActive && playerState.activeContender === 1 ? flameTextColor : (playerState.hasPlayed && playerState.activeContender === 1 ? contenderTextColor : theme.exteriorTextColor);
+
+        // Apply styles
+        song1.innerHTML = `<span class="${song1Class}" style="color: ${song1TextColor}" title="${playerState.contenders[0]?.replace('/sid/C64Music', '') || '-'}">${songName0}</span>`;
         vsText.textContent = " - vs - ";
-        song2.innerHTML = `<span class="${flameClass1}" style="color: ${playerState.hasPlayed && playerState.activeContender === 1 ? contenderTextColor : playerState.isFlameActive && playerState.activeContender === 1 ? flameTextColor : theme.exteriorTextColor}" title="${playerState.contenders[1]?.replace('/sid/C64Music', '') || '-'}">${songName1}</span>`;
+        song2.innerHTML = `<span class="${song2Class}" style="color: ${song2TextColor}" title="${playerState.contenders[1]?.replace('/sid/C64Music', '') || '-'}">${songName1}</span>`;
     }
 }
 
