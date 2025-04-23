@@ -1,3 +1,5 @@
+import * as brackets from './brackets.js';
+
 export let sidPlayer = null;
 export let isPlaying = false;
 let timerInterval;
@@ -34,6 +36,13 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
         if (window.backend.getRAM && window.backend.getRAM(0x0801) !== 0) {
             console.log(`[sID JAm] Detected unplayable BASIC SID file: ${filename}`);
             // Optionally: Pause player, update UI, or log to database
+            const state = brackets.getPlayerState();
+            if (state.currentMode === "bout" && state.activeBracket === "0 - 0") {
+                brackets.updatePlayerState({
+                    isUnplayableSID: true,
+                    isFlameActive: true
+                });
+            }
             sidPlayer.pause();
             setIsPlaying(false);
             stopTimer();
