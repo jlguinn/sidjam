@@ -120,7 +120,8 @@ export function findEligibleBracket() {
     return selectedBracket;
 }
 
-export function findReviveFallbackBracket() {
+
+export function findFallbackBracket() {
     let brackets = {};
     window.sidJamData.sidFiles.forEach(file => {
         let record = window.sidJamData.cachedResults[file] || { wins: 0, losses: 0 };
@@ -130,27 +131,40 @@ export function findReviveFallbackBracket() {
         }
     });
 
-    let nonEmptyBrackets = Object.keys(brackets).filter(key => {
-        if (key === "0 - 0") return false; // Exclude 0-0 since we know it's empty
-        return brackets[key] >= 1; // Need at least 1 contender
-    });
+    let nonEmptyBrackets = Object.keys(brackets).filter(key => brackets[key] >= 1);
 
     if (nonEmptyBrackets.length === 0) {
-        window.logmsg("No non-empty brackets found for Revive fallback");
+        window.logmsg("No non-empty brackets found for fallback");
         return null;
     }
 
-    // Sort by wins ASC, losses DESC
     nonEmptyBrackets.sort((a, b) => {
         const [aWins, aLosses] = a.split(" - ").map(Number);
         const [bWins, bLosses] = b.split(" - ").map(Number);
         if (aWins !== bWins) return aWins - bWins; // Sort by wins ASC
-        return bLosses - aLosses; // If wins are equal, sort by losses DESC
+        return bLosses - aLosses; // If wins equal, sort by losses DESC
     });
 
     const selectedBracket = nonEmptyBrackets[0];
-    window.logmsg(`Revive fallback bracket: ${selectedBracket} with ${brackets[selectedBracket]} contenders`);
+    window.logmsg(`Fallback bracket: ${selectedBracket} with ${brackets[selectedBracket]} contenders`);
     return selectedBracket;
+}
+
+export function replaceContenderFromBracket(bracket, excludeSongs = []) {
+    let filteredSongs = window.sidJamData.sidFiles.filter(song => {
+        if (excludeSongs.includes(song)) return false;
+        let record = window.sidJamData.cachedResults[song] || { wins: 0, losses: 0 };
+        let [wins, losses] = bracket.split(' - ').map(Number);
+        return record.wins === wins && record.losses === losses;
+    });
+
+    if (filteredSongs.length === 0) {
+        window.logmsg(`No contenders available in bracket ${bracket}`);
+        return null;
+    }
+
+    let newSongIndex = getRandom.randint(0, filteredSongs.length - 1);
+    return filteredSongs[newSongIndex];
 }
 
 export function getSongBracket(song) {
@@ -219,7 +233,7 @@ export function pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerBut
     return true;
 }
 
-// In brackets.js
+
 export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup, updateRoundInfo, updateWinnerButtons, updateFlameButton, updateBracketDropdown) {
     if (!sidPlayer) return;
 
@@ -232,161 +246,111 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
     }
 
     if (playerState.currentMode === "nowPlaying") {
-        let revivedToZeroZero = false;
         if (playerState.isReviveActive) {
             // Reset the song's win-loss record to 0-0
             const sidId = window.sidJamData.pathToId[playerState.nowPlayingSong];
-            const reviveResponse = await fetch(`dbcontrol/revive_song.php?user_id=${window.user.id}&sid_id=${sidId}`);
-            if (!reviveResponse.ok) {
-                window.logmsg(`Failed to revive song: ${reviveResponse.status}`);
-                return;
-            }
-            const reviveData = await reviveResponse.json();
-            if (!reviveData.success) {
-                window.logmsg("Failed to revive song");
-                return;
-            }
+            try {
+                const reviveResponse = await fetch(`dbcontrol/revive_song.php?user_id=${window.user.id}&sid_id=${sidId}`);
+                if (!reviveResponse.ok) throw new Error(`revive_song.php failed: ${reviveResponse.status}`);
+                const reviveData = await reviveResponse.json();
+                if (!reviveData.success) throw new Error('Failed to revive song');
 
-            // Refresh cachedResults to reflect the updated record
-            const resultsResponse = await fetch(`dbcontrol/get_results.php?user_id=${window.user.id}`);
-            if (!resultsResponse.ok) {
-                window.logmsg(`Failed to refresh results: ${resultsResponse.status}`);
-                return;
-            }
-            window.sidJamData.cachedResults = await resultsResponse.json();
+                const resultsResponse = await fetch(`dbcontrol/get_results.php?user_id=${window.user.id}`);
+                if (!resultsResponse.ok) throw new Error(`get_results.php failed: ${resultsResponse.status}`);
+                window.sidJamData.cachedResults = await resultsResponse.json();
 
-            if (getContenderCount("0 - 0") >= 2) {
-                updatePlayerState({
-                    currentMode: "bout",
-                    activeBracket: "0 - 0", // After revive, activeBracket should be set to "0 - 0"
-                    peekBracket: "0 - 0", // Ensure peekBracket is also updated
-                    contenders: [playerState.nowPlayingSong],
-                    isReviveActive: false,
-                    nowPlayingSong: null,
-                    nowPlayingSongBracket: null,
-                    isUnplayableSID: false // Reset on mode switch
-                });
-                let availableSongs = window.sidJamData.sidFiles.filter(song => song !== playerState.nowPlayingSong && (window.sidJamData.cachedResults[song] || { wins: 0, losses: 0 }).wins === 0 && (window.sidJamData.cachedResults[song] || { wins: 0, losses: 0 }).losses === 0);
-                if (availableSongs.length > 0) {
-                    let newSongIndex = getRandom.randint(0, availableSongs.length - 1);
-                    playerState.contenders[1] = availableSongs[newSongIndex];
-                    revivedToZeroZero = true;
-                }
-            }
-        }
+                let newBracket = "0 - 0";
+                let newContender = null;
 
-        if (!revivedToZeroZero) {
-            if (playerState.isReviveActive) {
-                newBracket = findReviveFallbackBracket();
-                if (!newBracket) {
-                    console.error("No fallback bracket found. Fatal!");
-                    return;
+                if (getContenderCount("0 - 0") >= 1) {
+                    newContender = replaceContenderFromBracket("0 - 0", [playerState.nowPlayingSong]);
                 }
 
-                updatePlayerState({
-                    currentMode: "bout",
-                    peekBracket: newBracket,
-                    activeBracket: newBracket,
-                    contenders: [playerState.nowPlayingSong], // Keep the revived song as the first contender
-                    isReviveActive: false,
-                    nowPlayingSong: null,
-                    nowPlayingSongBracket: null,
-                    activeContender: 0,
-                    roundCount: 1,
-                    winner: null,
-                    hasJammed: false,
-                    bothContendersSelected: false,
-                    isFlameActive: false,
-                    isUnplayableSID: false // Reset on mode switch
-                });
-
-                // Pick a second contender from the fallback bracket
-                let availableSongs = window.sidJamData.sidFiles.filter(song => {
-                    if (song === playerState.contenders[0]) return false; // Exclude the revived song
-                    let record = window.sidJamData.cachedResults[song] || { wins: 0, losses: 0 };
-                    return `${record.wins} - ${record.losses}` === newBracket && record.losses < 2;
-                });
-                if (availableSongs.length > 0) {
-                    let newSongIndex = getRandom.randint(0, availableSongs.length - 1);
-                    playerState.contenders[1] = availableSongs[newSongIndex];
-                } else {
-                    window.logmsg("Failed to pick second contender from fallback bracket");
-                    return;
-                }
-
-                loadSong(playerState.contenders[0], -1);
-                updatePlayerState({ hasPlayed: true });
-                shouldUpdateBracketDropdown = true;
-            } else {
-                // Ensure peekBracket is set to activeBracket when returning to Bout Mode
-                updatePlayerState({
-                    currentMode: "bout",
-                    nowPlayingSong: null,
-                    nowPlayingSongBracket: null,
-                    peekBracket: playerState.activeBracket, // Explicitly set peekBracket to activeBracket
-                    activeBracket: playerState.activeBracket,
-                    activeContender: 0,
-                    roundCount: 1,
-                    winner: null,
-                    hasJammed: false,
-                    bothContendersSelected: false,
-                    isFlameActive: false,
-                    isUnplayableSID: false // Reset on mode switch
-                });
-                if (playerState.contenders.length === 2 && 
-                    playerState.contenders.every(c => window.sidJamData.sidFiles.includes(c)) &&
-                    getContenderCount(playerState.activeBracket) >= 2) {
-                    loadSong(playerState.contenders[0], -1);
-                    updatePlayerState({ hasPlayed: true });
-                } else {
-                    let success = pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
-                    if (!success) {
-                        newBracket = findEligibleBracket();
-                        if (newBracket) {
-                            updatePlayerState({ peekBracket: newBracket, activeBracket: newBracket, isUnplayableSID: false });
-                            shouldUpdateBracketDropdown = true;
-                            pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
-                        } else {
-                            window.logmsg("No eligible brackets, stopping");
-                            return;
-                        }
+                if (!newContender) {
+                    newBracket = findFallbackBracket();
+                    if (!newBracket) {
+                        console.error("No fallback bracket found for Revive. Cannot continue.");
+                        return;
+                    }
+                    newContender = replaceContenderFromBracket(newBracket, [playerState.nowPlayingSong]);
+                    if (!newContender) {
+                        console.error(`No contenders available in fallback bracket ${newBracket}. Cannot continue.`);
+                        return;
                     }
                 }
+
+                updatePlayerState({
+                    currentMode: "bout",
+                    activeBracket: newBracket,
+                    peekBracket: newBracket,
+                    contenders: [playerState.nowPlayingSong, newContender],
+                    isReviveActive: false,
+                    nowPlayingSong: null,
+                    nowPlayingSongBracket: null,
+                    activeContender: 0,
+                    roundCount: 1,
+                    winner: null,
+                    hasJammed: false,
+                    bothContendersSelected: false,
+                    isFlameActive: false,
+                    isUnplayableSID: false
+                });
+
+                applyTheme("bout");
+                loadSong(playerState.nowPlayingSong, -1);
+                updatePlayerState({ hasPlayed: true });
+                updateVsMatchup(playerState);
+                updateRoundInfo(playerState);
+                updateWinnerButtons(playerState, sidPlayer);
+                updateFlameButton(playerState, sidPlayer);
+                updateBracketDropdown();
+                document.getElementById("bracket-select").value = newBracket.replace(' - ', '-');
+                voteProcessed = true;
+            } catch (error) {
+                console.error('Error reviving song:', error);
             }
         } else {
+            // Ensure peekBracket is set to activeBracket when returning to Bout Mode
             updatePlayerState({
-                peekBracket: "0 - 0", // After revive, ensure peekBracket is set correctly
-                activeBracket: "0 - 0",
+                currentMode: "bout",
+                nowPlayingSong: null,
+                nowPlayingSongBracket: null,
+                peekBracket: playerState.activeBracket,
+                activeBracket: playerState.activeBracket,
                 activeContender: 0,
                 roundCount: 1,
                 winner: null,
                 hasJammed: false,
                 bothContendersSelected: false,
                 isFlameActive: false,
-                isUnplayableSID: false // Reset on mode switch
+                isUnplayableSID: false
             });
-            if (!playerState.contenders[1]) {
-                newBracket = findEligibleBracket();
-                if (newBracket) {
-                    updatePlayerState({ peekBracket: newBracket, activeBracket: newBracket, isUnplayableSID: false });
-                    shouldUpdateBracketDropdown = true;
-                    pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
-                } else {
-                    window.logmsg("No eligible brackets, stopping");
-                    return;
-                }
-            } else {
+            if (playerState.contenders.length === 2 && 
+                playerState.contenders.every(c => window.sidJamData.sidFiles.includes(c)) &&
+                getContenderCount(playerState.activeBracket) >= 2) {
                 loadSong(playerState.contenders[0], -1);
                 updatePlayerState({ hasPlayed: true });
+            } else {
+                let success = pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
+                if (!success) {
+                    newBracket = findEligibleBracket();
+                    if (newBracket) {
+                        updatePlayerState({ peekBracket: newBracket, activeBracket: newBracket, isUnplayableSID: false });
+                        shouldUpdateBracketDropdown = true;
+                        pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
+                    } else {
+                        window.logmsg("No eligible brackets, stopping");
+                        return;
+                    }
+                }
             }
+            applyTheme("bout");
+            updateVsMatchup(playerState);
+            updateRoundInfo(playerState);
+            updateWinnerButtons(playerState, sidPlayer);
+            updateFlameButton(playerState, sidPlayer);
+            shouldUpdateBracketDropdown = true;
         }
-        applyTheme("bout");
-        updateVsMatchup(playerState);
-        updateRoundInfo(playerState);
-        updateWinnerButtons(playerState, sidPlayer);
-        updateFlameButton(playerState, sidPlayer);
-        // Ensure the UI reflects the updated peekBracket
-        shouldUpdateBracketDropdown = true; // Force dropdown update
         if (shouldUpdateBracketDropdown) {
             updateBracketDropdown();
             document.getElementById("bracket-select").value = playerState.peekBracket.replace(' - ', '-');
@@ -407,44 +371,53 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
 
         let votes = [{ id: window.sidJamData.pathToId[flamedFile], increment: -2 }];
         try {
-            await fetch('dbcontrol/log_result.php', {
+            const response = await fetch('dbcontrol/log_result.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ user_id: window.user.id, votes })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) return fetch(`dbcontrol/get_results.php?user_id=${window.user.id}`);
-            })
-            .then(response => response.json())
-            .then(data => {
-                window.sidJamData.cachedResults = data;
-
-                let availableSongs = window.sidJamData.sidFiles.filter(song => !playerState.contenders.includes(song));
-                if (availableSongs.length === 0) {
-                    window.logmsg("No songs to replace flamed song");
-                    updatePlayerState({ contenders: playerState.contenders.map((c, i) => i === flamedIndex ? null : c), isFlameActive: false, isUnplayableSID: false });
-                } else {
-                    let newSongIndex = getRandom.randint(0, availableSongs.length - 1);
-                    let newSong = availableSongs[newSongIndex];
-                    
-                    console.log(`New contender: ${window.sidJamData.pathToId[newSong]}`);
-                    console.log(`${newSong}`);
-
-                    updatePlayerState({ 
-                        contenders: playerState.contenders.map((c, i) => i === flamedIndex ? newSong : c),
-                        isFlameActive: false,
-                        isUnplayableSID: false // Reset after flaming
-                    });
-                    loadSong(newSong, -1);
-                    updatePlayerState({ hasPlayed: true });
-                }
-                updateVsMatchup(playerState);
-                updateRoundInfo(playerState);
-                updateWinnerButtons(playerState, sidPlayer);
-                updateFlameButton(playerState, sidPlayer);
-                voteProcessed = true;
             });
+            if (!response.ok) throw new Error(`log_result.php failed: ${response.status}`);
+            const data = await response.json();
+            if (!data.success) throw new Error('Failed to log flame result');
+
+            const resultsResponse = await fetch(`dbcontrol/get_results.php?user_id=${window.user.id}`);
+            if (!resultsResponse.ok) throw new Error(`get_results.php failed: ${resultsResponse.status}`);
+            window.sidJamData.cachedResults = await resultsResponse.json();
+
+            let newContender = replaceContenderFromBracket("0 - 0", playerState.contenders);
+            let newBracket = playerState.activeBracket;
+
+            if (!newContender) {
+                newBracket = findFallbackBracket();
+                if (!newBracket) {
+                    console.error("No fallback bracket found for Flame. Cannot continue.");
+                    return;
+                }
+                newContender = replaceContenderFromBracket(newBracket, playerState.contenders);
+                if (!newContender) {
+                    console.error(`No contenders available in fallback bracket ${newBracket}. Cannot continue.`);
+                    return;
+                }
+                updatePlayerState({ activeBracket: newBracket, peekBracket: newBracket });
+                updateBracketDropdown();
+                document.getElementById("bracket-select").value = newBracket.replace(' - ', '-');
+            }
+
+            console.log(`New contender: ${window.sidJamData.pathToId[newContender]}`);
+            console.log(`${newContender}`);
+
+            updatePlayerState({
+                contenders: playerState.contenders.map((c, i) => i === flamedIndex ? newContender : c),
+                isFlameActive: false,
+                isUnplayableSID: false
+            });
+            loadSong(newContender, -1);
+            updatePlayerState({ hasPlayed: true });
+            updateVsMatchup(playerState);
+            updateRoundInfo(playerState);
+            updateWinnerButtons(playerState, sidPlayer);
+            updateFlameButton(playerState, sidPlayer);
+            voteProcessed = true;
         } catch (error) {
             console.error('Error flaming song:', error);
         }
@@ -456,7 +429,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 roundCount: 1,
                 winner: null,
                 bothContendersSelected: false,
-                isUnplayableSID: false // Reset on new bout
+                isUnplayableSID: false
             });
             let success = pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
             if (!success) {

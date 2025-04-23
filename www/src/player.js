@@ -44,6 +44,8 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
                     isUnplayableSID: true,
                     isFlameActive: true
                 });
+                document.getElementById("winner0").disabled = true;
+                document.getElementById("winner1").disabled = true;
             }
         }
 
@@ -59,7 +61,6 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
         updateVsMatchup();
         ui.updateFlameButton(brackets.getPlayerState(), sidPlayer);
         ui.updateRoundInfo(brackets.getPlayerState());
-        ui.updateWinnerButtons(brackets.getPlayerState, sidPlayer);
     }).catch(error => {
         console.error(`Error loading song ${filename}:`, error);
         onFail();
