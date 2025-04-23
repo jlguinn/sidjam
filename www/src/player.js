@@ -30,6 +30,15 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
     }
 
     ScriptNodePlayer.loadMusicFromURL(filename, options, onFail, onProgress).then(() => {
+        // Check for BASIC ROM error via RAM
+        if (window.backend.getRAM && window.backend.getRAM(0x0801) !== 0) {
+            console.log(`[sID JAm] Detected unplayable BASIC SID file: ${filename}`);
+            // Optionally: Pause player, update UI, or log to database
+            sidPlayer.pause();
+            setIsPlaying(false);
+            stopTimer();
+        }
+
         updateSongInfo();
         if (autoPlay) {
             sidPlayer.resume();
