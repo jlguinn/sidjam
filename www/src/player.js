@@ -1,4 +1,5 @@
 import * as brackets from './brackets.js';
+import * as ui from './ui.js';
 
 export let sidPlayer = null;
 export let isPlaying = false;
@@ -35,17 +36,15 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
         // Check for BASIC ROM error via RAM
         if (window.backend.getRAM && window.backend.getRAM(0x0801) !== 0) {
             console.log(`[sID JAm] Detected unplayable BASIC SID file: ${filename}`);
-            // Optionally: Pause player, update UI, or log to database
             const state = brackets.getPlayerState();
             if (state.currentMode === "bout" && state.activeBracket === "0 - 0") {
+                state.isUnplayableSID = true;
+                state.isFlameActive = true;
                 brackets.updatePlayerState({
                     isUnplayableSID: true,
                     isFlameActive: true
                 });
             }
-            sidPlayer.pause();
-            setIsPlaying(false);
-            stopTimer();
         }
 
         updateSongInfo();
@@ -58,6 +57,7 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
         resetVoiceStates();
         updateNavigationButtons();
         updateVsMatchup();
+        ui.updateFlameButton(brackets.getPlayerState(), sidPlayer);
     }).catch(error => {
         console.error(`Error loading song ${filename}:`, error);
         onFail();

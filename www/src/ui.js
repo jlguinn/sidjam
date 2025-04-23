@@ -323,11 +323,15 @@ export function updateFlameButton(playerState, sidPlayer) {
 
     if (playerState.winner !== null || playerState.bothContendersSelected) {
         flameButton.disabled = true;
+    } else if (playerState.isUnplayableSID) {
+        // For unplayable SIDs, enable the flame button to allow user confirmation
+        flameButton.disabled = false;
     } else {
         const availableSongs = window.sidJamData.sidFiles.filter(song => !playerState.contenders.includes(song));
         flameButton.disabled = !playerState.hasPlayed || availableSongs.length === 0;
     }
 
+    // Ensure the animated GIF is used when isFlameActive is true
     flameButton.style.backgroundImage = playerState.isFlameActive ? "url('/image/Flame-01-june.gif')" : "url('/image/Flame-01-june.jpg')";
 }
 
