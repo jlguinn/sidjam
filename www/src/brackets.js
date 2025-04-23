@@ -190,7 +190,7 @@ export function pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerBut
     }
 
     if (filteredFiles.length < 2) {
-        updatePlayerState({ peekBracket: playerState.activeBracket, isUnplayableSID: false });
+        updatePlayerState({ peekBracket: playerState.activeBracket});
         updateBracketDropdown();
         return false;
     }
