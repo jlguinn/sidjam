@@ -192,7 +192,7 @@ export function updateVsMatchup(playerState) {
     }
 }
 
-let reviveMessageTimeout = null;
+let blinkMessageTimeout = null;
 
 export function updateRoundInfo(playerState) {
     const roundDiv = document.getElementById("round-info");
@@ -206,9 +206,9 @@ export function updateRoundInfo(playerState) {
     const winnerTextColor = adjustTextColor(theme.exteriorTextColor, winnerHighlight, "#000000");
 
     // Clear any existing timeout to prevent stale updates
-    if (reviveMessageTimeout) {
-        clearTimeout(reviveMessageTimeout);
-        reviveMessageTimeout = null;
+    if (blinkMessageTimeout) {
+        clearTimeout(blinkMessageTimeout);
+        blinkMessageTimeout = null;
     }
 
     if (playerState.currentMode === "nowPlaying") {
@@ -216,13 +216,13 @@ export function updateRoundInfo(playerState) {
             // Step 1: Show "Revive Activated" with blinking effect
             roundDiv.innerHTML = `<span class="revive-activated" style="color: ${theme.exteriorTextColor}">Revive Activated</span>`;
 
-            // Step 2: After 2 seconds (blink duration), switch to the instructional marquee
-            reviveMessageTimeout = setTimeout(() => {
-                // Only update if still in "nowPlaying" mode and isReviveActive is still true
+            // Step 2: After 2 seconds, switch to the instructional marquee
+            blinkMessageTimeout = setTimeout(() => {
+                // Only update if still in "nowPlaying" mode and isReviveActive is true
                 if (playerState.currentMode === "nowPlaying" && playerState.isReviveActive) {
                     roundDiv.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="3">Click jAM to revive this contender or click Revive again to cancel...</marquee>`;
                 }
-                reviveMessageTimeout = null;
+                blinkMessageTimeout = null;
             }, 2000); // Matches the 2s duration of the blink animation
         } else {
             // Step 3: Default "Now Playing" marquee when Revive is not active
@@ -233,6 +233,24 @@ export function updateRoundInfo(playerState) {
 
     if (!window.isLoggedIn && window.showPromptMessage && !window.hasShownPrompt) {
         roundDiv.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="3">Please sign in or register to save your progress...</marquee>`;
+        return;
+    }
+
+    if (playerState.isFlameActive && !playerState.bothContendersSelected && playerState.winner === null) {
+        // Step 1: Show "Flame Activated" with blinking effect
+        roundDiv.innerHTML = `<span class="flame-activated" style="color: ${theme.exteriorTextColor}">Flame Activated</span>`;
+
+        // Step 2: After 2 seconds, switch to the appropriate marquee
+        blinkMessageTimeout = setTimeout(() => {
+            // Only update if still in "bout" mode, isFlameActive is true, and no winner is selected
+            if (playerState.currentMode === "bout" && playerState.isFlameActive && !playerState.bothContendersSelected && playerState.winner === null) {
+                const marqueeMessage = playerState.isUnplayableSID
+                    ? "Unplayable SID detected... Click jAM to eliminate or flame to cancel..."
+                    : "Contender queued for elimination... Click jAM to confirm or flame to cancel...";
+                roundDiv.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="3" style="color: ${theme.exteriorTextColor}">${marqueeMessage}</marquee>`;
+            }
+            blinkMessageTimeout = null;
+        }, 2000); // Matches the 2s duration of the blink animation
         return;
     }
 

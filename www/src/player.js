@@ -37,7 +37,7 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
         if (window.backend.getRAM && window.backend.getRAM(0x0801) !== 0) {
             console.log(`[sID JAm] Detected unplayable BASIC SID file: ${filename}`);
             const state = brackets.getPlayerState();
-            if (state.currentMode === "bout" && state.activeBracket === "0 - 0") {
+            if (state.currentMode === "bout" && state.activeBracket === "0 - 0" && state.roundCount === 1) {
                 state.isUnplayableSID = true;
                 state.isFlameActive = true;
                 brackets.updatePlayerState({
@@ -58,6 +58,8 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
         updateNavigationButtons();
         updateVsMatchup();
         ui.updateFlameButton(brackets.getPlayerState(), sidPlayer);
+        ui.updateRoundInfo(brackets.getPlayerState());
+        ui.updateWinnerButtons(brackets.getPlayerState, sidPlayer);
     }).catch(error => {
         console.error(`Error loading song ${filename}:`, error);
         onFail();

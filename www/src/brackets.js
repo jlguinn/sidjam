@@ -1,5 +1,6 @@
 import { sidPlayer, isPlaying, stopTimer, setIsPlaying } from './player.js';
 import { applyTheme } from './ui.js';
+import { updateRoundInfo } from './ui.js';
 
 const USE_DETERMINISTIC_RANDOM = false;
 if (USE_DETERMINISTIC_RANDOM) {
@@ -524,6 +525,7 @@ export function toggleFlame(updateFlameButton, updateVsMatchup, updateWinnerButt
     updateFlameButton(playerState, sidPlayer);
     updateVsMatchup(playerState);
     updateWinnerButtons(playerState, sidPlayer);
+    updateRoundInfo(playerState);
 }
 
 export function toggleRevive(updateReviveButton, updateSongTitleHighlight) {

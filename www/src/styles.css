@@ -178,9 +178,15 @@ body {
     100% { opacity: 1; }
 }
 
+
+.flame-activated {
+    animation: blink 2s forwards; /* 5 blinks, 0.4s each */
+}
+
 .revive-activated {
     animation: blink 2s forwards; /* 5 blinks, 0.4s each */
 }
+
 
 #reviveButton:hover {
     filter: brightness(1.2);
