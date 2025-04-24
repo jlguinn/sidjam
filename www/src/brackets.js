@@ -131,7 +131,7 @@ export function findFallbackBracket() {
         }
     });
 
-    let nonEmptyBrackets = Object.keys(brackets).filter(key => brackets[key] >= 1);
+    let nonEmptyBrackets = Object.keys(brackets).filter(key => brackets[key] >= 1 && key !== "0 - 0");
 
     if (nonEmptyBrackets.length === 0) {
         window.logmsg("No non-empty brackets found for fallback");
