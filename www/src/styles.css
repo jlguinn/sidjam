@@ -398,3 +398,38 @@ body {
     background-color: #555;
     border-color: #999;
 }
+
+#winner-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: -12px;
+    margin-bottom: 5px;
+    width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.bitmap-button {
+    width: 92px;
+    height: 144px;
+    cursor: pointer;
+    transition: filter 0.3s ease;
+}
+
+.bitmap-button:disabled {
+    filter: grayscale(100%) opacity(0.5);
+    cursor: not-allowed;
+}
+
+.bitmap-button:hover:not(:disabled) {
+    filter: brightness(1.2);
+}
+
+#winner0 {
+    margin-left: 100px;
+}
+
+#winner1 {
+    margin-right: 100px;
+}

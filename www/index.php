@@ -171,8 +171,8 @@ $cxn->close();
         <button id="jamButton" class="control-button" onclick="window.jamToggle()" disabled>jAM</button>
     </div>
     <div id="winner-controls">
-        <button id="winner0" class="control-button" onclick="window.setWinner(0)">Winner</button>
-        <button id="winner1" class="control-button" onclick="window.setWinner(1)">Winner</button>
+        <div id="winner0" class="bitmap-button" onclick="window.setWinner(0)"></div>
+        <div id="winner1" class="bitmap-button" onclick="window.setWinner(1)"></div>
     </div>
     <div id="bracket-flame-row">
         <div id="bracket-controls">

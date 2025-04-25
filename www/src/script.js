@@ -122,6 +122,80 @@ const profileBitmap = [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ];
 
+const leftThumbUpBitmap = [
+    [0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,1,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0],
+    [0,0,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0],
+    [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+    [1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0],
+    [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0],
+    [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0],
+    [0,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
+    [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0],
+    [0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0],
+    [0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0],
+    [0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0],
+    [0,0,0,0,1,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+]
+
+function flipBitmapHorizontally(bitmap) {
+    return bitmap.map(row => [...row].reverse());
+}
+
+window.renderBitmap = function(bitmap, domElement, textColor) {
+    if (!domElement) {
+        console.error('DOM element for bitmap rendering not found.');
+        return;
+    }
+    domElement.innerHTML = '';
+
+    // Determine bitmap dimensions
+    const rows = bitmap.length;
+    const cols = bitmap[0].length;
+    const pixelSize = 2; // Consistent with profile bitmap
+
+    // Set grid layout
+    domElement.style.display = 'grid';
+    domElement.style.gridTemplateColumns = `repeat(${cols}, ${pixelSize}px)`;
+    domElement.style.gridTemplateRows = `repeat(${rows}, ${pixelSize}px)`;
+    domElement.style.width = `${cols * pixelSize}px`;
+    domElement.style.height = `${rows * pixelSize}px`;
+
+    // Render pixels
+    for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+            const pixel = document.createElement('div');
+            pixel.style.width = `${pixelSize}px`;
+            pixel.style.height = `${pixelSize}px`;
+            pixel.style.backgroundColor = bitmap[row][col] === 1 ? textColor : 'transparent';
+            domElement.appendChild(pixel);
+        }
+    }
+};
+
 window.renderProfileBitmap = function(textColor, isLoggedIn = window.isLoggedIn || false) {
     const bitmapContainer = document.getElementById('profile-bitmap');
     if (!bitmapContainer) {
@@ -1180,7 +1254,13 @@ async function initializeApp() {
         document.getElementById(`voice${i}`).addEventListener('change', () => player.toggleVoice(i));
     }
 
+    // Apply initial theme and render winner button bitmaps
     ui.applyTheme(brackets.getPlayerState().currentMode);
+    const theme = baseColorSchemes[ui.getCurrentThemeIndex()];
+    const winner0 = document.getElementById('winner0');
+    const winner1 = document.getElementById('winner1');
+    window.renderBitmap(leftThumbUpBitmap, winner0, theme.exteriorTextColor);
+    window.renderBitmap(flipBitmapHorizontally(leftThumbUpBitmap), winner1, theme.exteriorTextColor);
 
     const button = document.getElementById("colorButton");
     const currentTheme = baseColorSchemes[ui.getCurrentThemeIndex()];

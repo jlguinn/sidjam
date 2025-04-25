@@ -11,6 +11,10 @@ export function getCurrentThemeIndex() {
     return currentThemeIndex;
 }
 
+function flipBitmapHorizontally(bitmap) {
+    return bitmap.map(row => [...row].reverse());
+}
+
 // export function  debug(message) { console.log(`[DEBUG] ${message}`); }
 
 // Utility function to calculate luminance of a hex color
