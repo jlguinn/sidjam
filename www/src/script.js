@@ -11,10 +11,12 @@ window.sidJamData = {
     pathToId: {}
 };
 
-import * as player from './player.js';
+import { renderWinnerButtonBitmap, renderProfileBitmap } from './bitmap.js';
 import * as ui from './ui.js';
-import { baseColorSchemes } from './themes.js';
 import * as brackets from './brackets.js';
+import { baseColorSchemes } from './themes.js';
+import * as player from './player.js';
+
 
 function debug(message) { console.log(`[DEBUG] ${message}`); }
 
@@ -79,143 +81,6 @@ function checkSong2Clipping() {
         if (preferencesLink) preferencesLink.style.display = 'block';
     }
 }
-
-const guestBitmap = [
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,1,1,1,0,0,0,0,0,0],
-    [0,0,0,0,1,1,1,1,1,1,1,0,0,0,0],
-    [0,0,0,0,1,1,1,1,1,1,1,0,0,0,0],
-    [0,0,0,1,1,1,1,1,1,1,1,1,0,0,0],
-    [0,0,0,1,1,1,1,1,1,1,1,1,0,0,0],
-    [0,0,0,1,1,1,1,1,1,1,1,1,0,0,0],
-    [0,0,0,1,1,1,1,1,1,1,1,1,0,0,0],
-    [0,0,0,0,1,1,1,1,1,1,1,0,0,0,0],
-    [0,0,0,0,1,1,1,1,1,1,1,0,0,0,0],
-    [0,0,0,0,0,1,1,1,1,1,0,0,0,0,0],
-    [0,0,0,0,0,1,1,1,1,1,0,0,0,0,0],
-    [0,0,0,1,1,1,1,1,1,1,1,1,0,0,0],
-    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-];
-
-const profileBitmap = [
-    [0,0,0,0,1,1,1,1,1,1,1,0,0,0,0],
-    [0,0,1,1,0,0,0,0,0,0,0,1,1,0,0],
-    [0,1,0,0,0,0,1,1,1,0,0,0,0,1,0],
-    [1,0,0,0,1,1,1,1,1,1,1,0,0,0,1],
-    [1,0,0,0,1,1,1,1,1,1,1,0,0,0,1],
-    [0,1,0,1,0,0,0,0,0,0,0,1,0,1,0],
-    [1,1,0,1,0,0,0,1,0,0,0,1,0,1,1],
-    [1,1,0,1,0,0,1,1,1,0,0,1,0,1,1],
-    [1,1,0,1,1,1,1,1,1,1,1,1,0,1,1],
-    [0,1,0,0,1,1,1,1,1,1,1,0,0,1,0],
-    [0,0,0,0,1,1,1,1,1,1,1,0,0,0,0],
-    [0,0,0,0,0,1,1,1,1,1,0,0,0,0,0],
-    [0,0,0,0,0,1,1,1,1,1,0,0,0,0,0],
-    [0,0,0,1,1,1,1,1,1,1,1,1,0,0,0],
-    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-];
-
-const leftThumbUpBitmap = [
-    [0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,1,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0],
-    [0,0,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0],
-    [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
-    [1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0],
-    [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0],
-    [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0],
-    [0,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
-    [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0],
-    [0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0],
-    [0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0],
-    [0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0],
-    [0,0,0,0,1,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-]
-
-function flipBitmapHorizontally(bitmap) {
-    return bitmap.map(row => [...row].reverse());
-}
-
-window.renderBitmap = function(bitmap, domElement, textColor) {
-    if (!domElement) {
-        console.error('DOM element for bitmap rendering not found.');
-        return;
-    }
-    domElement.innerHTML = '';
-
-    // Determine bitmap dimensions
-    const rows = bitmap.length;
-    const cols = bitmap[0].length;
-    const pixelSize = 2; // Consistent with profile bitmap
-
-    // Set grid layout
-    domElement.style.display = 'grid';
-    domElement.style.gridTemplateColumns = `repeat(${cols}, ${pixelSize}px)`;
-    domElement.style.gridTemplateRows = `repeat(${rows}, ${pixelSize}px)`;
-    domElement.style.width = `${cols * pixelSize}px`;
-    domElement.style.height = `${rows * pixelSize}px`;
-
-    // Render pixels
-    for (let row = 0; row < rows; row++) {
-        for (let col = 0; col < cols; col++) {
-            const pixel = document.createElement('div');
-            pixel.style.width = `${pixelSize}px`;
-            pixel.style.height = `${pixelSize}px`;
-            pixel.style.backgroundColor = bitmap[row][col] === 1 ? textColor : 'transparent';
-            domElement.appendChild(pixel);
-        }
-    }
-};
-
-window.renderProfileBitmap = function(textColor, isLoggedIn = window.isLoggedIn || false) {
-    const bitmapContainer = document.getElementById('profile-bitmap');
-    if (!bitmapContainer) {
-        console.error('Profile bitmap container not found.');
-        return;
-    }
-    bitmapContainer.innerHTML = '';
-
-    const bitmap = isLoggedIn ? profileBitmap : guestBitmap;
-
-    for (let row = 0; row < 18; row++) {
-        for (let col = 0; col < 15; col++) {
-            const pixel = document.createElement('div');
-            pixel.style.width = '4px';
-            pixel.style.height = '4px';
-            pixel.style.backgroundColor = bitmap[row][col] === 1 ? textColor : 'transparent';
-            bitmapContainer.appendChild(pixel);
-        }
-    }
-};
 
 const updateTimerBound = () => player.updateTimer();
 
@@ -1072,8 +937,8 @@ window.flashProfileIcon = function() {
     }
 
     if (!currentColor) {
-        currentColor = baseColorSchemes[ui.currentThemeIndex].exteriorTextColor || '#000000';
-        window.renderProfileBitmap(currentColor);
+        currentColor = baseColorSchemes[ui.getCurrentThemeIndex()].exteriorTextColor || '#000000';
+        renderProfileBitmap(window.isLoggedIn || false, currentColor);
     }
 
     const complementaryColor = getComplementaryColor(currentColor);
@@ -1083,12 +948,12 @@ window.flashProfileIcon = function() {
 
     function flash() {
         if (flashCount >= maxFlashes) {
-            window.renderProfileBitmap(currentColor);
+            renderProfileBitmap(window.isLoggedIn || false, currentColor);
             return;
         }
 
         const colorToUse = flashCount % 2 === 0 ? complementaryColor : currentColor;
-        window.renderProfileBitmap(colorToUse);
+        renderProfileBitmap(window.isLoggedIn || false, colorToUse);
         flashCount++;
         setTimeout(flash, flashDuration);
     }
@@ -1182,7 +1047,7 @@ async function initializeApp() {
                 activeBracket: player_state.activeBracket,
                 currentMode: "bout",
                 nowPlayingSong: null,
-                nowPlayingSongBracket: null, // Reset since no song is playing
+                nowPlayingSongBracket: null,
                 activeContender: 0,
                 hasJammed: false,
                 bothContendersSelected: false,
@@ -1196,14 +1061,14 @@ async function initializeApp() {
             updateWinnerButtonsBound();
             updateFlameButtonBound();
         } else if (player_state && player_state.currentMode === "nowPlaying" && player_state.nowPlayingSong) {
-            const nowPlayingSongBracket = brackets.getSongBracket(player_state.nowPlayingSong); // Calculate bracket
+            const nowPlayingSongBracket = brackets.getSongBracket(player_state.nowPlayingSong);
             brackets.updatePlayerState({
                 contenders: player_state.contenders || [],
                 peekBracket: player_state.peekBracket,
                 activeBracket: player_state.activeBracket,
                 currentMode: "nowPlaying",
                 nowPlayingSong: player_state.nowPlayingSong,
-                nowPlayingSongBracket: nowPlayingSongBracket // Set the bracket
+                nowPlayingSongBracket: nowPlayingSongBracket
             });
             ui.setCurrentThemeIndex(player_state.theme || 0);
             loadSongBound(player_state.nowPlayingSong, -1, false);
@@ -1228,7 +1093,7 @@ async function initializeApp() {
                 bothContendersSelected: false,
                 isFlameActive: false,
                 nowPlayingSong: null,
-                nowPlayingSongBracket: null // Initialize as null
+                nowPlayingSongBracket: null
             });
             ui.setCurrentThemeIndex(0);
             brackets.updateBracketDropdown();
@@ -1244,7 +1109,7 @@ async function initializeApp() {
             activeBracket: "0 - 0",
             currentMode: "bout"
         });
-        ui.setCurrentThemeIndex(0); // Use setter
+        ui.setCurrentThemeIndex(0);
         brackets.updateBracketDropdown();
         brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateFlameButtonBound);
     }
@@ -1257,10 +1122,9 @@ async function initializeApp() {
     // Apply initial theme and render winner button bitmaps
     ui.applyTheme(brackets.getPlayerState().currentMode);
     const theme = baseColorSchemes[ui.getCurrentThemeIndex()];
-    const winner0 = document.getElementById('winner0');
-    const winner1 = document.getElementById('winner1');
-    window.renderBitmap(leftThumbUpBitmap, winner0, theme.exteriorTextColor);
-    window.renderBitmap(flipBitmapHorizontally(leftThumbUpBitmap), winner1, theme.exteriorTextColor);
+    const playerState = brackets.getPlayerState(); // Add this to get playerState
+    renderWinnerButtonBitmap(0, playerState, theme.exteriorTextColor); // Replace window.renderBitmap
+    renderWinnerButtonBitmap(1, playerState, theme.exteriorTextColor); // Replace window.renderBitmap
 
     const button = document.getElementById("colorButton");
     const currentTheme = baseColorSchemes[ui.getCurrentThemeIndex()];

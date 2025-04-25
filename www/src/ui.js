@@ -1,5 +1,6 @@
 import { baseColorSchemes, getInvertedTheme } from './themes.js';
 import * as brackets from './brackets.js';
+import { renderProfileBitmap, renderWinnerButtonBitmap } from './bitmap.js';
 
 export let currentThemeIndex = 0;
 
@@ -124,7 +125,7 @@ export function applyTheme(currentMode) {
     document.getElementById("song-title").style.color = theme.interiorTextColor;
 
     // Update profile bitmap based on login status
-    window.renderProfileBitmap(theme.exteriorTextColor, isLoggedIn);
+    renderProfileBitmap(isLoggedIn, theme.exteriorTextColor); // Replace window.renderProfileBitmap
 
     // Update color toggle button
     const nextIndex = (currentThemeIndex + 1) % baseColorSchemes.length;
