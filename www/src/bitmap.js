@@ -175,7 +175,13 @@ export function renderBitmap(bitmap, domElement, color, pixelSize) {
             const pixel = document.createElement('div');
             pixel.style.width = `${pixelSize}px`;
             pixel.style.height = `${pixelSize}px`;
-            pixel.style.backgroundColor = bitmap[row][col] === 1 ? color : 'transparent';
+            if (bitmap[row][col] === 1) {
+                pixel.style.backgroundColor = color; // Outline color (white)
+            } else if (bitmap[row][col] === 2) {
+                pixel.style.backgroundColor = '#FFDAB9'; // Interior flesh color
+            } else {
+                pixel.style.backgroundColor = 'transparent'; // Empty pixels
+            }
             domElement.appendChild(pixel);
         }
     }
