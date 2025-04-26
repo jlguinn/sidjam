@@ -307,13 +307,16 @@ export function updateWinnerButtons(playerState, sidPlayer) {
         return;
     }
 
-    winnerControls.style.display = "flex"; // Restore visibility in Bout Mode
+    winnerControls.style.display = "flex";
     const disabled = !playerState.hasPlayed || (playerState.roundCount === 1 && !playerState.hasJammed) || playerState.isFlameActive;
-    document.getElementById("winner0").disabled = disabled;
-    document.getElementById("winner1").disabled = disabled;
+    const winner0 = document.getElementById("winner0");
+    const winner1 = document.getElementById("winner1");
+    winner0.disabled = disabled;
+    winner1.disabled = disabled;
+    winner0.classList.toggle("disabled", disabled);
+    winner1.classList.toggle("disabled", disabled);
     document.getElementById("jamButton").disabled = !sidPlayer;
 }
-
 export function updateFlameButton(playerState, sidPlayer) {
     const flameControls = document.getElementById("flame-controls");
     const flameButton = document.getElementById("flameButton");

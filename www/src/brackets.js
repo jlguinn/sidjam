@@ -493,6 +493,11 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
 }
 
 export function updateWinner(contenderIndex, updateRoundInfo, updateWinnerButtons, updateFlameButton) {
+    const winnerButton = document.getElementById(`winner${contenderIndex}`);
+    if (winnerButton.disabled) {
+        console.log(`Button winner${contenderIndex} is disabled, ignoring click`);
+        return;
+    }
     if (playerState.winner === null && !playerState.bothContendersSelected) {
         updatePlayerState({ winner: contenderIndex });
     } else if (playerState.winner !== null && playerState.winner !== contenderIndex) {
@@ -502,12 +507,12 @@ export function updateWinner(contenderIndex, updateRoundInfo, updateWinnerButton
     } else {
         updatePlayerState({ winner: null });
     }
-    const theme = baseColorSchemes[getCurrentThemeIndex()]; // Added
+    const theme = baseColorSchemes[getCurrentThemeIndex()];
     updateRoundInfo(playerState);
     updateWinnerButtons(playerState, sidPlayer);
     updateFlameButton(playerState, sidPlayer);
-    renderWinnerButtonBitmap(0, '#000000', '#FFDAB9'); // Added
-    renderWinnerButtonBitmap(1, '#000000', '#FFDAB9'); // Added
+    renderWinnerButtonBitmap(0, playerState); // Fixed signature
+    renderWinnerButtonBitmap(1, playerState); // Fixed signature
 }
 
 export function toggleFlame(updateFlameButton, updateVsMatchup, updateWinnerButtons) {

@@ -164,8 +164,12 @@ export function renderWinnerButtonBitmap(contenderIndex, playerState) {
 
     // Check disabled state for color adjustment
     const isDisabled = winnerButton.disabled;
-    const primaryColor = isDisabled ? '#666666' : '#000000'; // Gray outline when disabled
-    const secondaryColor = isDisabled ? '#CCAA99' : '#FFDAB9'; // Muted flesh when disabled
+
+    const primaryColor '#000000'; 
+    const secondaryColor '#FFDAB9';
+
+    // const primaryColor = isDisabled ? '#666666' : '#000000'; // Gray outline when disabled
+    // const secondaryColor = isDisabled ? '#CCAA99' : '#FFDAB9'; // Muted flesh when disabled
 
     const isWinner = playerState.winner === contenderIndex;
     const isContenderSelected = playerState.selectedContender === contenderIndex;
