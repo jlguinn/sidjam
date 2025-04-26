@@ -7,8 +7,8 @@
     <style>
         /* Container for the sprite */
         .sprite-container {
-            width: 102px; /* Width of one frame (512 ÷ 5 ≈ 102.4) */
-            height: 102px; /* Height of one frame (512 ÷ 5 ≈ 102.4) */
+            width: 102px; /* Initial width of the visible area */
+            height: 102px; /* Initial height of the visible area */
             overflow: hidden;
             border: 2px solid #000; /* Optional: for visibility */
             cursor: pointer;
@@ -66,13 +66,18 @@
         </div>
         <div class="control-group">
             <label>Offset Y:</label>
-            <input type="range" id="frameHeight" min="50" max="150" value="102" oninput="updateFrame()">
-            <input type="number" id="frameHeightNum" min="50" max="150" value="102" oninput="updateFrame()">
-        </div>
-        <div class="control-group">
-            <label>Offset Y:</label>
             <input type="range" id="offsetY" min="0" max="20" value="0" oninput="updateFrame()">
             <input type="number" id="offsetYNum" min="0" max="20" value="0" oninput="updateFrame()">
+        </div>
+        <div class="control-group">
+            <label>Buffer X:</label>
+            <input type="range" id="bufferX" min="0" max="20" value="0" oninput="updateFrame()">
+            <input type="number" id="bufferXNum" min="0" max="20" value="0" oninput="updateFrame()">
+        </div>
+        <div class="control-group">
+            <label>Buffer Y:</label>
+            <input type="range" id="bufferY" min="0" max="20" value="0" oninput="updateFrame()">
+            <input type="number" id="bufferYNum" min="0" max="20" value="0" oninput="updateFrame()">
         </div>
         <div class="control-group">
             <label>Speed (ms):</label>
@@ -89,6 +94,8 @@
         let frameHeight = 102; /* Initial height of one frame (512 ÷ 5) */
         let offsetX = 0; /* Horizontal padding between frames */
         let offsetY = 0; /* Vertical padding between frames */
+        let bufferX = 0; /* Buffer to crop the horizontal edges */
+        let bufferY = 0; /* Buffer to crop the vertical edges */
         const framesPerRow = 5; /* Number of frames per row (5x5 grid) */
         const totalFrames = 25; /* Total frames in the sprite sheet */
         let speed = 200; /* Animation speed in milliseconds */
@@ -99,13 +106,15 @@
             target.value = input.value;
         }
 
-        // Update frame size and position
+        // Update frame size, buffer, and position
         function updateFrame() {
             // Get values from inputs
             frameWidth = parseInt(document.getElementById('frameWidth').value);
             frameHeight = parseInt(document.getElementById('frameHeight').value);
             offsetX = parseInt(document.getElementById('offsetX').value);
             offsetY = parseInt(document.getElementById('offsetY').value);
+            bufferX = parseInt(document.getElementById('bufferX').value);
+            bufferY = parseInt(document.getElementById('bufferY').value);
 
             // Sync slider and number inputs
             syncInputs(document.getElementById('frameWidth'), document.getElementById('frameWidthNum'));
@@ -116,10 +125,14 @@
             syncInputs(document.getElementById('offsetXNum'), document.getElementById('offsetX'));
             syncInputs(document.getElementById('offsetY'), document.getElementById('offsetYNum'));
             syncInputs(document.getElementById('offsetYNum'), document.getElementById('offsetY'));
+            syncInputs(document.getElementById('bufferX'), document.getElementById('bufferXNum'));
+            syncInputs(document.getElementById('bufferXNum'), document.getElementById('bufferX'));
+            syncInputs(document.getElementById('bufferY'), document.getElementById('bufferYNum'));
+            syncInputs(document.getElementById('bufferYNum'), document.getElementById('bufferY'));
 
-            // Update container size
-            spriteContainer.style.width = `${frameWidth}px`;
-            spriteContainer.style.height = `${frameHeight}px`;
+            // Update container size (subtract buffer to crop the edges)
+            spriteContainer.style.width = `${frameWidth - bufferX}px`;
+            spriteContainer.style.height = `${frameHeight - bufferY}px`;
 
             // Update frame position
             nextFrame();
