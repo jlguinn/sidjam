@@ -122,11 +122,18 @@ body {
 .image-button { width: 47px; height: 39px; border: none; background: none; cursor: pointer; vertical-align: middle; padding: 2px; }
 .image-button:disabled { filter: grayscale(100%) opacity(0.5); cursor: not-allowed; }
 #playPauseButton { padding: 0; }
-#control-row { display: flex; align-items: center; margin-bottom: 10px; position: relative; }
+#control-row { display: flex; align-items: center; margin-bottom: 5px; position: relative; }
 #player-controls { display: flex; justify-content: center; position: relative; left: 50%; transform: translateX(-50%); }
 .voice-controls { display: flex; justify-content: space-between; width: 65px; margin-left: 50px; }
 #jam-controls { display: flex; justify-content: center; margin-bottom: 5px; margin-top: 15px; }
-#bracket-flame-row { display: flex; align-items: center; justify-content: flex-start; margin-bottom: 5px; position: relative; }
+#bracket-flame-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    margin-top: -25px; /* Pull up closer to winner-controls */
+    margin-bottom: 2px; /* Reduced from 5px */
+    position: relative;
+}
 #bracket-controls { display: flex; flex-direction: column; align-items: flex-start; margin-left: 10px; }
 .bracket-row { display: flex; flex-direction: row; align-items: center; }
 #bracket-label { margin-bottom: 3px; transition: color 0.3s; }
@@ -401,7 +408,7 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-top: -12px;
-    margin-bottom: 5px;
+    margin-bottom: -20px;
     width: 600px;
     margin-left: auto;
     margin-right: auto;
