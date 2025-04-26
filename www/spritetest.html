@@ -25,9 +25,7 @@
 
         /* Sprite sheet image */
         .sprite {
-            width: 512px; /* Full width of the sprite sheet */
-            height: 512px; /* Full height of the sprite sheet */
-            background: url('image/flame_frames.png') 0 0 no-repeat;
+            background: url('image/angry_flame_sprite_sheet.png') 0 0 no-repeat;
             transition: background-position 0.1s steps(1); /* Smooth transition for frame changes */
             position: absolute; /* Position relative to the container */
         }
@@ -144,16 +142,6 @@
                 <input type="number" id="bufferRightNum" min="0" max="20" value="0" oninput="updateFrame()">
             </div>
             <div class="control-group">
-                <label>Buffer Top:</label>
-                <input type="range" id="bufferTop" min="0" max="20" value="3" oninput="updateFrame()">
-                <input type="number" id="bufferTopNum" min="0" max="20" value="3" oninput="updateFrame()">
-            </div>
-            <div class="control-group">
-                <label>Buffer Bottom:</label>
-                <input type="range" id="bufferBottom" min="0" max="20" value="0" oninput="updateFrame()">
-                <input type="number" id="bufferBottomNum" min="0" max="20" value="0" oninput="updateFrame()">
-            </div>
-            <div class="control-group">
                 <label>Speed (ms):</label>
                 <input type="range" id="speed" min="50" max="1000" value="200" oninput="updateSpeed()">
                 <input type="number" id="speedNum" min="50" max="1000" value="200" oninput="updateSpeed()">
@@ -173,18 +161,33 @@
         const jsonInput = document.getElementById('jsonInput');
         const rowDisplay = document.getElementById('rowDisplay');
         let frameIndex = 0;
-        let frameWidth = 102; /* Initial width of one frame (512 ÷ 5) */
-        let frameHeight = 102; /* Initial height of one frame (512 ÷ 5) */
+        let frameWidth = 102; /* Initial width of one frame */
+        let frameHeight = 102; /* Initial height of one frame */
         let offsetX = 2; /* Horizontal padding between frames */
         let offsetY = 0; /* Vertical padding between frames */
-        let bufferLeft = 0; /* Buffer to crop the left edge */
-        let bufferRight = 0; /* Buffer to crop the right edge */
-        let bufferTop = 3; /* Buffer to crop the top edge */
-        let bufferBottom = 0; /* Buffer to crop the bottom edge */
-        const framesPerRow = 5; /* Number of frames per row (5x5 grid) */
-        const totalFrames = 25; /* Total frames in the sprite sheet */
+        let bufferLeft = 0; /* Buffer to extend the left edge of the sprite sheet */
+        let bufferRight = 0; /* Buffer to extend the right edge of the sprite sheet */
+        let spriteSheetWidth = 512; /* Initial width of the sprite sheet */
+        let spriteSheetHeight = 512; /* Initial height of the sprite sheet */
+        let framesPerRow = 5; /* Initial number of frames per row */
+        let framesPerColumn = 5; /* Initial number of rows */
+        let totalFrames = framesPerRow * framesPerColumn; /* Total frames in the sprite sheet */
+        let rowBottomYPositions = []; /* Will be calculated if not provided */
         let speed = 200; /* Animation speed in milliseconds */
         let intervalId = null;
+
+        // Calculate default rowBottomYPositions if not provided
+        function calculateRowBottomYPositions() {
+            const rowHeight = spriteSheetHeight / framesPerColumn;
+            return Array.from({ length: framesPerColumn }, (_, i) => (i + 1) * rowHeight);
+        }
+
+        // Set initial rowBottomYPositions
+        rowBottomYPositions = calculateRowBottomYPositions();
+
+        // Set initial sprite dimensions
+        sprite.style.width = `${spriteSheetWidth}px`;
+        sprite.style.height = `${spriteSheetHeight}px`;
 
         // Sync sliders and number inputs
         function syncInputs(input, target) {
@@ -194,14 +197,17 @@
         // Update JSON output
         function updateJsonOutput() {
             const settings = {
+                spriteSheetWidth: `${spriteSheetWidth}px`,
+                spriteSheetHeight: `${spriteSheetHeight}px`,
+                framesPerRow: framesPerRow,
+                framesPerColumn: framesPerColumn,
                 frameWidth: `${frameWidth}px`,
                 frameHeight: `${frameHeight}px`,
                 offsetX: `${offsetX}px`,
                 offsetY: `${offsetY}px`,
                 bufferLeft: `${bufferLeft}px`,
                 bufferRight: `${bufferRight}px`,
-                bufferTop: `${bufferTop}px`,
-                bufferBottom: `${bufferBottom}px`,
+                rowBottomYPositions: rowBottomYPositions,
                 speed: `${speed}ms`
             };
             jsonOutput.textContent = JSON.stringify(settings, null, 2);
@@ -216,15 +222,26 @@
                 const parseValue = (str, unit) => parseInt(str.replace(unit, ''));
 
                 // Update variables
+                spriteSheetWidth = parseValue(settings.spriteSheetWidth, 'px');
+                spriteSheetHeight = parseValue(settings.spriteSheetHeight, 'px');
+                framesPerRow = parseInt(settings.framesPerRow);
+                framesPerColumn = parseInt(settings.framesPerColumn);
+                totalFrames = framesPerRow * framesPerColumn; // Recalculate total frames
                 frameWidth = parseValue(settings.frameWidth, 'px');
                 frameHeight = parseValue(settings.frameHeight, 'px');
                 offsetX = parseValue(settings.offsetX, 'px');
                 offsetY = parseValue(settings.offsetY, 'px');
                 bufferLeft = parseValue(settings.bufferLeft, 'px');
                 bufferRight = parseValue(settings.bufferRight, 'px');
-                bufferTop = parseValue(settings.bufferTop, 'px');
-                bufferBottom = parseValue(settings.bufferBottom, 'px');
+                // Use provided rowBottomYPositions if available, otherwise calculate
+                rowBottomYPositions = settings.rowBottomYPositions
+                    ? settings.rowBottomYPositions.map(Number)
+                    : calculateRowBottomYPositions();
                 speed = parseValue(settings.speed, 'ms');
+
+                // Update sprite dimensions
+                sprite.style.width = `${spriteSheetWidth}px`;
+                sprite.style.height = `${spriteSheetHeight}px`;
 
                 // Update sliders and number inputs
                 document.getElementById('frameWidth').value = frameWidth;
@@ -239,10 +256,6 @@
                 document.getElementById('bufferLeftNum').value = bufferLeft;
                 document.getElementById('bufferRight').value = bufferRight;
                 document.getElementById('bufferRightNum').value = bufferRight;
-                document.getElementById('bufferTop').value = bufferTop;
-                document.getElementById('bufferTopNum').value = bufferTop;
-                document.getElementById('bufferBottom').value = bufferBottom;
-                document.getElementById('bufferBottomNum').value = bufferBottom;
                 document.getElementById('speed').value = speed;
                 document.getElementById('speedNum').value = speed;
 
@@ -255,7 +268,7 @@
             }
         }
 
-        // Update frame size, buffer, and position
+        // Update frame size and position
         function updateFrame() {
             // Get values from inputs
             frameWidth = parseInt(document.getElementById('frameWidth').value);
@@ -264,8 +277,6 @@
             offsetY = parseInt(document.getElementById('offsetY').value);
             bufferLeft = parseInt(document.getElementById('bufferLeft').value);
             bufferRight = parseInt(document.getElementById('bufferRight').value);
-            bufferTop = parseInt(document.getElementById('bufferTop').value);
-            bufferBottom = parseInt(document.getElementById('bufferBottom').value);
 
             // Sync slider and number inputs
             syncInputs(document.getElementById('frameWidth'), document.getElementById('frameWidthNum'));
@@ -280,18 +291,14 @@
             syncInputs(document.getElementById('bufferLeftNum'), document.getElementById('bufferLeft'));
             syncInputs(document.getElementById('bufferRight'), document.getElementById('bufferRightNum'));
             syncInputs(document.getElementById('bufferRightNum'), document.getElementById('bufferRight'));
-            syncInputs(document.getElementById('bufferTop'), document.getElementById('bufferTopNum'));
-            syncInputs(document.getElementById('bufferTopNum'), document.getElementById('bufferTop'));
-            syncInputs(document.getElementById('bufferBottom'), document.getElementById('bufferBottomNum'));
-            syncInputs(document.getElementById('bufferBottomNum'), document.getElementById('bufferBottom'));
 
-            // Update container size (total buffer affects the visible area)
-            spriteContainer.style.width = `${frameWidth - bufferLeft - bufferRight}px`;
-            spriteContainer.style.height = `${frameHeight - bufferTop - bufferBottom}px`;
+            // Update container size (based only on frameWidth and frameHeight)
+            spriteContainer.style.width = `${frameWidth}px`;
+            spriteContainer.style.height = `${frameHeight}px`;
 
-            // Adjust the sprite position to account for the left and top buffers
+            // Adjust the sprite position to account for the left buffer
             sprite.style.left = `${-bufferLeft}px`;
-            sprite.style.top = `${-bufferTop}px`;
+            sprite.style.top = `0px`; // No top buffer needed with Y-positions
 
             // Update frame position
             nextFrame();
@@ -322,9 +329,18 @@
             // Update row display
             rowDisplay.textContent = `Row: ${row}`;
 
-            // Calculate the position, including any offset
-            const posX = -col * (frameWidth + offsetX);
-            const posY = -row * (frameHeight + offsetY);
+            // Calculate the effective sprite sheet width including buffers (for X-axis)
+            const effectiveSpriteSheetWidth = spriteSheetWidth + bufferLeft + bufferRight;
+            const effectiveFrameWidth = effectiveSpriteSheetWidth / framesPerRow;
+
+            // Use the rowBottomYPositions to determine the Y-position of the bottom of the current row
+            const rowBottomY = rowBottomYPositions[row];
+            // Calculate the top Y-position of the current row (top = bottom - frameHeight)
+            const rowTopY = rowBottomY - frameHeight;
+
+            // Calculate the position, including offsets
+            const posX = -col * (effectiveFrameWidth + offsetX);
+            const posY = -rowTopY - offsetY; // Use the calculated top Y-position
             sprite.style.backgroundPosition = `${posX}px ${posY}px`;
 
             // Move to the next frame, loop back to 0 if at the end
@@ -340,20 +356,3 @@
     </script>
 </body>
 </html>
-
-
-<!--
-{
-  "frameWidth": "102px",
-  "frameHeight": "101px",
-  "offsetX": "2px",
-  "offsetY": "0px",
-  "bufferLeft": "0px",
-  "bufferRight": "0px",
-  "bufferTop": "3px",
-  "bufferBottom": "0px",
-  "speed": "200ms"
-}
-
--->
-
