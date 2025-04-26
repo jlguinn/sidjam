@@ -7,19 +7,39 @@
     <style>
         /* Container for the sprite */
         .sprite-container {
-            width: 83px; /* Width of one frame */
-            height: 96px; /* Height of one frame */
+            width: 102px; /* Width of one frame (512 ÷ 5 ≈ 102.4) */
+            height: 102px; /* Height of one frame (512 ÷ 5 ≈ 102.4) */
             overflow: hidden;
             border: 2px solid #000; /* Optional: for visibility */
             cursor: pointer;
+            margin-bottom: 20px;
         }
 
         /* Sprite sheet image */
         .sprite {
-            width: 512px; /* Full width of the sprite sheet (5 frames x 64px) */
-            height: 512px; /* Full height of the sprite sheet (5 frames x 64px) */
+            width: 512px; /* Full width of the sprite sheet */
+            height: 512px; /* Full height of the sprite sheet */
             background: url('image/flame_sprite_sheet.png') 0 0 no-repeat;
             transition: background-position 0.1s steps(1); /* Smooth transition for frame changes */
+        }
+
+        /* Styling for controls */
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 300px;
+        }
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        label {
+            width: 100px;
+        }
+        input[type="range"], input[type="number"] {
+            width: 150px;
         }
     </style>
 </head>
@@ -28,32 +48,113 @@
         <div class="sprite" id="flameSprite"></div>
     </div>
 
+    <div class="controls">
+        <div class="control-group">
+            <label>Frame Width:</label>
+            <input type="range" id="frameWidth" min="50" max="150" value="102" oninput="updateFrame()">
+            <input type="number" id="frameWidthNum" min="50" max="150" value="102" oninput="updateFrame()">
+        </div>
+        <div class="control-group">
+            <label>Frame Height:</label>
+            <input type="range" id="frameHeight" min="50" max="150" value="102" oninput="updateFrame()">
+            <input type="number" id="frameHeightNum" min="50" max="150" value="102" oninput="updateFrame()">
+        </div>
+        <div class="control-group">
+            <label>Offset X:</label>
+            <input type="range" id="offsetX" min="0" max="20" value="0" oninput="updateFrame()">
+            <input type="number" id="offsetXNum" min="0" max="20" value="0" oninput="updateFrame()">
+        </div>
+        <div class="control-group">
+            <label>Offset Y:</label>
+            <input type="range" id="frameHeight" min="50" max="150" value="102" oninput="updateFrame()">
+            <input type="number" id="frameHeightNum" min="50" max="150" value="102" oninput="updateFrame()">
+        </div>
+        <div class="control-group">
+            <label>Offset Y:</label>
+            <input type="range" id="offsetY" min="0" max="20" value="0" oninput="updateFrame()">
+            <input type="number" id="offsetYNum" min="0" max="20" value="0" oninput="updateFrame()">
+        </div>
+        <div class="control-group">
+            <label>Speed (ms):</label>
+            <input type="range" id="speed" min="50" max="1000" value="200" oninput="updateSpeed()">
+            <input type="number" id="speedNum" min="50" max="1000" value="200" oninput="updateSpeed()">
+        </div>
+    </div>
+
     <script>
         const sprite = document.getElementById('flameSprite');
+        const spriteContainer = document.querySelector('.sprite-container');
         let frameIndex = 0;
-        const frameWidth = 64; /* Width of one frame */
-        const frameHeight = 64; /* Height of one frame */
+        let frameWidth = 102; /* Initial width of one frame (512 ÷ 5) */
+        let frameHeight = 102; /* Initial height of one frame (512 ÷ 5) */
+        let offsetX = 0; /* Horizontal padding between frames */
+        let offsetY = 0; /* Vertical padding between frames */
         const framesPerRow = 5; /* Number of frames per row (5x5 grid) */
         const totalFrames = 25; /* Total frames in the sprite sheet */
+        let speed = 200; /* Animation speed in milliseconds */
+        let intervalId = null;
+
+        // Sync sliders and number inputs
+        function syncInputs(input, target) {
+            target.value = input.value;
+        }
+
+        // Update frame size and position
+        function updateFrame() {
+            // Get values from inputs
+            frameWidth = parseInt(document.getElementById('frameWidth').value);
+            frameHeight = parseInt(document.getElementById('frameHeight').value);
+            offsetX = parseInt(document.getElementById('offsetX').value);
+            offsetY = parseInt(document.getElementById('offsetY').value);
+
+            // Sync slider and number inputs
+            syncInputs(document.getElementById('frameWidth'), document.getElementById('frameWidthNum'));
+            syncInputs(document.getElementById('frameWidthNum'), document.getElementById('frameWidth'));
+            syncInputs(document.getElementById('frameHeight'), document.getElementById('frameHeightNum'));
+            syncInputs(document.getElementById('frameHeightNum'), document.getElementById('frameHeight'));
+            syncInputs(document.getElementById('offsetX'), document.getElementById('offsetXNum'));
+            syncInputs(document.getElementById('offsetXNum'), document.getElementById('offsetX'));
+            syncInputs(document.getElementById('offsetY'), document.getElementById('offsetYNum'));
+            syncInputs(document.getElementById('offsetYNum'), document.getElementById('offsetY'));
+
+            // Update container size
+            spriteContainer.style.width = `${frameWidth}px`;
+            spriteContainer.style.height = `${frameHeight}px`;
+
+            // Update frame position
+            nextFrame();
+        }
+
+        // Update animation speed
+        function updateSpeed() {
+            speed = parseInt(document.getElementById('speed').value);
+            syncInputs(document.getElementById('speed'), document.getElementById('speedNum'));
+            syncInputs(document.getElementById('speedNum'), document.getElementById('speed'));
+
+            // Restart the interval with the new speed
+            clearInterval(intervalId);
+            intervalId = setInterval(nextFrame, speed);
+        }
 
         function nextFrame() {
             // Calculate the row and column of the current frame
             const row = Math.floor(frameIndex / framesPerRow);
             const col = frameIndex % framesPerRow;
 
-            // Update the background position to show the current frame
-            const posX = -col * frameWidth;
-            const posY = -row * frameHeight;
+            // Calculate the position, including any offset
+            const posX = -col * (frameWidth + offsetX);
+            const posY = -row * (frameHeight + offsetY);
             sprite.style.backgroundPosition = `${posX}px ${posY}px`;
 
             // Move to the next frame, loop back to 0 if at the end
             frameIndex = (frameIndex + 1) % totalFrames;
         }
 
-        // Optional: Auto-play the animation (uncomment to enable)
-        
-        setInterval(nextFrame, 200); // Change frame every 200ms (5 frames per second)
-        
+        // Start the animation
+        intervalId = setInterval(nextFrame, speed);
+
+        // Initial update to sync everything
+        updateFrame();
     </script>
 </body>
 </html>
