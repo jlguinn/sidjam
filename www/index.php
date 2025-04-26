@@ -1,7 +1,7 @@
 <?php
 // Define debug toggle (hardcoded for now)
 $debug_enabled = true; // Change to false to disable debugging
-$log_level = 2; // 0 terse (default); 1 verbose; 2 debugging; -1 silent
+$log_level = 1; // 0 terse (default); 1 verbose; 2 debugging; -1 silent
 
 // Set session cookie lifetime to 30 days
 session_set_cookie_params(30 * 24 * 60 * 60);
