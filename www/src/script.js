@@ -1123,8 +1123,14 @@ async function initializeApp() {
     ui.applyTheme(brackets.getPlayerState().currentMode);
     const theme = baseColorSchemes[ui.getCurrentThemeIndex()];
     const playerState = brackets.getPlayerState(); // Add this to get playerState
-    renderWinnerButtonBitmap(0, playerState, '#000000', '#FFDAB9'); // Replace window.renderBitmap
-    renderWinnerButtonBitmap(1, playerState, '#000000', '#FFDAB9'); // Replace window.renderBitmap
+    renderWinnerButtonBitmap(0, playerState); // Replace window.renderBitmap
+    renderWinnerButtonBitmap(1, playerState); // Replace window.renderBitmap
+
+    // Disable winner buttons initially
+    const winnerButton0 = document.getElementById('winner0');
+    const winnerButton1 = document.getElementById('winner1');
+    winnerButton0.disabled = true;
+    winnerButton1.disabled = true;
 
     const button = document.getElementById("colorButton");
     const currentTheme = baseColorSchemes[ui.getCurrentThemeIndex()];
