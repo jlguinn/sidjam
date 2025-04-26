@@ -46,6 +46,9 @@
     input[type="number"] {
       width: 80px;
     }
+    input[type="checkbox"] {
+      margin-left: 10px;
+    }
     button {
       padding: 8px 16px;
       border: none;
@@ -142,6 +145,11 @@
       font-size: 14px;
       color: #2c3e50;
     }
+    .json-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
@@ -159,6 +167,14 @@
     <div class="input-group">
       <label>Speed (FPS):</label>
       <input type="number" id="speedInput" value="60" min="1" max="120">
+    </div>
+    <div class="input-group">
+      <label>Overlay Previous Frame:</label>
+      <input type="checkbox" id="overlayToggle">
+    </div>
+    <div class="input-group">
+      <label>Load JSON Config:</label>
+      <input type="file" id="jsonInput" accept="application/json">
     </div>
     <div class="input-group">
       <button id="pauseResumeBtn" disabled>Pause</button>
@@ -193,6 +209,9 @@
     <div class="frame-position" id="framePosition">Row: -, Col: -</div>
     <div>
       <h3>Frame Specifications</h3>
+      <div class="json-controls">
+        <button id="copyJsonBtn" disabled>Copy JSON</button>
+      </div>
       <pre id="frameSpecs"></pre>
     </div>
   </div>
@@ -202,6 +221,8 @@
     const rowsInput = document.getElementById('rowsInput');
     const colsInput = document.getElementById('colsInput');
     const speedInput = document.getElementById('speedInput');
+    const jsonInput = document.getElementById('jsonInput');
+    const overlayToggle = document.getElementById('overlayToggle');
     const pauseResumeBtn = document.getElementById('pauseResumeBtn');
     const prevFrameBtn = document.getElementById('prevFrameBtn');
     const nextFrameBtn = document.getElementById('nextFrameBtn');
@@ -215,6 +236,7 @@
     const globalMoveLeftBtn = document.getElementById('globalMoveLeftBtn');
     const globalMoveRightBtn = document.getElementById('globalMoveRightBtn');
     const globalResetBtn = document.getElementById('globalResetBtn');
+    const copyJsonBtn = document.getElementById('copyJsonBtn');
     const canvas = document.getElementById('previewCanvas');
     const ctx = canvas.getContext('2d');
     const frameSpecsOutput = document.getElementById('frameSpecs');
@@ -227,6 +249,7 @@
     let lastFrameTime = 0;
     let globalOffsetX = 0; // Global x-axis adjustment
     let globalOffsetY = 0; // Global y-axis adjustment
+    let overlayEnabled = false; // Track overlay state
     const moveIncrement = 1; // Pixels to move per click
 
     // Load sprite sheet
@@ -253,10 +276,92 @@
           globalMoveLeftBtn.disabled = false;
           globalMoveRightBtn.disabled = false;
           globalResetBtn.disabled = false;
+          copyJsonBtn.disabled = false;
         };
         spriteImage.src = event.target.result;
       };
       reader.readAsDataURL(file);
+    });
+
+    // Load JSON configuration
+    jsonInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file || !spriteImage) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const config = JSON.parse(event.target.result);
+          const rows = parseInt(rowsInput.value) || 5;
+          const cols = parseInt(colsInput.value) || 5;
+          const expectedFrameCount = rows * cols;
+
+          // Validate the loaded JSON
+          if (!config.frames || !Array.isArray(config.frames)) {
+            alert('Invalid JSON: "frames" must be an array.');
+            return;
+          }
+          if (config.frames.length !== expectedFrameCount) {
+            alert(`Invalid JSON: Expected ${expectedFrameCount} frames, but found ${config.frames.length}.`);
+            return;
+          }
+          if (typeof config.globalOffsetX !== 'number' || typeof config.globalOffsetY !== 'number') {
+            alert('Invalid JSON: "globalOffsetX" and "globalOffsetY" must be numbers.');
+            return;
+          }
+
+          // Validate frame structure and dimensions
+          const frameWidth = spriteImage.width / cols;
+          const frameHeight = spriteImage.height / rows;
+          for (let i = 0; i < config.frames.length; i++) {
+            const frame = config.frames[i];
+            if (typeof frame.x !== 'number' || typeof frame.y !== 'number' ||
+                typeof frame.width !== 'number' || typeof frame.height !== 'number' ||
+                typeof frame.offsetX !== 'number' || typeof frame.offsetY !== 'number') {
+              alert(`Invalid JSON: Frame ${i} is missing required properties or has invalid types.`);
+              return;
+            }
+            // Check if dimensions match the current sprite sheet
+            if (Math.abs(frame.width - frameWidth) > 0.1 || Math.abs(frame.height - frameHeight) > 0.1) {
+              alert(`Invalid JSON: Frame ${i} dimensions (${frame.width}x${frame.height}) do not match expected dimensions (${frameWidth}x${frameHeight}).`);
+              return;
+            }
+          }
+
+          // Apply the loaded configuration
+          frames = config.frames;
+          globalOffsetX = config.globalOffsetX;
+          globalOffsetY = config.globalOffsetY;
+
+          // Update display
+          frameSpecsOutput.textContent = JSON.stringify({ frames, globalOffsetX, globalOffsetY }, null, 2);
+          currentFrame = 0;
+          drawFrame();
+        } catch (error) {
+          alert('Error parsing JSON: ' + error.message);
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    // Copy JSON to clipboard
+    copyJsonBtn.addEventListener('click', () => {
+      if (frames.length === 0) return;
+
+      const config = { frames, globalOffsetX, globalOffsetY };
+      const jsonString = JSON.stringify(config, null, 2);
+      navigator.clipboard.writeText(jsonString).then(() => {
+        alert('JSON copied to clipboard!');
+      }).catch((error) => {
+        alert('Failed to copy JSON: ' + error.message);
+      });
+    });
+
+    // Toggle overlay
+    overlayToggle.addEventListener('change', () => {
+      overlayEnabled = overlayToggle.checked;
+      console.log('Overlay toggled:', overlayEnabled); // Debug log
+      drawFrame();
     });
 
     // Update frames when inputs change
@@ -292,12 +397,12 @@
       canvas.width = frameWidth;
       canvas.height = frameHeight;
 
-      // Display frame specs
-      frameSpecsOutput.textContent = JSON.stringify(frames, null, 2);
-
       // Reset global adjustments
       globalOffsetX = 0;
       globalOffsetY = 0;
+
+      // Display frame specs
+      frameSpecsOutput.textContent = JSON.stringify({ frames, globalOffsetX, globalOffsetY }, null, 2);
 
       // Reset animation
       currentFrame = 0;
@@ -314,15 +419,32 @@
       // Clear canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw current frame with combined offsets
+      // Draw current frame first with full opacity
       const frame = frames[currentFrame];
       const totalOffsetX = frame.offsetX + globalOffsetX;
       const totalOffsetY = frame.offsetY + globalOffsetY;
+      ctx.globalAlpha = 1.0; // Ensure full opacity
       ctx.drawImage(
         spriteImage,
         frame.x, frame.y, frame.width, frame.height,
         totalOffsetX, totalOffsetY, canvas.width, canvas.height
       );
+
+      // Draw previous frame on top with 50% opacity if overlay is enabled
+      if (overlayEnabled) {
+        const prevFrameIndex = (currentFrame - 1 + frames.length) % frames.length;
+        const prevFrame = frames[prevFrameIndex];
+        const prevTotalOffsetX = prevFrame.offsetX + globalOffsetX;
+        const prevTotalOffsetY = prevFrame.offsetY + globalOffsetY;
+
+        ctx.globalAlpha = 0.5; // Set 50% opacity for previous frame
+        ctx.drawImage(
+          spriteImage,
+          prevFrame.x, prevFrame.y, prevFrame.width, prevFrame.height,
+          prevTotalOffsetX, prevTotalOffsetY, canvas.width, canvas.height
+        );
+        ctx.globalAlpha = 1.0; // Reset opacity
+      }
 
       // Calculate row and column (1-based for display)
       const cols = parseInt(colsInput.value) || 5;
@@ -386,24 +508,28 @@
     moveUpBtn.addEventListener('click', () => {
       if (frames.length === 0) return;
       frames[currentFrame].offsetY -= moveIncrement;
+      frameSpecsOutput.textContent = JSON.stringify({ frames, globalOffsetX, globalOffsetY }, null, 2);
       drawFrame();
     });
 
     moveDownBtn.addEventListener('click', () => {
       if (frames.length === 0) return;
       frames[currentFrame].offsetY += moveIncrement;
+      frameSpecsOutput.textContent = JSON.stringify({ frames, globalOffsetX, globalOffsetY }, null, 2);
       drawFrame();
     });
 
     moveLeftBtn.addEventListener('click', () => {
       if (frames.length === 0) return;
       frames[currentFrame].offsetX -= moveIncrement;
+      frameSpecsOutput.textContent = JSON.stringify({ frames, globalOffsetX, globalOffsetY }, null, 2);
       drawFrame();
     });
 
     moveRightBtn.addEventListener('click', () => {
       if (frames.length === 0) return;
       frames[currentFrame].offsetX += moveIncrement;
+      frameSpecsOutput.textContent = JSON.stringify({ frames, globalOffsetX, globalOffsetY }, null, 2);
       drawFrame();
     });
 
@@ -411,33 +537,39 @@
       if (frames.length === 0) return;
       frames[currentFrame].offsetX = 0;
       frames[currentFrame].offsetY = 0;
+      frameSpecsOutput.textContent = JSON.stringify({ frames, globalOffsetX, globalOffsetY }, null, 2);
       drawFrame();
     });
 
     // Global movement handlers
     globalMoveUpBtn.addEventListener('click', () => {
       globalOffsetY -= moveIncrement;
+      frameSpecsOutput.textContent = JSON.stringify({ frames, globalOffsetX, globalOffsetY }, null, 2);
       drawFrame();
     });
 
     globalMoveDownBtn.addEventListener('click', () => {
       globalOffsetY += moveIncrement;
+      frameSpecsOutput.textContent = JSON.stringify({ frames, globalOffsetX, globalOffsetY }, null, 2);
       drawFrame();
     });
 
     globalMoveLeftBtn.addEventListener('click', () => {
       globalOffsetX -= moveIncrement;
+      frameSpecsOutput.textContent = JSON.stringify({ frames, globalOffsetX, globalOffsetY }, null, 2);
       drawFrame();
     });
 
     globalMoveRightBtn.addEventListener('click', () => {
       globalOffsetX += moveIncrement;
+      frameSpecsOutput.textContent = JSON.stringify({ frames, globalOffsetX, globalOffsetY }, null, 2);
       drawFrame();
     });
 
     globalResetBtn.addEventListener('click', () => {
       globalOffsetX = 0;
       globalOffsetY = 0;
+      frameSpecsOutput.textContent = JSON.stringify({ frames, globalOffsetX, globalOffsetY }, null, 2);
       drawFrame();
     });
   </script>
