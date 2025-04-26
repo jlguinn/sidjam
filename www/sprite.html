@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sprite Sheet Animator</title>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    canvas { border: 1px solid black; }
+    label { margin-right: 10px; }
+  </style>
+</head>
+<body>
+  <div>
+    <label>Sprite Sheet (PNG):</label>
+    <input type="file" id="spriteInput" accept="image/png">
+  </div>
+  <div>
+    <label>Rows:</label>
+    <input type="number" id="rowsInput" value="5" min="1">
+    <label>Columns:</label>
+    <input type="number" id="colsInput" value="5" min="1">
+  </div>
+  <canvas id="previewCanvas"></canvas>
+  <div>
+    <h3>Frame Specifications</h3>
+    <pre id="frameSpecs"></pre>
+  </div>
+
+  <script>
+    const spriteInput = document.getElementById('spriteInput');
+    const rowsInput = document.getElementById('rowsInput');
+    const colsInput = document.getElementById('colsInput');
+    const canvas = document.getElementById('previewCanvas');
+    const ctx = canvas.getContext('2d');
+    const frameSpecsOutput = document.getElementById('frameSpecs');
+
+    let spriteImage = null;
+    let frames = [];
+    let currentFrame = 0;
+
+    // Load sprite sheet
+    spriteInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        spriteImage = new Image();
+        spriteImage.onload = updateAnimation;
+        spriteImage.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Update frames and animation when inputs change
+    rowsInput.addEventListener('input', updateAnimation);
+    colsInput.addEventListener('input', updateAnimation);
+
+    function updateAnimation() {
+      if (!spriteImage) return;
+
+      const rows = parseInt(rowsInput.value) || 5;
+      const cols = parseInt(colsInput.value) || 5;
+
+      // Calculate frame dimensions
+      const frameWidth = spriteImage.width / cols;
+      const frameHeight = spriteImage.height / rows;
+
+      // Generate frame specifications
+      frames = [];
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          frames.push({
+            x: col * frameWidth,
+            y: row * frameHeight,
+            width: frameWidth,
+            height: frameHeight
+          });
+        }
+      }
+
+      // Update canvas size to match single frame
+      canvas.width = frameWidth;
+      canvas.height = frameHeight;
+
+      // Display frame specs
+      frameSpecsOutput.textContent = JSON.stringify(frames, null, 2);
+
+      // Reset animation
+      currentFrame = 0;
+    }
+
+    // Animation loop
+    function animate() {
+      if (frames.length === 0) {
+        requestAnimationFrame(animate);
+        return;
+      }
+
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw current frame
+      const frame = frames[currentFrame];
+      ctx.drawImage(
+        spriteImage,
+        frame.x, frame.y, frame.width, frame.height,
+        0, 0, canvas.width, canvas.height
+      );
+
+      // Advance frame
+      currentFrame = (currentFrame + 1) % frames.length;
+
+      requestAnimationFrame(animate);
+    }
+
+    // Start animation loop
+    animate();
+  </script>
+</body>
+</html>

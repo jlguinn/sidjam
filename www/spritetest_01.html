@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flame Sprite Animation</title>
+    <style>
+        :root {
+            --frame-width: 102px;
+            --frame-height: 102px;
+            --border-color: #000;
+            --button-bg: #007bff;
+            --button-hover-bg: #0056b3;
+            --button-text: white;
+        }
+
+        /* Container for the sprite and row display */
+        .sprite-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* Container for the sprite */
+        .sprite-container {
+            width: var(--frame-width);
+            height: var(--frame-height);
+            overflow: hidden;
+            border: 2px solid var(--border-color);
+            cursor: pointer;
+            position: relative;
+        }
+
+        /* Sprite sheet image */
+        .sprite {
+            background: url('image/flame_sprite_sheet.png') 0 0 no-repeat;
+            transition: background-position 0.1s steps(1);
+            position: absolute;
+        }
+
+        /* Row number display */
+        .row-display {
+            font-family: monospace;
+            font-size: 16px;
+            color: #333;
+        }
+
+        /* Main layout container */
+        .layout {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        /* Styling for controls */
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 400px;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        label {
+            width: 100px;
+        }
+
+        input[type="range"], input[type="number"] {
+            width: 150px;
+        }
+
+        input[type="file"] {
+            width: 310px; /* Match the total width of other inputs (label + input) */
+        }
+
+        /* Animation control buttons */
+        .animation-controls {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 5px 10px;
+            background: var(--button-bg);
+            color: var(--button-text);
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: var(--button-hover-bg);
+        }
+
+        /* Styling for JSON output and input */
+        .json-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .json-output {
+            padding: 10px;
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            font-family: monospace;
+            white-space: pre-wrap;
+            user-select: all;
+            min-width: 200px;
+            max-width: 300px;
+            min-height: 200px;
+        }
+
+        .json-input {
+            width: 100%;
+            height: 100px;
+            font-family: monospace;
+            resize: vertical;
+            padding: 5px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="sprite-wrapper">
+        <div class="sprite-container" onclick="animation.nextFrame()">
+            <div class="sprite" id="flameSprite"></div>
+        </div>
+        <div class="row-display" id="rowDisplay">Row: 0</div>
+    </div>
+
+    <div class="layout">
+        <div class="controls">
+            <fieldset>
+                <legend>Sprite Sheet</legend>
+                <div class="control-group">
+                    <label>Load Image:</label>
+                    <input type="file" id="spriteSheetFile" accept="image/*" onchange="animation.loadSpriteSheet(this.files[0])">
+                </div>
+            </fieldset>
+            <fieldset>
+                <legend>Frame Settings</legend>
+                <div class="control-group">
+                    <label>Frame Width:</label>
+                    <input type="range" id="frameWidth" min="50" max="150" value="102" oninput="ui.updateFrameWidth(this)">
+                    <input type="number" id="frameWidthNum" min="50" max="150" value="102" oninput="ui.updateFrameWidth(this)">
+                </div>
+                <div class="control-group">
+                    <label>Frame Height:</label>
+                    <input type="range" id="frameHeight" min="50" max="150" value="102" oninput="ui.updateFrameHeight(this)">
+                    <input type="number" id="frameHeightNum" min="50" max="150" value="102" oninput="ui.updateFrameHeight(this)">
+                </div>
+            </fieldset>
+            <fieldset>
+                <legend>Position Adjustments</legend>
+                <div class="control-group">
+                    <label>Offset X:</label>
+                    <input type="range" id="offsetX" min="-20" max="20" value="2" oninput="ui.updateOffsetX(this)">
+                    <input type="number" id="offsetXNum" min="-20" max="20" value="2" oninput="ui.updateOffsetX(this)">
+                </div>
+                <div class="control-group">
+                    <label>Offset Y:</label>
+                    <input type="range" id="offsetY" min="-20" max="20" value="0" oninput="ui.updateOffsetY(this)">
+                    <input type="number" id="offsetYNum" min="-20" max="20" value="0" oninput="ui.updateOffsetY(this)">
+                </div>
+                <div class="control-group">
+                    <label>Buffer Left:</label>
+                    <input type="range" id="bufferLeft" min="0" max="20" value="0" oninput="ui.updateBufferLeft(this)">
+                    <input type="number" id="bufferLeftNum" min="0" max="20" value="0" oninput="ui.updateBufferLeft(this)">
+                </div>
+                <div class="control-group">
+                    <label>Buffer Right:</label>
+                    <input type="range" id="bufferRight" min="0" max="20" value="0" oninput="ui.updateBufferRight(this)">
+                    <input type="number" id="bufferRightNum" min="0" max="20" value="0" oninput="ui.updateBufferRight(this)">
+                </div>
+            </fieldset>
+            <fieldset>
+                <legend>Animation Settings</legend>
+                <div class="control-group">
+                    <label>Speed (ms):</label>
+                    <input type="range" id="speed" min="50" max="1000" value="200" oninput="ui.updateSpeed(this)">
+                    <input type="number" id="speedNum" min="50" max="1000" value="200" oninput="ui.updateSpeed(this)">
+                </div>
+                <div class="animation-controls">
+                    <button onclick="animation.togglePlay()">Pause</button>
+                    <button onclick="animation.prevFrame()">Previous</button>
+                    <button onclick="animation.nextFrame()">Next</button>
+                </div>
+            </fieldset>
+        </div>
+        <div class="json-container">
+            <div class="json-output" id="jsonOutput"></div>
+            <textarea class="json-input" id="jsonInput" placeholder="Paste JSON here to apply settings..."></textarea>
+            <button class="apply-button" onclick="state.applyJsonSettings()">Apply JSON</button>
+        </div>
+    </div>
+
+    <script>
+        // State Management
+        const state = {
+            settings: {
+                spriteSheetWidth: 512,
+                spriteSheetHeight: 512,
+                framesPerRow: 5,
+                framesPerColumn: 5,
+                frameWidth: 102,
+                frameHeight: 102,
+                offsetX: 2,
+                offsetY: 0,
+                bufferLeft: 0,
+                bufferRight: 0,
+                columnRightXPositions: null, // Will be calculated if not provided
+                rowBottomYPositions: null, // Will be calculated if not provided
+                speed: 200
+            },
+
+            calculateColumnRightXPositions() {
+                const width = this.settings.spriteSheetWidth + this.settings.bufferLeft + this.settings.bufferRight;
+                const colWidth = width / this.settings.framesPerRow;
+                return Array.from({ length: this.settings.framesPerRow }, (_, i) => (i + 1) * colWidth);
+            },
+
+            calculateRowBottomYPositions() {
+                const rowHeight = this.settings.spriteSheetHeight / this.settings.framesPerColumn;
+                return Array.from({ length: this.settings.framesPerColumn }, (_, i) => (i + 1) * rowHeight);
+            },
+
+            validateSettings(settings) {
+                const errors = [];
+
+                // Validate required numeric fields
+                const requiredNumerics = [
+                    'spriteSheetWidth', 'spriteSheetHeight', 'framesPerRow', 'framesPerColumn',
+                    'frameWidth', 'frameHeight', 'bufferLeft', 'bufferRight', 'speed'
+                ];
+                for (const field of requiredNumerics) {
+                    if (typeof settings[field] !== 'number' || settings[field] <= 0) {
+                        errors.push(`${field} must be a positive number`);
+                    }
+                }
+
+                // Validate offset fields (can be negative)
+                const offsetFields = ['offsetX', 'offsetY'];
+                for (const field of offsetFields) {
+                    if (typeof settings[field] !== 'number') {
+                        errors.push(`${field} must be a number`);
+                    }
+                }
+
+                // Validate columnRightXPositions length if provided
+                if (settings.columnRightXPositions) {
+                    if (settings.columnRightXPositions.length !== settings.framesPerRow) {
+                        errors.push(`columnRightXPositions length (${settings.columnRightXPositions.length}) must match framesPerRow (${settings.framesPerRow})`);
+                    }
+                }
+
+                // Validate rowBottomYPositions length if provided
+                if (settings.rowBottomYPositions) {
+                    if (settings.rowBottomYPositions.length !== settings.framesPerColumn) {
+                        errors.push(`rowBottomYPositions length (${settings.rowBottomYPositions.length}) must match framesPerColumn (${settings.framesPerColumn})`);
+                    }
+                }
+
+                return errors;
+            },
+
+            applyJsonSettings() {
+                try {
+                    const jsonInput = document.getElementById('jsonInput').value;
+                    const newSettings = JSON.parse(jsonInput);
+
+                    // Helper function to parse value and remove unit
+                    const parseValue = (str, unit) => parseInt(str.replace(unit, ''));
+
+                    // Map JSON settings to internal settings
+                    const mappedSettings = {
+                        spriteSheetWidth: parseValue(newSettings.spriteSheetWidth, 'px'),
+                        spriteSheetHeight: parseValue(newSettings.spriteSheetHeight, 'px'),
+                        framesPerRow: parseInt(newSettings.framesPerRow),
+                        framesPerColumn: parseInt(newSettings.framesPerColumn),
+                        frameWidth: parseValue(newSettings.frameWidth, 'px'),
+                        frameHeight: parseValue(newSettings.frameHeight, 'px'),
+                        offsetX: parseValue(newSettings.offsetX, 'px'),
+                        offsetY: parseValue(newSettings.offsetY, 'px'),
+                        bufferLeft: parseValue(newSettings.bufferLeft, 'px'),
+                        bufferRight: parseValue(newSettings.bufferRight, 'px'),
+                        columnRightXPositions: newSettings.columnRightXPositions ? newSettings.columnRightXPositions.map(Number) : null,
+                        rowBottomYPositions: newSettings.rowBottomYPositions ? newSettings.rowBottomYPositions.map(Number) : null,
+                        speed: parseValue(newSettings.speed, 'ms')
+                    };
+
+                    // Validate settings
+                    const errors = this.validateSettings(mappedSettings);
+                    if (errors.length > 0) {
+                        alert(`Validation errors:\n${errors.join('\n')}`);
+                        return;
+                    }
+
+                    // Apply settings
+                    this.settings = { ...mappedSettings };
+
+                    // Calculate positions if not provided
+                    if (!this.settings.columnRightXPositions) {
+                        this.settings.columnRightXPositions = this.calculateColumnRightXPositions();
+                    }
+                    if (!this.settings.rowBottomYPositions) {
+                        this.settings.rowBottomYPositions = this.calculateRowBottomYPositions();
+                    }
+
+                    // Update UI and animation
+                    ui.updateAll();
+                    animation.update();
+                } catch (error) {
+                    alert('Invalid JSON format. Please check your input.');
+                    console.error(error);
+                }
+            },
+
+            updateJsonOutput() {
+                const settingsForOutput = {
+                    spriteSheetWidth: `${this.settings.spriteSheetWidth}px`,
+                    spriteSheetHeight: `${this.settings.spriteSheetHeight}px`,
+                    framesPerRow: this.settings.framesPerRow,
+                    framesPerColumn: this.settings.framesPerColumn,
+                    frameWidth: `${this.settings.frameWidth}px`,
+                    frameHeight: `${this.settings.frameHeight}px`,
+                    offsetX: `${this.settings.offsetX}px`,
+                    offsetY: `${this.settings.offsetY}px`,
+                    bufferLeft: `${this.settings.bufferLeft}px`,
+                    bufferRight: `${this.settings.bufferRight}px`,
+                    columnRightXPositions: this.settings.columnRightXPositions,
+                    rowBottomYPositions: this.settings.rowBottomYPositions,
+                    speed: `${this.settings.speed}ms`
+                };
+                document.getElementById('jsonOutput').textContent = JSON.stringify(settingsForOutput, null, 2);
+            }
+        };
+
+        // Animation Logic
+        const animation = {
+            frameIndex: 0,
+            isPlaying: true,
+            intervalId: null,
+            effectiveFrameWidth: 0,
+            currentImageUrl: null, // Store the current image URL
+
+            start() {
+                if (this.isPlaying && !this.intervalId) {
+                    this.intervalId = setInterval(() => this.nextFrame(), state.settings.speed);
+                }
+            },
+
+            stop() {
+                if (this.intervalId) {
+                    clearInterval(this.intervalId);
+                    this.intervalId = null;
+                }
+            },
+
+            togglePlay() {
+                this.isPlaying = !this.isPlaying;
+                if (this.isPlaying) {
+                    this.start();
+                    document.querySelector('.animation-controls button:first-child').textContent = 'Pause';
+                } else {
+                    this.stop();
+                    document.querySelector('.animation-controls button:first-child').textContent = 'Play';
+                }
+            },
+
+            prevFrame() {
+                this.stop();
+                this.frameIndex = (this.frameIndex - 1 + (state.settings.framesPerRow * state.settings.framesPerColumn)) % (state.settings.framesPerRow * state.settings.framesPerColumn);
+                this.updateFramePosition();
+            },
+
+            nextFrame() {
+                this.stop();
+                this.frameIndex = (this.frameIndex + 1) % (state.settings.framesPerRow * state.settings.framesPerColumn);
+                this.updateFramePosition();
+                if (this.isPlaying) {
+                    this.start();
+                }
+            },
+
+            loadSpriteSheet(file) {
+                if (file) {
+                    // Revoke the previous URL if it exists to free memory
+                    if (this.currentImageUrl) {
+                        URL.revokeObjectURL(this.currentImageUrl);
+                    }
+
+                    // Create a new URL for the uploaded file
+                    this.currentImageUrl = URL.createObjectURL(file);
+                    const sprite = document.getElementById('flameSprite');
+                    sprite.style.backgroundImage = `url('${this.currentImageUrl}')`;
+
+                    // Reset animation to ensure the new image is displayed correctly
+                    this.update();
+                }
+            },
+
+            update() {
+                // Precompute values that don't change per frame
+                const effectiveSpriteSheetWidth = state.settings.spriteSheetWidth + state.settings.bufferLeft + state.settings.bufferRight;
+                this.effectiveFrameWidth = effectiveSpriteSheetWidth / state.settings.framesPerRow;
+
+                // Restart animation with new settings
+                this.stop();
+                this.frameIndex = 0;
+                this.updateFramePosition();
+                this.start();
+            },
+
+            updateFramePosition() {
+                const row = Math.floor(this.frameIndex / state.settings.framesPerRow);
+                const col = this.frameIndex % state.settings.framesPerRow;
+
+                // Update row display
+                document.getElementById('rowDisplay').textContent = `Row: ${row}`;
+
+                // Calculate X position using columnRightXPositions
+                const colRightX = state.settings.columnRightXPositions[col];
+                const colLeftX = col === 0 ? 0 : state.settings.columnRightXPositions[col - 1];
+                const posX = -colLeftX + state.settings.offsetX;
+
+                // Calculate Y position using rowBottomYPositions
+                const rowBottomY = state.settings.rowBottomYPositions[row];
+                const rowTopY = rowBottomY - state.settings.frameHeight;
+                const posY = -rowTopY + state.settings.offsetY;
+
+                // Update sprite position
+                const sprite = document.getElementById('flameSprite');
+                sprite.style.backgroundPosition = `${posX}px ${posY}px`;
+            }
+        };
+
+        // UI Management
+        const ui = {
+            syncInputs(input, targetId) {
+                const target = document.getElementById(targetId);
+                target.value = input.value;
+            },
+
+            updateFrameWidth(input) {
+                this.syncInputs(input, input.id === 'frameWidth' ? 'frameWidthNum' : 'frameWidth');
+                state.settings.frameWidth = parseInt(input.value);
+                document.querySelector('.sprite-container').style.width = `${state.settings.frameWidth}px`;
+                state.updateJsonOutput();
+                animation.update();
+            },
+
+            updateFrameHeight(input) {
+                this.syncInputs(input, input.id === 'frameHeight' ? 'frameHeightNum' : 'frameHeight');
+                state.settings.frameHeight = parseInt(input.value);
+                document.querySelector('.sprite-container').style.height = `${state.settings.frameHeight}px`;
+                state.updateJsonOutput();
+                animation.update();
+            },
+
+            updateOffsetX(input) {
+                this.syncInputs(input, input.id === 'offsetX' ? 'offsetXNum' : 'offsetX');
+                state.settings.offsetX = parseInt(input.value);
+                state.updateJsonOutput();
+                animation.updateFramePosition();
+            },
+
+            updateOffsetY(input) {
+                this.syncInputs(input, input.id === 'offsetY' ? 'offsetYNum' : 'offsetY');
+                state.settings.offsetY = parseInt(input.value);
+                state.updateJsonOutput();
+                animation.updateFramePosition();
+            },
+
+            updateBufferLeft(input) {
+                this.syncInputs(input, input.id === 'bufferLeft' ? 'bufferLeftNum' : 'bufferLeft');
+                state.settings.bufferLeft = parseInt(input.value);
+                document.getElementById('flameSprite').style.left = `${-state.settings.bufferLeft}px`;
+                state.settings.columnRightXPositions = state.calculateColumnRightXPositions();
+                state.updateJsonOutput();
+                animation.update();
+            },
+
+            updateBufferRight(input) {
+                this.syncInputs(input, input.id === 'bufferRight' ? 'bufferRightNum' : 'bufferRight');
+                state.settings.bufferRight = parseInt(input.value);
+                state.settings.columnRightXPositions = state.calculateColumnRightXPositions();
+                state.updateJsonOutput();
+                animation.update();
+            },
+
+            updateSpeed(input) {
+                this.syncInputs(input, input.id === 'speed' ? 'speedNum' : 'speed');
+                state.settings.speed = parseInt(input.value);
+                animation.update();
+                state.updateJsonOutput();
+            },
+
+            updateAll() {
+                // Update sprite dimensions
+                const sprite = document.getElementById('flameSprite');
+                sprite.style.width = `${state.settings.spriteSheetWidth}px`;
+                sprite.style.height = `${state.settings.spriteSheetHeight}px`;
+                sprite.style.left = `${-state.settings.bufferLeft}px`;
+                sprite.style.top = `0px`;
+
+                // Update container dimensions
+                document.querySelector('.sprite-container').style.width = `${state.settings.frameWidth}px`;
+                document.querySelector('.sprite-container').style.height = `${state.settings.frameHeight}px`;
+
+                // Update sliders and number inputs
+                document.getElementById('frameWidth').value = state.settings.frameWidth;
+                document.getElementById('frameWidthNum').value = state.settings.frameWidth;
+                document.getElementById('frameHeight').value = state.settings.frameHeight;
+                document.getElementById('frameHeightNum').value = state.settings.frameHeight;
+                document.getElementById('offsetX').value = state.settings.offsetX;
+                document.getElementById('offsetXNum').value = state.settings.offsetX;
+                document.getElementById('offsetY').value = state.settings.offsetY;
+                document.getElementById('offsetYNum').value = state.settings.offsetY;
+                document.getElementById('bufferLeft').value = state.settings.bufferLeft;
+                document.getElementById('bufferLeftNum').value = state.settings.bufferLeft;
+                document.getElementById('bufferRight').value = state.settings.bufferRight;
+                document.getElementById('bufferRightNum').value = state.settings.bufferRight;
+                document.getElementById('speed').value = state.settings.speed;
+                document.getElementById('speedNum').value = state.settings.speed;
+
+                // Update JSON output
+                state.updateJsonOutput();
+            }
+        };
+
+        // Initialize
+        state.settings.columnRightXPositions = state.calculateColumnRightXPositions();
+        state.settings.rowBottomYPositions = state.calculateRowBottomYPositions();
+        ui.updateAll();
+        animation.start();
+    </script>
+</body>
+</html>
