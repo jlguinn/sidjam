@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flame Sprite Animation</title>
     <style>
+        /* Container for the sprite and row display */
+        .sprite-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
         /* Container for the sprite */
         .sprite-container {
             width: 102px; /* Initial width of the visible area */
@@ -12,7 +20,7 @@
             overflow: hidden;
             border: 2px solid #000; /* Optional: for visibility */
             cursor: pointer;
-            margin-bottom: 20px;
+            position: relative; /* Needed for positioning the sprite */
         }
 
         /* Sprite sheet image */
@@ -21,6 +29,21 @@
             height: 512px; /* Full height of the sprite sheet */
             background: url('image/flame_sprite_sheet.png') 0 0 no-repeat;
             transition: background-position 0.1s steps(1); /* Smooth transition for frame changes */
+            position: absolute; /* Position relative to the container */
+        }
+
+        /* Row number display */
+        .row-display {
+            font-family: monospace;
+            font-size: 16px;
+            color: #333;
+        }
+
+        /* Main layout container */
+        .layout {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start; /* Align items at the top */
         }
 
         /* Styling for controls */
@@ -41,72 +64,123 @@
         input[type="range"], input[type="number"] {
             width: 150px;
         }
+
+        /* Styling for JSON output and input */
+        .json-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
         .json-output {
-            margin-top: 20px;
             padding: 10px;
             background: #f0f0f0;
             border: 1px solid #ccc;
             font-family: monospace;
             white-space: pre-wrap;
             user-select: all; /* Makes it easy to select and copy */
+            min-width: 200px;
+            max-width: 300px;
+            min-height: 200px; /* Ensure it has some height for visibility */
+        }
+        .json-input {
+            width: 100%;
+            height: 100px;
+            font-family: monospace;
+            resize: vertical;
+            padding: 5px;
+            border: 1px solid #ccc;
+        }
+        .apply-button {
+            padding: 5px 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .apply-button:hover {
+            background: #0056b3;
         }
     </style>
 </head>
 <body>
-    <div class="sprite-container" onclick="nextFrame()">
-        <div class="sprite" id="flameSprite"></div>
+    <div class="sprite-wrapper">
+        <div class="sprite-container" onclick="nextFrame()">
+            <div class="sprite" id="flameSprite"></div>
+        </div>
+        <div class="row-display" id="rowDisplay">Row: 0</div>
     </div>
 
-    <div class="controls">
-        <div class="control-group">
-            <label>Frame Width:</label>
-            <input type="range" id="frameWidth" min="50" max="150" value="102" oninput="updateFrame()">
-            <input type="number" id="frameWidthNum" min="50" max="150" value="102" oninput="updateFrame()">
+    <div class="layout">
+        <div class="controls">
+            <div class="control-group">
+                <label>Frame Width:</label>
+                <input type="range" id="frameWidth" min="50" max="150" value="102" oninput="updateFrame()">
+                <input type="number" id="frameWidthNum" min="50" max="150" value="102" oninput="updateFrame()">
+            </div>
+            <div class="control-group">
+                <label>Frame Height:</label>
+                <input type="range" id="frameHeight" min="50" max="150" value="102" oninput="updateFrame()">
+                <input type="number" id="frameHeightNum" min="50" max="150" value="102" oninput="updateFrame()">
+            </div>
+            <div class="control-group">
+                <label>Offset X:</label>
+                <input type="range" id="offsetX" min="0" max="20" value="2" oninput="updateFrame()">
+                <input type="number" id="offsetXNum" min="0" max="20" value="2" oninput="updateFrame()">
+            </div>
+            <div class="control-group">
+                <label>Offset Y:</label>
+                <input type="range" id="offsetY" min="0" max="20" value="0" oninput="updateFrame()">
+                <input type="number" id="offsetYNum" min="0" max="20" value="0" oninput="updateFrame()">
+            </div>
+            <div class="control-group">
+                <label>Buffer Left:</label>
+                <input type="range" id="bufferLeft" min="0" max="20" value="0" oninput="updateFrame()">
+                <input type="number" id="bufferLeftNum" min="0" max="20" value="0" oninput="updateFrame()">
+            </div>
+            <div class="control-group">
+                <label>Buffer Right:</label>
+                <input type="range" id="bufferRight" min="0" max="20" value="0" oninput="updateFrame()">
+                <input type="number" id="bufferRightNum" min="0" max="20" value="0" oninput="updateFrame()">
+            </div>
+            <div class="control-group">
+                <label>Buffer Top:</label>
+                <input type="range" id="bufferTop" min="0" max="20" value="3" oninput="updateFrame()">
+                <input type="number" id="bufferTopNum" min="0" max="20" value="3" oninput="updateFrame()">
+            </div>
+            <div class="control-group">
+                <label>Buffer Bottom:</label>
+                <input type="range" id="bufferBottom" min="0" max="20" value="0" oninput="updateFrame()">
+                <input type="number" id="bufferBottomNum" min="0" max="20" value="0" oninput="updateFrame()">
+            </div>
+            <div class="control-group">
+                <label>Speed (ms):</label>
+                <input type="range" id="speed" min="50" max="1000" value="200" oninput="updateSpeed()">
+                <input type="number" id="speedNum" min="50" max="1000" value="200" oninput="updateSpeed()">
+            </div>
         </div>
-        <div class="control-group">
-            <label>Frame Height:</label>
-            <input type="range" id="frameHeight" min="50" max="150" value="102" oninput="updateFrame()">
-            <input type="number" id="frameHeightNum" min="50" max="150" value="102" oninput="updateFrame()">
+        <div class="json-container">
+            <div class="json-output" id="jsonOutput"></div>
+            <textarea class="json-input" id="jsonInput" placeholder="Paste JSON here to apply settings..."></textarea>
+            <button class="apply-button" onclick="applyJsonSettings()">Apply JSON</button>
         </div>
-        <div class="control-group">
-            <label>Offset X:</label>
-            <input type="range" id="offsetX" min="0" max="20" value="0" oninput="updateFrame()">
-            <input type="number" id="offsetXNum" min="0" max="20" value="0" oninput="updateFrame()">
-        </div>
-        <div class="control-group">
-            <label>Offset Y:</label>
-            <input type="range" id="offsetY" min="0" max="20" value="0" oninput="updateFrame()">
-            <input type="number" id="offsetYNum" min="0" max="20" value="0" oninput="updateFrame()">
-        </div>
-        <div class="control-group">
-            <label>Buffer X:</label>
-            <input type="range" id="bufferX" min="0" max="20" value="0" oninput="updateFrame()">
-            <input type="number" id="bufferXNum" min="0" max="20" value="0" oninput="updateFrame()">
-        </div>
-        <div class="control-group">
-            <label>Buffer Y:</label>
-            <input type="range" id="bufferY" min="0" max="20" value="0" oninput="updateFrame()">
-            <input type="number" id="bufferYNum" min="0" max="20" value="0" oninput="updateFrame()">
-        </div>
-        <div class="control-group">
-            <label>Speed (ms):</label>
-            <input type="range" id="speed" min="50" max="1000" value="200" oninput="updateSpeed()">
-            <input type="number" id="speedNum" min="50" max="1000" value="200" oninput="updateSpeed()">
-        </div>
-        <div class="json-output" id="jsonOutput"></div>
     </div>
 
     <script>
         const sprite = document.getElementById('flameSprite');
         const spriteContainer = document.querySelector('.sprite-container');
         const jsonOutput = document.getElementById('jsonOutput');
+        const jsonInput = document.getElementById('jsonInput');
+        const rowDisplay = document.getElementById('rowDisplay');
         let frameIndex = 0;
         let frameWidth = 102; /* Initial width of one frame (512 ÷ 5) */
         let frameHeight = 102; /* Initial height of one frame (512 ÷ 5) */
-        let offsetX = 0; /* Horizontal padding between frames */
+        let offsetX = 2; /* Horizontal padding between frames */
         let offsetY = 0; /* Vertical padding between frames */
-        let bufferX = 0; /* Buffer to crop the horizontal edges */
-        let bufferY = 0; /* Buffer to crop the vertical edges */
+        let bufferLeft = 0; /* Buffer to crop the left edge */
+        let bufferRight = 0; /* Buffer to crop the right edge */
+        let bufferTop = 3; /* Buffer to crop the top edge */
+        let bufferBottom = 0; /* Buffer to crop the bottom edge */
         const framesPerRow = 5; /* Number of frames per row (5x5 grid) */
         const totalFrames = 25; /* Total frames in the sprite sheet */
         let speed = 200; /* Animation speed in milliseconds */
@@ -124,11 +198,61 @@
                 frameHeight: `${frameHeight}px`,
                 offsetX: `${offsetX}px`,
                 offsetY: `${offsetY}px`,
-                bufferX: `${bufferX}px`,
-                bufferY: `${bufferY}px`,
+                bufferLeft: `${bufferLeft}px`,
+                bufferRight: `${bufferRight}px`,
+                bufferTop: `${bufferTop}px`,
+                bufferBottom: `${bufferBottom}px`,
                 speed: `${speed}ms`
             };
             jsonOutput.textContent = JSON.stringify(settings, null, 2);
+        }
+
+        // Apply settings from pasted JSON
+        function applyJsonSettings() {
+            try {
+                const settings = JSON.parse(jsonInput.value);
+
+                // Helper function to parse value and remove unit
+                const parseValue = (str, unit) => parseInt(str.replace(unit, ''));
+
+                // Update variables
+                frameWidth = parseValue(settings.frameWidth, 'px');
+                frameHeight = parseValue(settings.frameHeight, 'px');
+                offsetX = parseValue(settings.offsetX, 'px');
+                offsetY = parseValue(settings.offsetY, 'px');
+                bufferLeft = parseValue(settings.bufferLeft, 'px');
+                bufferRight = parseValue(settings.bufferRight, 'px');
+                bufferTop = parseValue(settings.bufferTop, 'px');
+                bufferBottom = parseValue(settings.bufferBottom, 'px');
+                speed = parseValue(settings.speed, 'ms');
+
+                // Update sliders and number inputs
+                document.getElementById('frameWidth').value = frameWidth;
+                document.getElementById('frameWidthNum').value = frameWidth;
+                document.getElementById('frameHeight').value = frameHeight;
+                document.getElementById('frameHeightNum').value = frameHeight;
+                document.getElementById('offsetX').value = offsetX;
+                document.getElementById('offsetXNum').value = offsetX;
+                document.getElementById('offsetY').value = offsetY;
+                document.getElementById('offsetYNum').value = offsetY;
+                document.getElementById('bufferLeft').value = bufferLeft;
+                document.getElementById('bufferLeftNum').value = bufferLeft;
+                document.getElementById('bufferRight').value = bufferRight;
+                document.getElementById('bufferRightNum').value = bufferRight;
+                document.getElementById('bufferTop').value = bufferTop;
+                document.getElementById('bufferTopNum').value = bufferTop;
+                document.getElementById('bufferBottom').value = bufferBottom;
+                document.getElementById('bufferBottomNum').value = bufferBottom;
+                document.getElementById('speed').value = speed;
+                document.getElementById('speedNum').value = speed;
+
+                // Update animation with new settings
+                updateFrame();
+                updateSpeed();
+            } catch (error) {
+                alert('Invalid JSON format. Please check your input.');
+                console.error(error);
+            }
         }
 
         // Update frame size, buffer, and position
@@ -138,8 +262,10 @@
             frameHeight = parseInt(document.getElementById('frameHeight').value);
             offsetX = parseInt(document.getElementById('offsetX').value);
             offsetY = parseInt(document.getElementById('offsetY').value);
-            bufferX = parseInt(document.getElementById('bufferX').value);
-            bufferY = parseInt(document.getElementById('bufferY').value);
+            bufferLeft = parseInt(document.getElementById('bufferLeft').value);
+            bufferRight = parseInt(document.getElementById('bufferRight').value);
+            bufferTop = parseInt(document.getElementById('bufferTop').value);
+            bufferBottom = parseInt(document.getElementById('bufferBottom').value);
 
             // Sync slider and number inputs
             syncInputs(document.getElementById('frameWidth'), document.getElementById('frameWidthNum'));
@@ -150,14 +276,22 @@
             syncInputs(document.getElementById('offsetXNum'), document.getElementById('offsetX'));
             syncInputs(document.getElementById('offsetY'), document.getElementById('offsetYNum'));
             syncInputs(document.getElementById('offsetYNum'), document.getElementById('offsetY'));
-            syncInputs(document.getElementById('bufferX'), document.getElementById('bufferXNum'));
-            syncInputs(document.getElementById('bufferXNum'), document.getElementById('bufferX'));
-            syncInputs(document.getElementById('bufferY'), document.getElementById('bufferYNum'));
-            syncInputs(document.getElementById('bufferYNum'), document.getElementById('bufferY'));
+            syncInputs(document.getElementById('bufferLeft'), document.getElementById('bufferLeftNum'));
+            syncInputs(document.getElementById('bufferLeftNum'), document.getElementById('bufferLeft'));
+            syncInputs(document.getElementById('bufferRight'), document.getElementById('bufferRightNum'));
+            syncInputs(document.getElementById('bufferRightNum'), document.getElementById('bufferRight'));
+            syncInputs(document.getElementById('bufferTop'), document.getElementById('bufferTopNum'));
+            syncInputs(document.getElementById('bufferTopNum'), document.getElementById('bufferTop'));
+            syncInputs(document.getElementById('bufferBottom'), document.getElementById('bufferBottomNum'));
+            syncInputs(document.getElementById('bufferBottomNum'), document.getElementById('bufferBottom'));
 
-            // Update container size (subtract buffer to crop the edges)
-            spriteContainer.style.width = `${frameWidth - bufferX}px`;
-            spriteContainer.style.height = `${frameHeight - bufferY}px`;
+            // Update container size (total buffer affects the visible area)
+            spriteContainer.style.width = `${frameWidth - bufferLeft - bufferRight}px`;
+            spriteContainer.style.height = `${frameHeight - bufferTop - bufferBottom}px`;
+
+            // Adjust the sprite position to account for the left and top buffers
+            sprite.style.left = `${-bufferLeft}px`;
+            sprite.style.top = `${-bufferTop}px`;
 
             // Update frame position
             nextFrame();
@@ -185,6 +319,9 @@
             const row = Math.floor(frameIndex / framesPerRow);
             const col = frameIndex % framesPerRow;
 
+            // Update row display
+            rowDisplay.textContent = `Row: ${row}`;
+
             // Calculate the position, including any offset
             const posX = -col * (frameWidth + offsetX);
             const posY = -row * (frameHeight + offsetY);
@@ -203,3 +340,20 @@
     </script>
 </body>
 </html>
+
+
+<!--
+{
+  "frameWidth": "102px",
+  "frameHeight": "101px",
+  "offsetX": "2px",
+  "offsetY": "0px",
+  "bufferLeft": "0px",
+  "bufferRight": "0px",
+  "bufferTop": "3px",
+  "bufferBottom": "0px",
+  "speed": "200ms"
+}
+
+-->
+
