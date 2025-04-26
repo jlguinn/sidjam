@@ -494,10 +494,6 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
 
 export function updateWinner(contenderIndex, updateRoundInfo, updateWinnerButtons, updateFlameButton) {
     const winnerButton = document.getElementById(`winner${contenderIndex}`);
-    if (winnerButton.disabled) {
-        console.log(`Button winner${contenderIndex} is disabled, ignoring click`);
-        return;
-    }
     if (playerState.winner === null && !playerState.bothContendersSelected) {
         updatePlayerState({ winner: contenderIndex });
     } else if (playerState.winner !== null && playerState.winner !== contenderIndex) {

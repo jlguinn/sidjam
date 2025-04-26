@@ -317,6 +317,7 @@ export function updateWinnerButtons(playerState, sidPlayer) {
     winner1.classList.toggle("disabled", disabled);
     document.getElementById("jamButton").disabled = !sidPlayer;
 }
+
 export function updateFlameButton(playerState, sidPlayer) {
     const flameControls = document.getElementById("flame-controls");
     const flameButton = document.getElementById("flameButton");
