@@ -28,7 +28,7 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            max-width: 300px;
+            max-width: 400px;
         }
         .control-group {
             display: flex;
@@ -40,6 +40,15 @@
         }
         input[type="range"], input[type="number"] {
             width: 150px;
+        }
+        .json-output {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            font-family: monospace;
+            white-space: pre-wrap;
+            user-select: all; /* Makes it easy to select and copy */
         }
     </style>
 </head>
@@ -84,11 +93,13 @@
             <input type="range" id="speed" min="50" max="1000" value="200" oninput="updateSpeed()">
             <input type="number" id="speedNum" min="50" max="1000" value="200" oninput="updateSpeed()">
         </div>
+        <div class="json-output" id="jsonOutput"></div>
     </div>
 
     <script>
         const sprite = document.getElementById('flameSprite');
         const spriteContainer = document.querySelector('.sprite-container');
+        const jsonOutput = document.getElementById('jsonOutput');
         let frameIndex = 0;
         let frameWidth = 102; /* Initial width of one frame (512 ÷ 5) */
         let frameHeight = 102; /* Initial height of one frame (512 ÷ 5) */
@@ -104,6 +115,20 @@
         // Sync sliders and number inputs
         function syncInputs(input, target) {
             target.value = input.value;
+        }
+
+        // Update JSON output
+        function updateJsonOutput() {
+            const settings = {
+                frameWidth: `${frameWidth}px`,
+                frameHeight: `${frameHeight}px`,
+                offsetX: `${offsetX}px`,
+                offsetY: `${offsetY}px`,
+                bufferX: `${bufferX}px`,
+                bufferY: `${bufferY}px`,
+                speed: `${speed}ms`
+            };
+            jsonOutput.textContent = JSON.stringify(settings, null, 2);
         }
 
         // Update frame size, buffer, and position
@@ -136,6 +161,9 @@
 
             // Update frame position
             nextFrame();
+
+            // Update JSON output
+            updateJsonOutput();
         }
 
         // Update animation speed
@@ -147,6 +175,9 @@
             // Restart the interval with the new speed
             clearInterval(intervalId);
             intervalId = setInterval(nextFrame, speed);
+
+            // Update JSON output
+            updateJsonOutput();
         }
 
         function nextFrame() {
@@ -168,6 +199,7 @@
 
         // Initial update to sync everything
         updateFrame();
+        updateSpeed();
     </script>
 </body>
 </html>
