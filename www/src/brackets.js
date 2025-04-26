@@ -309,8 +309,8 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 updateFlameButton(playerState, sidPlayer);
                 updateBracketDropdown();
                 document.getElementById("bracket-select").value = newBracket.replace(' - ', '-');
-                renderWinnerButtonBitmap(0, playerState, theme.exteriorTextColor); // Added
-                renderWinnerButtonBitmap(1, playerState, theme.exteriorTextColor); // Added
+                renderWinnerButtonBitmap(0, '#000000', '#FFDAB9'); // Added
+                renderWinnerButtonBitmap(1, '#000000', '#FFDAB9'); // Added
                 voteProcessed = true;
             } catch (error) {
                 console.error('Error reviving song:', error);
@@ -355,8 +355,8 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
             updateRoundInfo(playerState);
             updateWinnerButtons(playerState, sidPlayer);
             updateFlameButton(playerState, sidPlayer);
-            renderWinnerButtonBitmap(0, playerState, theme.exteriorTextColor); // Added
-            renderWinnerButtonBitmap(1, playerState, theme.exteriorTextColor); // Added
+            renderWinnerButtonBitmap(0, '#000000', '#FFDAB9'); // Added
+            renderWinnerButtonBitmap(1, '#000000', '#FFDAB9'); // Added
             shouldUpdateBracketDropdown = true;
         }
         if (shouldUpdateBracketDropdown) {
@@ -425,8 +425,8 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
             updateRoundInfo(playerState);
             updateWinnerButtons(playerState, sidPlayer);
             updateFlameButton(playerState, sidPlayer);
-            renderWinnerButtonBitmap(0, playerState, theme.exteriorTextColor); // Added
-            renderWinnerButtonBitmap(1, playerState, theme.exteriorTextColor); // Added
+            renderWinnerButtonBitmap(0, '#000000', '#FFDAB9'); // Added
+            renderWinnerButtonBitmap(1, '#000000', '#FFDAB9'); // Added
             voteProcessed = true;
         } catch (error) {
             console.error('Error flaming song:', error);
@@ -459,8 +459,8 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
             updateRoundInfo(playerState);
             updateWinnerButtons(playerState, sidPlayer);
             updateFlameButton(playerState, sidPlayer);
-            renderWinnerButtonBitmap(0, playerState, theme.exteriorTextColor); // Added
-            renderWinnerButtonBitmap(1, playerState, theme.exteriorTextColor); // Added
+            renderWinnerButtonBitmap(0, '#000000', '#FFDAB9'); // Added
+            renderWinnerButtonBitmap(1, '#000000', '#FFDAB9'); // Added
         } catch (error) {
             console.error('Error in jamToggle after logResult:', error);
         }
@@ -478,8 +478,8 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
         updateRoundInfo(playerState);
         updateWinnerButtons(playerState, sidPlayer);
         updateFlameButton(playerState, sidPlayer);
-        renderWinnerButtonBitmap(0, playerState, theme.exteriorTextColor); // Added
-        renderWinnerButtonBitmap(1, playerState, theme.exteriorTextColor); // Added
+        renderWinnerButtonBitmap(0, '#000000', '#FFDAB9'); // Added
+        renderWinnerButtonBitmap(1, '#000000', '#FFDAB9'); // Added
     }
 
     if (shouldUpdateBracketDropdown || voteProcessed) {
@@ -506,8 +506,8 @@ export function updateWinner(contenderIndex, updateRoundInfo, updateWinnerButton
     updateRoundInfo(playerState);
     updateWinnerButtons(playerState, sidPlayer);
     updateFlameButton(playerState, sidPlayer);
-    renderWinnerButtonBitmap(0, playerState, theme.exteriorTextColor); // Added
-    renderWinnerButtonBitmap(1, playerState, theme.exteriorTextColor); // Added
+    renderWinnerButtonBitmap(0, '#000000', '#FFDAB9'); // Added
+    renderWinnerButtonBitmap(1, '#000000', '#FFDAB9'); // Added
 }
 
 export function toggleFlame(updateFlameButton, updateVsMatchup, updateWinnerButtons) {
@@ -517,8 +517,8 @@ export function toggleFlame(updateFlameButton, updateVsMatchup, updateWinnerButt
     updateVsMatchup(playerState);
     updateWinnerButtons(playerState, sidPlayer);
     updateRoundInfo(playerState);
-    renderWinnerButtonBitmap(0, playerState, theme.exteriorTextColor); // Added
-    renderWinnerButtonBitmap(1, playerState, theme.exteriorTextColor); // Added
+    renderWinnerButtonBitmap(0, '#000000', '#FFDAB9'); // Added
+    renderWinnerButtonBitmap(1, '#000000', '#FFDAB9'); // Added
 }
 
 export function toggleRevive(updateReviveButton, updateSongTitleHighlight) {
@@ -574,8 +574,8 @@ export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, upda
     const theme = baseColorSchemes[getCurrentThemeIndex()]; // Added
     updateFlameButton(playerState, sidPlayer);
     if (loadSong) loadSong(playerState.contenders[playerState.activeContender], -1);
-    renderWinnerButtonBitmap(0, playerState, theme.exteriorTextColor); // Added
-    renderWinnerButtonBitmap(1, playerState, theme.exteriorTextColor); // Added
+    renderWinnerButtonBitmap(0, '#000000', '#FFDAB9'); // Added
+    renderWinnerButtonBitmap(1, '#000000', '#FFDAB9'); // Added
 }
 
 

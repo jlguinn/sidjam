@@ -81,47 +81,6 @@ const leftThumbUpBitmap = [
     [0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 ]
 
-/*
-const leftThumbUpBitmap = [
-    [0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,1,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0],
-    [0,0,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0],
-    [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
-    [1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0],
-    [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0],
-    [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0],
-    [0,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
-    [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0],
-    [0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0],
-    [0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0],
-    [0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0],
-    [0,0,0,0,1,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-]
-*/
-
 // Transformation utilities
 export function flipBitmapHorizontally(bitmap) {
     return bitmap.map(row => [...row].reverse());
@@ -154,7 +113,7 @@ export function rotateBitmap(bitmap, degrees) {
 }
 
 // Core rendering function
-export function renderBitmap(bitmap, domElement, color, pixelSize) {
+export function renderBitmap(bitmap, domElement, pixelSize, primaryColor, secondaryColor) {
     if (!domElement) {
         console.error('DOM element for bitmap rendering not found.');
         return;
@@ -176,9 +135,9 @@ export function renderBitmap(bitmap, domElement, color, pixelSize) {
             pixel.style.width = `${pixelSize}px`;
             pixel.style.height = `${pixelSize}px`;
             if (bitmap[row][col] === 1) {
-                pixel.style.backgroundColor = color; // Outline color (white)
+                pixel.style.backgroundColor = primaryColor; // Outline color
             } else if (bitmap[row][col] === 2) {
-                pixel.style.backgroundColor = '#FFDAB9'; // Interior flesh color
+                pixel.style.backgroundColor = secondaryColor; // Interior flesh color
             } else {
                 pixel.style.backgroundColor = 'transparent'; // Empty pixels
             }
@@ -191,27 +150,23 @@ export function renderBitmap(bitmap, domElement, color, pixelSize) {
 export function renderProfileBitmap(isLoggedIn, color, pixelSize = 4, domElementId = 'profile-bitmap') {
     const domElement = document.getElementById(domElementId);
     const bitmap = isLoggedIn ? profileBitmap : guestBitmap;
-    renderBitmap(bitmap, domElement, color, pixelSize);
+    renderBitmap(bitmap, domElement, pixelSize, color);
 }
 
 // Winner button rendering
-export function renderWinnerButtonBitmap(index, playerState, primaryColor, secondaryColor = null, pixelSize = 2, domElementId = `winner${index}`) {
-    const domElement = document.getElementById(domElementId);
-    const isBracketZero = playerState.activeBracket === "0 - 0";
-    const bothContendersSelected = playerState.contenders && playerState.contenders.length === 2;
-    let rotation;
-    let bitmap = leftThumbUpBitmap;
-
-    if (isBracketZero && bothContendersSelected) {
-        rotation = index === 0 ? 0 : 180; // Thumbs up for both winners
-    } else if (playerState.winner !== null) {
-        rotation = playerState.winner === index ? 0 : 180; // Winner up, loser down
-    } else {
-        rotation = index === 0 ? 90 : -90; // Default: left thumb points right, right thumb points left
-        bitmap = index === 0 ? flipBitmapHorizontally(leftThumbUpBitmap) : leftThumbUpBitmap;
+export function renderWinnerButtonBitmap(contenderIndex, playerState) {
+    const primaryColor = "#000000";
+    const secondaryColor = '#FFDAB9';
+    const winnerButton = document.getElementById(`winner${contenderIndex}`);
+    if (!winnerButton) {
+        console.error(`Winner button for contender ${contenderIndex} not found.`);
+        return;
     }
 
-    // Use secondaryColor for future feature (e.g., highlight winner)
-    const color = secondaryColor && playerState.winner === index ? secondaryColor : primaryColor;
-    renderBitmap(rotateBitmap(bitmap, rotation), domElement, color, pixelSize);
+    const isWinner = playerState.winner === contenderIndex;
+    const isContenderSelected = playerState.selectedContender === contenderIndex;
+    const bitmap = leftThumbUpBitmap;
+
+    const pixelSize = 2; // Pixel size for bitmap rendering
+    renderBitmap(bitmap, winnerButton, pixelSize, primaryColor, secondaryColor); 
 }
