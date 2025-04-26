@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flame Sprite Animation</title>
+    <style>
+        /* Container for the sprite */
+        .sprite-container {
+            width: 83px; /* Width of one frame */
+            height: 96px; /* Height of one frame */
+            overflow: hidden;
+            border: 2px solid #000; /* Optional: for visibility */
+            cursor: pointer;
+        }
+
+        /* Sprite sheet image */
+        .sprite {
+            width: 512px; /* Full width of the sprite sheet (5 frames x 64px) */
+            height: 512px; /* Full height of the sprite sheet (5 frames x 64px) */
+            background: url('image/flame_sprite_sheet.png') 0 0 no-repeat;
+            transition: background-position 0.1s steps(1); /* Smooth transition for frame changes */
+        }
+    </style>
+</head>
+<body>
+    <div class="sprite-container" onclick="nextFrame()">
+        <div class="sprite" id="flameSprite"></div>
+    </div>
+
+    <script>
+        const sprite = document.getElementById('flameSprite');
+        let frameIndex = 0;
+        const frameWidth = 64; /* Width of one frame */
+        const frameHeight = 64; /* Height of one frame */
+        const framesPerRow = 5; /* Number of frames per row (5x5 grid) */
+        const totalFrames = 25; /* Total frames in the sprite sheet */
+
+        function nextFrame() {
+            // Calculate the row and column of the current frame
+            const row = Math.floor(frameIndex / framesPerRow);
+            const col = frameIndex % framesPerRow;
+
+            // Update the background position to show the current frame
+            const posX = -col * frameWidth;
+            const posY = -row * frameHeight;
+            sprite.style.backgroundPosition = `${posX}px ${posY}px`;
+
+            // Move to the next frame, loop back to 0 if at the end
+            frameIndex = (frameIndex + 1) % totalFrames;
+        }
+
+        // Optional: Auto-play the animation (uncomment to enable)
+        
+        setInterval(nextFrame, 200); // Change frame every 200ms (5 frames per second)
+        
+    </script>
+</body>
+</html>
