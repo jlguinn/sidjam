@@ -63,11 +63,67 @@
       background-color: #bdc3c7;
       cursor: not-allowed;
     }
+    .canvas-container {
+      display: flex;
+      align-items: flex-start;
+      gap: 15px;
+      margin: 15px 0;
+    }
     canvas {
       border: 2px solid #34495e;
       border-radius: 4px;
-      margin: 15px 0;
       background-color: #ecf0f1;
+    }
+    .controls-container {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .movement-controls,
+    .global-controls {
+      display: grid;
+      grid-template-areas:
+        ". up ."
+        "left reset right"
+        ". down .";
+      gap: 5px;
+    }
+    .movement-btn {
+      padding: 5px;
+      font-size: 12px;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #3498db;
+    }
+    .movement-btn:hover:not(:disabled) {
+      background-color: #2980b9;
+    }
+    .movement-btn.up { grid-area: up; }
+    .movement-btn.down { grid-area: down; }
+    .movement-btn.left { grid-area: left; }
+    .movement-btn.right { grid-area: right; }
+    .movement-btn.reset {
+      grid-area: reset;
+      background-color: #e74c3c;
+    }
+    .movement-btn.reset:hover:not(:disabled) {
+      background-color: #c0392b;
+    }
+    .global-controls .movement-btn {
+      background-color: #2ecc71;
+    }
+    .global-controls .movement-btn:hover:not(:disabled) {
+      background-color: #27ae60;
+    }
+    .control-label {
+      font-size: 12px;
+      font-weight: bold;
+      color: #34495e;
+      text-align: center;
+      margin-bottom: 5px;
     }
     .frame-position {
       text-align: center;
@@ -109,7 +165,31 @@
       <button id="prevFrameBtn" disabled>Previous Frame</button>
       <button id="nextFrameBtn" disabled>Next Frame</button>
     </div>
-    <canvas id="previewCanvas"></canvas>
+    <div class="canvas-container">
+      <canvas id="previewCanvas"></canvas>
+      <div class="controls-container">
+        <div>
+          <div class="control-label">Frame Adjustment</div>
+          <div class="movement-controls">
+            <button class="movement-btn up" id="moveUpBtn" disabled>↑</button>
+            <button class="movement-btn left" id="moveLeftBtn" disabled>←</button>
+            <button class="movement-btn reset" id="resetBtn" disabled>Reset</button>
+            <button class="movement-btn right" id="moveRightBtn" disabled>→</button>
+            <button class="movement-btn down" id="moveDownBtn" disabled>↓</button>
+          </div>
+        </div>
+        <div>
+          <div class="control-label">Global Adjustment</div>
+          <div class="global-controls">
+            <button class="movement-btn up" id="globalMoveUpBtn" disabled>↑</button>
+            <button class="movement-btn left" id="globalMoveLeftBtn" disabled>←</button>
+            <button class="movement-btn reset" id="globalResetBtn" disabled>Reset</button>
+            <button class="movement-btn right" id="globalMoveRightBtn" disabled>→</button>
+            <button class="movement-btn down" id="globalMoveDownBtn" disabled>↓</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="frame-position" id="framePosition">Row: -, Col: -</div>
     <div>
       <h3>Frame Specifications</h3>
@@ -125,6 +205,16 @@
     const pauseResumeBtn = document.getElementById('pauseResumeBtn');
     const prevFrameBtn = document.getElementById('prevFrameBtn');
     const nextFrameBtn = document.getElementById('nextFrameBtn');
+    const moveUpBtn = document.getElementById('moveUpBtn');
+    const moveDownBtn = document.getElementById('moveDownBtn');
+    const moveLeftBtn = document.getElementById('moveLeftBtn');
+    const moveRightBtn = document.getElementById('moveRightBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const globalMoveUpBtn = document.getElementById('globalMoveUpBtn');
+    const globalMoveDownBtn = document.getElementById('globalMoveDownBtn');
+    const globalMoveLeftBtn = document.getElementById('globalMoveLeftBtn');
+    const globalMoveRightBtn = document.getElementById('globalMoveRightBtn');
+    const globalResetBtn = document.getElementById('globalResetBtn');
     const canvas = document.getElementById('previewCanvas');
     const ctx = canvas.getContext('2d');
     const frameSpecsOutput = document.getElementById('frameSpecs');
@@ -135,6 +225,9 @@
     let currentFrame = 0;
     let isPaused = false;
     let lastFrameTime = 0;
+    let globalOffsetX = 0; // Global x-axis adjustment
+    let globalOffsetY = 0; // Global y-axis adjustment
+    const moveIncrement = 1; // Pixels to move per click
 
     // Load sprite sheet
     spriteInput.addEventListener('change', (e) => {
@@ -150,6 +243,16 @@
           pauseResumeBtn.disabled = false;
           prevFrameBtn.disabled = false;
           nextFrameBtn.disabled = false;
+          moveUpBtn.disabled = false;
+          moveDownBtn.disabled = false;
+          moveLeftBtn.disabled = false;
+          moveRightBtn.disabled = false;
+          resetBtn.disabled = false;
+          globalMoveUpBtn.disabled = false;
+          globalMoveDownBtn.disabled = false;
+          globalMoveLeftBtn.disabled = false;
+          globalMoveRightBtn.disabled = false;
+          globalResetBtn.disabled = false;
         };
         spriteImage.src = event.target.result;
       };
@@ -170,7 +273,7 @@
       const frameWidth = spriteImage.width / cols;
       const frameHeight = spriteImage.height / rows;
 
-      // Generate frame specifications
+      // Generate frame specifications with per-frame offsets
       frames = [];
       for (let row = 0; row < rows; row++) {
         for (let col = 0; col < cols; col++) {
@@ -178,7 +281,9 @@
             x: col * frameWidth,
             y: row * frameHeight,
             width: frameWidth,
-            height: frameHeight
+            height: frameHeight,
+            offsetX: 0, // Per-frame x offset
+            offsetY: 0  // Per-frame y offset
           });
         }
       }
@@ -190,12 +295,16 @@
       // Display frame specs
       frameSpecsOutput.textContent = JSON.stringify(frames, null, 2);
 
+      // Reset global adjustments
+      globalOffsetX = 0;
+      globalOffsetY = 0;
+
       // Reset animation
       currentFrame = 0;
       drawFrame();
     }
 
-    // Draw current frame and update row/col display
+    // Draw current frame with per-frame and global position adjustments
     function drawFrame() {
       if (frames.length === 0) {
         framePosition.textContent = "Row: -, Col: -";
@@ -205,12 +314,14 @@
       // Clear canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw current frame
+      // Draw current frame with combined offsets
       const frame = frames[currentFrame];
+      const totalOffsetX = frame.offsetX + globalOffsetX;
+      const totalOffsetY = frame.offsetY + globalOffsetY;
       ctx.drawImage(
         spriteImage,
         frame.x, frame.y, frame.width, frame.height,
-        0, 0, canvas.width, canvas.height
+        totalOffsetX, totalOffsetY, canvas.width, canvas.height
       );
 
       // Calculate row and column (1-based for display)
@@ -268,6 +379,65 @@
     nextFrameBtn.addEventListener('click', () => {
       if (frames.length === 0) return;
       currentFrame = (currentFrame + 1) % frames.length;
+      drawFrame();
+    });
+
+    // Per-frame movement handlers
+    moveUpBtn.addEventListener('click', () => {
+      if (frames.length === 0) return;
+      frames[currentFrame].offsetY -= moveIncrement;
+      drawFrame();
+    });
+
+    moveDownBtn.addEventListener('click', () => {
+      if (frames.length === 0) return;
+      frames[currentFrame].offsetY += moveIncrement;
+      drawFrame();
+    });
+
+    moveLeftBtn.addEventListener('click', () => {
+      if (frames.length === 0) return;
+      frames[currentFrame].offsetX -= moveIncrement;
+      drawFrame();
+    });
+
+    moveRightBtn.addEventListener('click', () => {
+      if (frames.length === 0) return;
+      frames[currentFrame].offsetX += moveIncrement;
+      drawFrame();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      if (frames.length === 0) return;
+      frames[currentFrame].offsetX = 0;
+      frames[currentFrame].offsetY = 0;
+      drawFrame();
+    });
+
+    // Global movement handlers
+    globalMoveUpBtn.addEventListener('click', () => {
+      globalOffsetY -= moveIncrement;
+      drawFrame();
+    });
+
+    globalMoveDownBtn.addEventListener('click', () => {
+      globalOffsetY += moveIncrement;
+      drawFrame();
+    });
+
+    globalMoveLeftBtn.addEventListener('click', () => {
+      globalOffsetX -= moveIncrement;
+      drawFrame();
+    });
+
+    globalMoveRightBtn.addEventListener('click', () => {
+      globalOffsetX += moveIncrement;
+      drawFrame();
+    });
+
+    globalResetBtn.addEventListener('click', () => {
+      globalOffsetX = 0;
+      globalOffsetY = 0;
       drawFrame();
     });
   </script>
