@@ -142,8 +142,27 @@ body {
 #flame-wrapper { position: absolute; left: 50%; transform: translateX(-50%); }
 #flame-controls { display: flex; justify-content: center; }
 #flame-controls.hidden { display: none; }
-#flameButton { width: 30px; height: 60px; border: none; background: url('../image/Flame-01-june.gif'); cursor: pointer; vertical-align: middle; padding: 0; background-size: contain; background-repeat: no-repeat; background-position: center; }
-#flameButton:disabled { opacity: 0.5; cursor: not-allowed; }
+#flameButton {
+    width: 48px;
+    height: 60px;
+    border: none;
+    background: none; /* Default to no background, canvas or static image will override */
+    cursor: pointer;
+    vertical-align: middle;
+    padding: 0;
+    background-size: cover; /* For static image */
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  
+  #flameButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  #flameButton canvas {
+    display: block; /* Ensure canvas fills button */
+  }
 #reviveButton {
     display: none;
     width: 80px;

@@ -1,6 +1,7 @@
 import { baseColorSchemes, getInvertedTheme } from './themes.js';
 import * as brackets from './brackets.js';
 import { renderProfileBitmap, renderWinnerButtonBitmap } from './bitmap.js';
+import { renderSpriteAnimation } from './spriteAnimator.js'; 
 
 export let currentThemeIndex = 0;
 
@@ -322,42 +323,48 @@ export function updateFlameButton(playerState, sidPlayer) {
     const flameControls = document.getElementById("flame-controls");
     const flameButton = document.getElementById("flameButton");
     const reviveButton = document.getElementById("reviveButton");
-
+  
     if (playerState.currentMode === "nowPlaying") {
-        if (playerState.nowPlayingSongBracket === "Eliminated" && playerState.nowPlayingSong) {
-            flameControls.classList.remove("hidden");
-            flameButton.style.display = "none";
-            reviveButton.style.display = "block";
-            updateReviveButton(playerState.isReviveActive);
-            return;
-        }
-        flameControls.classList.add("hidden");
-        flameButton.style.display = "none";
-        reviveButton.style.display = "none";
-        return;
-    }
-
-    if (playerState.peekBracket === "0 - 0") {
+      if (playerState.nowPlayingSongBracket === "Eliminated" && playerState.nowPlayingSong) {
         flameControls.classList.remove("hidden");
-        flameButton.style.display = "block";
-        reviveButton.style.display = "none";
-    } else {
-        flameControls.classList.add("hidden");
         flameButton.style.display = "none";
-        reviveButton.style.display = "none";
+        reviveButton.style.display = "block";
+        updateReviveButton(playerState.isReviveActive);
         return;
+      }
+      flameControls.classList.add("hidden");
+      flameButton.style.display = "none";
+      reviveButton.style.display = "none";
+      return;
     }
-
-    if (playerState.winner !== null || playerState.bothContendersSelected) {
-        flameButton.disabled = true;
+  
+    if (playerState.peekBracket === "0 - 0") {
+      flameControls.classList.remove("hidden");
+      flameButton.style.display = "block";
+      reviveButton.style.display = "none";
     } else {
-        const availableSongs = window.sidJamData.sidFiles.filter(song => !playerState.contenders.includes(song));
-        flameButton.disabled = !playerState.hasPlayed || availableSongs.length === 0;
+      flameControls.classList.add("hidden");
+      flameButton.style.display = "none";
+      reviveButton.style.display = "none";
+      return;
     }
-
-    // Ensure the animated GIF is used when isFlameActive is true
-    flameButton.style.backgroundImage = playerState.isFlameActive ? "url('/image/Flame-01-june.gif')" : "url('/image/Flame-01-june.jpg')";
-}
+  
+    if (playerState.winner !== null || playerState.bothContendersSelected) {
+      flameButton.disabled = true;
+    } else {
+      const availableSongs = window.sidJamData.sidFiles.filter(song => !playerState.contenders.includes(song));
+      flameButton.disabled = !playerState.hasPlayed || availableSongs.length === 0;
+    }
+  
+    // Render sprite sheet animation or static image
+    if (playerState.isFlameActive) {
+      flameButton.style.backgroundImage = 'none'; // Clear static image
+      renderSpriteAnimation(flameButton, true);
+    } else {
+      flameButton.style.backgroundImage = "url('/image/flame-static.png')"; // Static image
+      renderSpriteAnimation(flameButton, false); // Clear animation
+    }
+  }
 
 export function updateReviveButton(isReviveActive) {
     const reviveButton = document.getElementById("reviveButton");

@@ -1,10 +1,3 @@
-/*
-window.logmsg = function(msg, msgLogLevel = 0) {
-    const PLAYER_LOG_LEVEL = typeof window.LOG_LEVEL === 'number' ? window.LOG_LEVEL : 0;
-    if (PLAYER_LOG_LEVEL >= msgLogLevel) console.log(msg);
-};
-*/
-
 window.sidJamData = {
     sidFiles: [],
     cachedResults: {},
@@ -16,6 +9,7 @@ import * as ui from './ui.js';
 import * as brackets from './brackets.js';
 import { baseColorSchemes } from './themes.js';
 import * as player from './player.js';
+import { renderSpriteAnimation } from './spriteAnimator.js';
 
 
 function debug(message) { console.log(`[DEBUG] ${message}`); }
@@ -824,7 +818,7 @@ window.resetPlayer = function() {
         songInfo.textContent = 'Press Play';
     }
     if (flameButton) {
-        flameButton.src = '/image/Flame-01-june.jpg';
+        flameButton.src = '/image/flame-static.png';
         flameButton.alt = 'Flame Inactive';
     }
 
@@ -982,9 +976,13 @@ async function initializeApp() {
     const preferencesLink = document.getElementById('preferences-link');
     const profileIcon = document.getElementById('profile-icon');
     const userInfo = document.getElementById('user-info');
-
+  
     window.hasShownPrompt = false;
     window.showPromptMessage = false;
+  
+    // Preload sprite sheet for flame animation
+    // (Note: spriteAnimator.js already preloads, but we ensure it's referenced)
+    window.logmsg('Preloading flame sprite sheet', 2);
 
     if (authLink) {
         authLink.removeEventListener('click', window.toggleAuthPopUp);
@@ -1032,116 +1030,116 @@ async function initializeApp() {
         if (!window.sidJamData.sidFiles || window.sidJamData.sidFiles.length === 0) throw new Error('No songs loaded from sidtunes');
         window.sidJamData.pathToId = {};
         tunesData.forEach(tune => {
-            window.sidJamData.pathToId[tune.fullpath] = tune.id;
+          window.sidJamData.pathToId[tune.fullpath] = tune.id;
         });
-
+    
         const resultsResponse = await fetch(`dbcontrol/get_results.php?user_id=${window.user.id}`);
         if (!resultsResponse.ok) throw new Error(`Failed to load results: ${resultsResponse.statusText}`);
         window.sidJamData.cachedResults = await resultsResponse.json();
-
+    
         const player_state = await loadPlayerState();
         if (player_state && player_state.contenders && player_state.currentMode === "bout" && player_state.contenders[0] && player_state.contenders[1]) {
-            brackets.updatePlayerState({
-                contenders: player_state.contenders,
-                peekBracket: player_state.activeBracket,
-                activeBracket: player_state.activeBracket,
-                currentMode: "bout",
-                nowPlayingSong: null,
-                nowPlayingSongBracket: null,
-                activeContender: 0,
-                hasJammed: false,
-                bothContendersSelected: false,
-                isFlameActive: false
-            });
-            ui.setCurrentThemeIndex(player_state.theme || 0);
-            brackets.updateBracketDropdown();
-            document.getElementById("bracket-select").value = player_state.activeBracket.replace(" - ", "-");
-            updateVsMatchupBound();
-            updateRoundInfoBound();
-            updateWinnerButtonsBound();
-            updateFlameButtonBound();
+          brackets.updatePlayerState({
+            contenders: player_state.contenders,
+            peekBracket: player_state.activeBracket,
+            activeBracket: player_state.activeBracket,
+            currentMode: "bout",
+            nowPlayingSong: null,
+            nowPlayingSongBracket: null,
+            activeContender: 0,
+            hasJammed: false,
+            bothContendersSelected: false,
+            isFlameActive: false
+          });
+          ui.setCurrentThemeIndex(player_state.theme || 0);
+          brackets.updateBracketDropdown();
+          document.getElementById("bracket-select").value = player_state.activeBracket.replace(" - ", "-");
+          updateVsMatchupBound();
+          updateRoundInfoBound();
+          updateWinnerButtonsBound();
+          updateFlameButtonBound();
         } else if (player_state && player_state.currentMode === "nowPlaying" && player_state.nowPlayingSong) {
-            const nowPlayingSongBracket = brackets.getSongBracket(player_state.nowPlayingSong);
-            brackets.updatePlayerState({
-                contenders: player_state.contenders || [],
-                peekBracket: player_state.peekBracket,
-                activeBracket: player_state.activeBracket,
-                currentMode: "nowPlaying",
-                nowPlayingSong: player_state.nowPlayingSong,
-                nowPlayingSongBracket: nowPlayingSongBracket
-            });
-            ui.setCurrentThemeIndex(player_state.theme || 0);
-            loadSongBound(player_state.nowPlayingSong, -1, false);
-            brackets.updateBracketDropdown();
-            document.getElementById("bracket-select").value = player_state.peekBracket.replace(" - ", "-");
-            updateVsMatchupBound();
-            updateRoundInfoBound();
-            updateWinnerButtonsBound();
-            updateFlameButtonBound();
+          const nowPlayingSongBracket = brackets.getSongBracket(player_state.nowPlayingSong);
+          brackets.updatePlayerState({
+            contenders: player_state.contenders || [],
+            peekBracket: player_state.peekBracket,
+            activeBracket: player_state.activeBracket,
+            currentMode: "nowPlaying",
+            nowPlayingSong: player_state.nowPlayingSong,
+            nowPlayingSongBracket: nowPlayingSongBracket
+          });
+          ui.setCurrentThemeIndex(player_state.theme || 0);
+          loadSongBound(player_state.nowPlayingSong, -1, false);
+          brackets.updateBracketDropdown();
+          document.getElementById("bracket-select").value = player_state.peekBracket.replace(" - ", "-");
+          updateVsMatchupBound();
+          updateRoundInfoBound();
+          updateWinnerButtonsBound();
+          updateFlameButtonBound();
         } else {
-            window.logmsg("Initializing with default player state");
-            brackets.updatePlayerState({
-                contenders: [],
-                peekBracket: "0 - 0",
-                activeBracket: "0 - 0",
-                currentMode: "bout",
-                activeContender: 0,
-                roundCount: 1,
-                winner: null,
-                hasPlayed: false,
-                hasJammed: false,
-                bothContendersSelected: false,
-                isFlameActive: false,
-                nowPlayingSong: null,
-                nowPlayingSongBracket: null
-            });
-            ui.setCurrentThemeIndex(0);
-            brackets.updateBracketDropdown();
-            brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateFlameButtonBound);
+          window.logmsg("Initializing with default player state");
+          brackets.updatePlayerState({
+            contenders: [],
+            peekBracket: "0 - 0",
+            activeBracket: "0 - 0",
+            currentMode: "bout",
+            activeContender: 0,
+            roundCount: 1,
+            winner: null,
+            hasPlayed: false,
+            hasJammed: false,
+            bothContendersSelected: false,
+            isFlameActive: false,
+            nowPlayingSong: null,
+            nowPlayingSongBracket: null
+          });
+          ui.setCurrentThemeIndex(0);
+          brackets.updateBracketDropdown();
+          brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateFlameButtonBound);
         }
-    } catch (error) {
+      } catch (error) {
         console.error('Error loading data:', error);
         window.sidJamData.cachedResults = {};
         window.sidJamData.sidFiles = [];
         window.sidJamData.pathToId = {};
         brackets.updatePlayerState({
-            peekBracket: "0 - 0",
-            activeBracket: "0 - 0",
-            currentMode: "bout"
+          peekBracket: "0 - 0",
+          activeBracket: "0 - 0",
+          currentMode: "bout"
         });
         ui.setCurrentThemeIndex(0);
         brackets.updateBracketDropdown();
         brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateFlameButtonBound);
-    }
-
-    document.getElementById("playPauseButton").disabled = false;
-    for (let i = 1; i <= 3; i++) {
+      }
+    
+      document.getElementById("playPauseButton").disabled = false;
+      for (let i = 1; i <= 3; i++) {
         document.getElementById(`voice${i}`).addEventListener('change', () => player.toggleVoice(i));
+      }
+    
+      // Apply initial theme and render winner button bitmaps
+      ui.applyTheme(brackets.getPlayerState().currentMode);
+      const theme = baseColorSchemes[ui.getCurrentThemeIndex()];
+      const playerState = brackets.getPlayerState();
+      renderWinnerButtonBitmap(0, playerState);
+      renderWinnerButtonBitmap(1, playerState);
+    
+      // Disable winner buttons initially
+      const winnerButton0 = document.getElementById('winner0');
+      const winnerButton1 = document.getElementById('winner1');
+      winnerButton0.disabled = true;
+      winnerButton1.disabled = true;
+    
+      const button = document.getElementById("colorButton");
+      const currentTheme = baseColorSchemes[ui.getCurrentThemeIndex()];
+      const nextIndex = (ui.getCurrentThemeIndex() + 1) % baseColorSchemes.length;
+      const nextTheme = baseColorSchemes[nextIndex];
+      button.style.backgroundColor = nextTheme.exterior;
+      button.querySelector('.inner-box').style.backgroundColor = nextTheme.interior;
+      button.title = `Switch Theme \n  From: ${currentTheme.name}\n  To: ${nextTheme.name}`;
+    
+      checkSong2Clipping();
     }
-
-    // Apply initial theme and render winner button bitmaps
-    ui.applyTheme(brackets.getPlayerState().currentMode);
-    const theme = baseColorSchemes[ui.getCurrentThemeIndex()];
-    const playerState = brackets.getPlayerState(); // Add this to get playerState
-    renderWinnerButtonBitmap(0, playerState); // Replace window.renderBitmap
-    renderWinnerButtonBitmap(1, playerState); // Replace window.renderBitmap
-
-    // Disable winner buttons initially
-    const winnerButton0 = document.getElementById('winner0');
-    const winnerButton1 = document.getElementById('winner1');
-    winnerButton0.disabled = true;
-    winnerButton1.disabled = true;
-
-    const button = document.getElementById("colorButton");
-    const currentTheme = baseColorSchemes[ui.getCurrentThemeIndex()];
-    const nextIndex = (ui.getCurrentThemeIndex() + 1) % baseColorSchemes.length;
-    const nextTheme = baseColorSchemes[nextIndex];
-    button.style.backgroundColor = nextTheme.exterior;
-    button.querySelector('.inner-box').style.backgroundColor = nextTheme.interior;
-    button.title = `Switch Theme \n  From: ${currentTheme.name}\n  To: ${nextTheme.name}`;
-
-    checkSong2Clipping();
-}
 
 document.getElementById('authOverlay').addEventListener('click', function(event) {
     if (event.target === this) {
