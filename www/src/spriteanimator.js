@@ -10,7 +10,7 @@ const FLAME_SETTINGS = {
   ],
   "globalOffsetX": -7,
   "globalOffsetY": 6,
-  "delayMs": 228,
+  "delayMs": 128,
   "loop": true
 };
 
