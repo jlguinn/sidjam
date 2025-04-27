@@ -1,7 +1,7 @@
 <?php
 // Define debug toggle (hardcoded for now)
 $debug_enabled = true; // Change to false to disable debugging
-$log_level = 1; // 0 terse (default); 1 verbose; 2 debugging; -1 silent
+$log_level = 2; // 0 terse (default); 1 verbose; 2 debugging; -1 silent
 
 // Set session cookie lifetime to 30 days
 session_set_cookie_params(30 * 24 * 60 * 60);
@@ -16,75 +16,161 @@ $is_logged_in = false;
 
 // Check if user is logged in via $_SESSION['user_id']
 if (isset($_SESSION['user_id'])) {
-    $user_id = $_SESSION['user_id'];
-    $stmt = $cxn->prepare("SELECT session_id, UserName, email FROM siduser WHERE user_id = ?");
-    $stmt->bind_param("i", $user_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    if ($row = $result->fetch_assoc()) {
-        // Sync session_id
-        if ($row['session_id'] !== $_SESSION['session_id']) {
-            $stmt = $cxn->prepare("UPDATE siduser SET session_id = ?, LastAccessDate = CURDATE() WHERE user_id = ?");
-            $stmt->bind_param("si", $_SESSION['session_id'], $user_id);
-            $stmt->execute();
-            setcookie('session_id', $_SESSION['session_id'], time() + (30 * 24 * 60 * 60), "/");
+    try {
+        $user_id = $_SESSION['user_id'];
+        $stmt = $cxn->prepare("SELECT session_id, UserName, email FROM siduser WHERE user_id = ?");
+        if (!$stmt) {
+            throw new Exception("Failed to prepare SELECT statement: " . $cxn->error);
         }
-        // Update LastAccessDate
-        $stmt = $cxn->prepare("UPDATE siduser SET LastAccessDate = CURDATE() WHERE user_id = ?");
         $stmt->bind_param("i", $user_id);
-        $stmt->execute();
-        // Set user data
-        $username = $row['UserName'] ?: "Guest User";
-        $_SESSION['email'] = $row['email'] ?: '';
-        $is_logged_in = !empty($row['email']);
-    } else {
+        if (!$stmt->execute()) {
+            throw new Exception("Failed to execute SELECT statement: " . $stmt->error);
+        }
+        $result = $stmt->get_result();
+        if ($row = $result->fetch_assoc()) {
+            // Sync session_id
+            if ($row['session_id'] !== ($_SESSION['session_id'] ?? null)) {
+                try {
+                    $session_id = $_SESSION['session_id'] ?? bin2hex(random_bytes(16));
+                    $stmt = $cxn->prepare("UPDATE siduser SET session_id = ?, LastAccessDate = CURDATE() WHERE user_id = ?");
+                    if (!$stmt) {
+                        throw new Exception("Failed to prepare UPDATE statement: " . $cxn->error);
+                    }
+                    error_log("Updating session_id to: " . ($session_id ?: 'NULL')); // Debug log
+                    $stmt->bind_param("si", $session_id, $user_id);
+                    if (!$stmt->execute()) {
+                        throw new Exception("Failed to execute UPDATE statement: " . $stmt->error);
+                    }
+                    setcookie('session_id', $session_id, time() + (30 * 24 * 60 * 60), "/");
+                } catch (Exception $e) {
+                    error_log("Error syncing session_id for user_id $user_id: " . $e->getMessage());
+                    // Clear session and proceed to guest creation
+                    session_destroy();
+                    unset($_SESSION['user_id']);
+                    unset($_SESSION['session_id']);
+                    setcookie('session_id', '', time() - 3600, "/");
+                    $user_id = null;
+                }
+            }
+            // Update LastAccessDate
+            $stmt = $cxn->prepare("UPDATE siduser SET LastAccessDate = CURDATE() WHERE user_id = ?");
+            if ($stmt) {
+                $stmt->bind_param("i", $user_id);
+                $stmt->execute();
+            } else {
+                error_log("Failed to prepare UPDATE LastAccessDate: " . $cxn->error);
+            }
+            // Set user data
+            $username = $row['UserName'] ?: "Guest User";
+            $_SESSION['email'] = $row['email'] ?: '';
+            $is_logged_in = !empty($row['email']);
+        } else {
+            error_log("No user found for user_id: $user_id");
+            unset($_SESSION['user_id']);
+            unset($_SESSION['email']);
+            $user_id = null;
+        }
+        $stmt->close();
+    } catch (Exception $e) {
+        error_log("Error validating user session for user_id $user_id: " . $e->getMessage());
+        // Clear session and proceed to guest creation
+        session_destroy();
         unset($_SESSION['user_id']);
-        unset($_SESSION['email']);
+        unset($_SESSION['session_id']);
+        setcookie('session_id', '', time() - 3600, "/");
         $user_id = null;
     }
-    $stmt->close();
 }
 
 // If no user_id, check for existing session_id (guest user)
 if (!$user_id) {
-    $session_id = $_SESSION['session_id'] ?? $_COOKIE['session_id'] ?? null;
-    if ($session_id) {
-        $stmt = $cxn->prepare("SELECT user_id, UserName, email FROM siduser WHERE session_id = ?");
-        $stmt->bind_param("s", $session_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        if ($row = $result->fetch_assoc()) {
-            $user_id = $row['user_id'];
-            $_SESSION['user_id'] = $user_id;
-            $_SESSION['email'] = $row['email'] ?: '';
-            $username = $row['UserName'] ?: "Guest User";
-            $is_logged_in = !empty($row['email']);
-            // Update LastAccessDate
-            $stmt = $cxn->prepare("UPDATE siduser SET LastAccessDate = CURDATE() WHERE user_id = ?");
-            $stmt->bind_param("i", $user_id);
-            $stmt->execute();
+    $session_id = isset($_SESSION['session_id']) ? $_SESSION['session_id'] : (isset($_COOKIE['session_id']) ? $_COOKIE['session_id'] : null);
+    if ($session_id && is_string($session_id) && strlen($session_id) === 32) {
+        try {
+            $stmt = $cxn->prepare("SELECT user_id, UserName, email FROM siduser WHERE session_id = ?");
+            if (!$stmt) {
+                throw new Exception("Failed to prepare SELECT for session_id: " . $cxn->error);
+            }
+            $stmt->bind_param("s", $session_id);
+            if (!$stmt->execute()) {
+                throw new Exception("Failed to execute SELECT for session_id: " . $stmt->error);
+            }
+            $result = $stmt->get_result();
+            if ($row = $result->fetch_assoc()) {
+                $user_id = $row['user_id'];
+                $_SESSION['user_id'] = $user_id;
+                $_SESSION['session_id'] = $session_id;
+                $_SESSION['email'] = $row['email'] ?: '';
+                $username = $row['UserName'] ?: "Guest User";
+                $is_logged_in = !empty($row['email']);
+                // Update LastAccessDate
+                $stmt = $cxn->prepare("UPDATE siduser SET LastAccessDate = CURDATE() WHERE user_id = ?");
+                if ($stmt) {
+                    $stmt->bind_param("i", $user_id);
+                    $stmt->execute();
+                } else {
+                    error_log("Failed to prepare UPDATE LastAccessDate: " . $cxn->error);
+                }
+            } else {
+                error_log("No user found for session_id: $session_id");
+                unset($_SESSION['session_id']);
+                setcookie('session_id', '', time() - 3600, "/");
+            }
+            $stmt->close();
+        } catch (Exception $e) {
+            error_log("Error validating session_id $session_id: " . $e->getMessage());
+            unset($_SESSION['session_id']);
+            setcookie('session_id', '', time() - 3600, "/");
         }
-        $stmt->close();
+    } else {
+        error_log("Invalid or missing session_id: " . (is_null($session_id) ? 'NULL' : $session_id));
+        unset($_SESSION['session_id']);
+        setcookie('session_id', '', time() - 3600, "/");
     }
 }
 
 // Create new guest if no user_id
 if (!$user_id) {
-    $new_session_id = bin2hex(random_bytes(16));
-    $stmt = $cxn->prepare("INSERT INTO siduser (session_id, RegDate, LastAccessDate, player_state) VALUES (?, CURDATE(), CURDATE(), NULL)");
-    $stmt->bind_param("s", $new_session_id);
-    $stmt->execute();
-    $user_id = $cxn->insert_id;
-    $stmt->close();
+    $new_session_id = null;
+    try {
+        $new_session_id = bin2hex(random_bytes(16));
+        if (empty($new_session_id) || !is_string($new_session_id) || strlen($new_session_id) !== 32) {
+            throw new Exception("Invalid session_id generated");
+        }
+    } catch (Exception $e) {
+        error_log("Failed to generate session_id: " . $e->getMessage());
+        $new_session_id = substr(hash('sha256', microtime(true) . mt_rand()), 0, 32);
+        error_log("Using fallback session_id: $new_session_id");
+    }
 
-    $_SESSION['user_id'] = $user_id;
-    $_SESSION['session_id'] = $new_session_id;
-    $_SESSION['email'] = '';
-    setcookie('session_id', $new_session_id, time() + (30 * 24 * 60 * 60), "/");
-    error_log("Index: Created new guest user_id $user_id with session_id $new_session_id");
+    try {
+        $stmt = $cxn->prepare("INSERT INTO siduser (session_id, RegDate, LastAccessDate, player_state) VALUES (?, CURDATE(), CURDATE(), NULL)");
+        if (!$stmt) {
+            throw new Exception("Failed to prepare INSERT statement: " . $cxn->error);
+        }
+        error_log("Binding session_id: " . (is_null($new_session_id) ? 'NULL' : $new_session_id)); // Debug log
+        $stmt->bind_param("s", $new_session_id);
+        if (!$stmt->execute()) {
+            throw new Exception("Failed to execute INSERT statement: " . $stmt->error);
+        }
+        $user_id = $cxn->insert_id;
+        $_SESSION['user_id'] = $user_id;
+        $_SESSION['session_id'] = $new_session_id;
+        $_SESSION['email'] = '';
+        setcookie('session_id', $new_session_id, time() + (30 * 24 * 60 * 60), "/");
+        error_log("Index: Created new guest user_id $user_id with session_id $new_session_id");
+    } catch (Exception $e) {
+        error_log("Failed to create guest user: " . $e->getMessage());
+        session_destroy();
+        setcookie('session_id', '', time() - 3600, "/");
+        header('Location: /');
+        exit;
+    }
+    $stmt->close();
 }
 
 $cxn->close();
+
 
 ?>
 <!DOCTYPE html>
@@ -106,7 +192,7 @@ $cxn->close();
             const PLAYER_LOG_LEVEL = typeof window.LOG_LEVEL === 'number' ? window.LOG_LEVEL : 0;
             if (PLAYER_LOG_LEVEL >= msgLogLevel) console.log(msg);
         };
-        console.log("sID JAm Version (ALPHA) 2025.04.19a");
+        console.log("sID JAm Version (ALPHA) 2025.04.27a");
         window.logmsg("Hello world!");
         window.logmsg(`Log Level: ${window.LOG_LEVEL === 1 ? "VERBOSE" : window.LOG_LEVEL === 2 ? "DEBUGGING" : window.LOG_LEVEL === 0 ? "TERSE" : window.LOG_LEVEL === -1 ? "SILENT" : window.LOG_LEVEL.toString()}`, 1);
     </script>
