@@ -1,5 +1,3 @@
-// spriteAnimator.js
-
 // Embedded settings JSON for the flame animation
 const FLAME_SETTINGS = {
   "frames": [
@@ -22,8 +20,8 @@ const SPRITE_SHEET_PATH = '/image/flame-sprite.png';
 // Static image path for when animation is off
 const STATIC_IMAGE_PATH = '/image/flame-static.png';
 
-// Scaling factor to match thumbnail size (~48x60 pixels)
-const SCALE_FACTOR = 48 / 261; // Scales 261px width to 48px, preserving aspect ratio
+// Scaling factor to achieve ~95px height (original height: 330px)
+const SCALE_FACTOR = 95 / 330; // Scales 330px height to 95px, width to ~75px
 
 // Preloaded sprite sheet image
 let spriteSheet = null;
@@ -35,6 +33,9 @@ function preloadSpriteSheet() {
   spriteSheet.onerror = () => {
     window.logmsg(`Failed to load sprite sheet: ${SPRITE_SHEET_PATH}`, 2);
   };
+  spriteSheet.onload = () => {
+    window.logmsg('Sprite sheet loaded successfully', 1);
+  };
 }
 
 // Animation state
@@ -44,10 +45,14 @@ let lastFrameTime = 0;
 
 // Render the sprite sheet animation
 export function renderSpriteAnimation(targetElement, isActive) {
+  // Ensure sprite sheet is loaded
   if (!spriteSheet || !spriteSheet.complete || spriteSheet.naturalWidth === 0) {
-    window.logmsg('Sprite sheet not loaded, skipping animation', 2);
-    // Fallback to static image if sprite sheet fails
+    window.logmsg('Sprite sheet not loaded, using static image', 2);
     targetElement.style.backgroundImage = `url(${STATIC_IMAGE_PATH})`;
+    targetElement.style.backgroundSize = 'contain';
+    targetElement.style.backgroundRepeat = 'no-repeat';
+    targetElement.style.backgroundPosition = 'center';
+    targetElement.style.backgroundColor = 'transparent'; // Ensure no background color
     return;
   }
 
@@ -69,28 +74,44 @@ export function renderSpriteAnimation(targetElement, isActive) {
     targetElement.style.backgroundSize = 'contain';
     targetElement.style.backgroundRepeat = 'no-repeat';
     targetElement.style.backgroundPosition = 'center';
+    targetElement.style.backgroundColor = 'transparent'; // Ensure no background color
     return;
   }
 
-  // Create a canvas to match the scaled size
+  // Create canvas and context
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
-  const scaledWidth = FLAME_SETTINGS.frames[0].width * SCALE_FACTOR;
-  const scaledHeight = FLAME_SETTINGS.frames[0].height * SCALE_FACTOR;
+  const scaledWidth = FLAME_SETTINGS.frames[0].width * SCALE_FACTOR; // ~75px
+  const scaledHeight = FLAME_SETTINGS.frames[0].height * SCALE_FACTOR; // 95px
   canvas.width = scaledWidth;
   canvas.height = scaledHeight;
   canvas.style.width = `${scaledWidth}px`;
   canvas.style.height = `${scaledHeight}px`;
-  targetElement.appendChild(canvas);
 
-  // Clear background image to ensure canvas is visible
-  targetElement.style.backgroundImage = '';
+  // Draw first frame immediately to avoid blink
+  ctx.clearRect(0, 0, canvas.width, canvas.height); // Ensure transparent background
+  const frame = FLAME_SETTINGS.frames[0];
+  const scaledOffsetX = (frame.offsetX + FLAME_SETTINGS.globalOffsetX) * SCALE_FACTOR;
+  const scaledOffsetY = (frame.offsetY + FLAME_SETTINGS.globalOffsetY) * SCALE_FACTOR;
+  ctx.drawImage(
+    spriteSheet,
+    frame.x, frame.y, frame.width, frame.height,
+    scaledOffsetX, scaledOffsetY, frame.width * SCALE_FACTOR, frame.height * SCALE_FACTOR
+  );
+
+  // Clear background before appending canvas
+  targetElement.style.backgroundImage = 'none';
+  targetElement.style.background = 'none';
+  targetElement.style.backgroundColor = 'transparent'; // Ensure no background color
+
+  // Append canvas to DOM
+  targetElement.appendChild(canvas);
 
   // Animation loop
   function animate() {
     const now = performance.now();
     if (now - lastFrameTime >= FLAME_SETTINGS.delayMs) {
-      // Clear canvas
+      // Clear canvas for transparent background
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // Draw current frame
@@ -116,6 +137,7 @@ export function renderSpriteAnimation(targetElement, isActive) {
 
   // Start animation
   lastFrameTime = performance.now();
+  currentFrame = 0; // Reset to first frame
   animate();
 }
 

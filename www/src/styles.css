@@ -139,30 +139,51 @@ body {
 #bracket-label { margin-bottom: 3px; transition: color 0.3s; }
 #bracket-select { margin-right: 5px; }
 #ellipsis-button { width: 24px; height: 20px; padding: 0; font-size: 12px; line-height: 20px; }
-#flame-wrapper { position: absolute; left: 50%; transform: translateX(-50%); }
-#flame-controls { display: flex; justify-content: center; }
-#flame-controls.hidden { display: none; }
+
+/* styles.css (relevant excerpt) */
 #flameButton {
-    width: 48px;
-    height: 60px;
+    width: 75px; /* Adjusted for aspect ratio: 95px * (261/330) ≈ 75px */
+    height: 95px; /* New height */
     border: none;
-    background: none; /* Default to no background, canvas or static image will override */
+    background: url('../image/flame-static.png'); /* Fallback for JS failure */
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: transparent; /* Allow theme color to show through */
     cursor: pointer;
     vertical-align: middle;
     padding: 0;
-    background-size: cover; /* For static image */
-    background-position: center;
-    background-repeat: no-repeat;
+    position: relative; /* For canvas positioning */
   }
-  
   #flameButton:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
-  
   #flameButton canvas {
-    display: block; /* Ensure canvas fills button */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1; /* Ensure canvas is above any background */
   }
+  
+  /* Adjust flame-wrapper positioning to center the larger button */
+  #flame-wrapper {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  
+  /* Ensure flame-controls accommodates the larger button */
+  #flame-controls {
+    display: flex;
+    justify-content: center;
+  }
+  #flame-controls.hidden {
+    display: none;
+  }
+
 #reviveButton {
     display: none;
     width: 80px;
@@ -199,11 +220,6 @@ body {
     0%, 20%, 40%, 60%, 80% { opacity: 1; }
     10%, 30%, 50%, 70%, 90% { opacity: 0; }
     100% { opacity: 1; }
-}
-
-
-.flame-activated {
-    animation: blink 2s forwards; /* 5 blinks, 0.4s each */
 }
 
 .revive-activated {

@@ -356,8 +356,11 @@ export function updateFlameButton(playerState, sidPlayer) {
       flameButton.disabled = !playerState.hasPlayed || availableSongs.length === 0;
     }
   
-    // Render sprite animation or static image based on isFlameActive
+    // Render sprite animation or static image
     renderSpriteAnimation(flameButton, playerState.isFlameActive);
+  
+    // Add accessibility title
+    flameButton.setAttribute('title', playerState.isFlameActive ? 'Cancel Flame' : 'Flame Contender');
   }
 
 export function updateReviveButton(isReviveActive) {
