@@ -356,14 +356,8 @@ export function updateFlameButton(playerState, sidPlayer) {
       flameButton.disabled = !playerState.hasPlayed || availableSongs.length === 0;
     }
   
-    // Render sprite sheet animation or static image
-    if (playerState.isFlameActive) {
-      flameButton.style.backgroundImage = 'none'; // Clear static image
-      renderSpriteAnimation(flameButton, true);
-    } else {
-      flameButton.style.backgroundImage = "url('/image/flame-static.png')"; // Static image
-      renderSpriteAnimation(flameButton, false); // Clear animation
-    }
+    // Render sprite animation or static image based on isFlameActive
+    renderSpriteAnimation(flameButton, playerState.isFlameActive);
   }
 
 export function updateReviveButton(isReviveActive) {

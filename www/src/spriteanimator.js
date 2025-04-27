@@ -1,3 +1,5 @@
+// spriteAnimator.js
+
 // Embedded settings JSON for the flame animation
 const FLAME_SETTINGS = {
   "frames": [
@@ -16,6 +18,9 @@ const FLAME_SETTINGS = {
 
 // Hardcoded sprite sheet path
 const SPRITE_SHEET_PATH = '/image/flame-sprite.png';
+
+// Static image path for when animation is off
+const STATIC_IMAGE_PATH = '/image/flame-static.png';
 
 // Scaling factor to match thumbnail size (~48x60 pixels)
 const SCALE_FACTOR = 48 / 261; // Scales 261px width to 48px, preserving aspect ratio
@@ -41,6 +46,8 @@ let lastFrameTime = 0;
 export function renderSpriteAnimation(targetElement, isActive) {
   if (!spriteSheet || !spriteSheet.complete || spriteSheet.naturalWidth === 0) {
     window.logmsg('Sprite sheet not loaded, skipping animation', 2);
+    // Fallback to static image if sprite sheet fails
+    targetElement.style.backgroundImage = `url(${STATIC_IMAGE_PATH})`;
     return;
   }
 
@@ -57,8 +64,11 @@ export function renderSpriteAnimation(targetElement, isActive) {
   }
 
   if (!isActive) {
-    // Clear the canvas and let CSS handle the static image
-    targetElement.style.backgroundImage = ''; // Ensure canvas is primary when active
+    // Set static image
+    targetElement.style.backgroundImage = `url(${STATIC_IMAGE_PATH})`;
+    targetElement.style.backgroundSize = 'contain';
+    targetElement.style.backgroundRepeat = 'no-repeat';
+    targetElement.style.backgroundPosition = 'center';
     return;
   }
 
@@ -72,6 +82,9 @@ export function renderSpriteAnimation(targetElement, isActive) {
   canvas.style.width = `${scaledWidth}px`;
   canvas.style.height = `${scaledHeight}px`;
   targetElement.appendChild(canvas);
+
+  // Clear background image to ensure canvas is visible
+  targetElement.style.backgroundImage = '';
 
   // Animation loop
   function animate() {
