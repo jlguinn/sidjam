@@ -1,145 +1,175 @@
-// Embedded settings JSON for the flame animation
-const FLAME_SETTINGS = {
-  "frames": [
-    { "x": 0, "y": 0, "width": 261, "height": 330, "offsetX": -10, "offsetY": 0 },
-    { "x": 261, "y": 0, "width": 261, "height": 330, "offsetX": 3, "offsetY": 0 },
-    { "x": 522, "y": 0, "width": 261, "height": 330, "offsetX": 21, "offsetY": -5 },
-    { "x": 0, "y": 330, "width": 261, "height": 330, "offsetX": 1, "offsetY": 0 },
-    { "x": 261, "y": 330, "width": 261, "height": 330, "offsetX": 8, "offsetY": 0 },
-    { "x": 522, "y": 330, "width": 261, "height": 330, "offsetX": 22, "offsetY": 0 }
-  ],
-  "globalOffsetX": -7,
-  "globalOffsetY": 6,
-  "delayMs": 128,
-  "loop": true
+// Configuration map for animations
+const ANIMATION_CONFIGS = {
+  flame: {
+    spriteSheetPath: '/image/flame-sprite.png',
+    staticImagePath: '/image/flame-static.png',
+    scaleFactor: 95 / 330,
+    frames: [
+      { x: 0, y: 0, width: 261, height: 330, offsetX: -10, offsetY: 0 },
+      { x: 261, y: 0, width: 261, height: 330, offsetX: 3, offsetY: 0 },
+      { x: 522, y: 0, width: 261, height: 330, offsetX: 21, offsetY: -5 },
+      { x: 0, y: 330, width: 261, height: 330, offsetX: 1, offsetY: 0 },
+      { x: 261, y: 330, width: 261, height: 330, offsetX: 8, offsetY: 0 },
+      { x: 522, y: 330, width: 261, height: 330, offsetX: 22, offsetY: 0 }
+    ],
+    globalOffsetX: -7,
+    globalOffsetY: 6,
+    delayMs: 128,
+    loop: true
+  },
+  jam: {
+    spriteSheetPath: '/image/jam-sprite.png', // Placeholder
+    staticImagePath: '/image/jam-static.png', // Placeholder
+    scaleFactor: 95 / 330, // Placeholder, same as flame for now
+    frames: [
+      { x: 0, y: 0, width: 261, height: 330, offsetX: 0, offsetY: 0 }, // Placeholder
+      { x: 261, y: 0, width: 261, height: 330, offsetX: 0, offsetY: 0 },
+      { x: 522, y: 0, width: 261, height: 330, offsetX: 0, offsetY: 0 },
+      { x: 0, y: 330, width: 261, height: 330, offsetX: 0, offsetY: 0 },
+      { x: 261, y: 330, width: 261, height: 330, offsetX: 0, offsetY: 0 },
+      { x: 522, y: 330, width: 261, height: 330, offsetX: 0, offsetY: 0 }
+    ],
+    globalOffsetX: 0, // Placeholder
+    globalOffsetY: 0, // Placeholder
+    delayMs: 128, // Placeholder
+    loop: true
+  }
 };
 
-// Hardcoded sprite sheet path
-const SPRITE_SHEET_PATH = '/image/flame-sprite.png';
+// Store preloaded sprite sheets
+const spriteSheets = new Map();
 
-// Static image path for when animation is off
-const STATIC_IMAGE_PATH = '/image/flame-static.png';
+// Store animation state per target element
+const animationStates = new WeakMap();
 
-// Scaling factor to achieve ~95px height (original height: 330px)
-const SCALE_FACTOR = 95 / 330; // Scales 330px height to 95px, width to ~75px
-
-// Preloaded sprite sheet image
-let spriteSheet = null;
-
-// Preload the sprite sheet
-function preloadSpriteSheet() {
-  spriteSheet = new Image();
-  spriteSheet.src = SPRITE_SHEET_PATH;
-  spriteSheet.onerror = () => {
-    window.logmsg(`Failed to load sprite sheet: ${SPRITE_SHEET_PATH}`, 2);
-  };
-  spriteSheet.onload = () => {
-    window.logmsg('Sprite sheet loaded successfully', 1);
-  };
+// Preload sprite sheets for all animations
+function preloadSpriteSheets() {
+  Object.entries(ANIMATION_CONFIGS).forEach(([animationId, config]) => {
+    const img = new Image();
+    img.src = config.spriteSheetPath;
+    img.onerror = () => {
+      window.logmsg(`Failed to load sprite sheet for ${animationId}: ${config.spriteSheetPath}`, 2);
+    };
+    img.onload = () => {
+      window.logmsg(`Sprite sheet for ${animationId} loaded successfully`, 1);
+    };
+    spriteSheets.set(animationId, img);
+  });
 }
 
-// Animation state
-let animationFrameId = null;
-let currentFrame = 0;
-let lastFrameTime = 0;
-
 // Render the sprite sheet animation
-export function renderSpriteAnimation(targetElement, isActive) {
-  // Ensure sprite sheet is loaded
-  if (!spriteSheet || !spriteSheet.complete || spriteSheet.naturalWidth === 0) {
-    window.logmsg('Sprite sheet not loaded, using static image', 2);
-    targetElement.style.backgroundImage = `url(${STATIC_IMAGE_PATH})`;
+export function renderSpriteAnimation(targetElement, animationId, isActive) {
+  // Validate animationId
+  if (!ANIMATION_CONFIGS[animationId]) {
+    window.logmsg(`Invalid animationId: ${animationId}`, 2);
+    targetElement.style.backgroundImage = `url(${ANIMATION_CONFIGS.flame.staticImagePath})`; // Fallback to flame static
     targetElement.style.backgroundSize = 'contain';
     targetElement.style.backgroundRepeat = 'no-repeat';
     targetElement.style.backgroundPosition = 'center';
-    targetElement.style.backgroundColor = 'transparent'; // Ensure no background color
+    targetElement.style.backgroundColor = 'transparent';
     return;
   }
 
-  // Remove any existing canvas
+  const config = ANIMATION_CONFIGS[animationId];
+  const spriteSheet = spriteSheets.get(animationId);
+
+  // Fallback to static image if sprite sheet not loaded
+  if (!spriteSheet || !spriteSheet.complete || spriteSheet.naturalWidth === 0) {
+    window.logmsg(`Sprite sheet for ${animationId} not loaded, using static image`, 2);
+    targetElement.style.backgroundImage = `url(${config.staticImagePath})`;
+    targetElement.style.backgroundSize = 'contain';
+    targetElement.style.backgroundRepeat = 'no-repeat';
+    targetElement.style.backgroundPosition = 'center';
+    targetElement.style.backgroundColor = 'transparent';
+    return;
+  }
+
+  // Remove existing canvas
   const existingCanvas = targetElement.querySelector('canvas');
   if (existingCanvas) {
     existingCanvas.remove();
   }
 
   // Stop any running animation
-  if (animationFrameId) {
-    cancelAnimationFrame(animationFrameId);
-    animationFrameId = null;
+  let state = animationStates.get(targetElement) || {};
+  if (state.animationFrameId) {
+    cancelAnimationFrame(state.animationFrameId);
+    state.animationFrameId = null;
   }
 
   if (!isActive) {
     // Set static image
-    targetElement.style.backgroundImage = `url(${STATIC_IMAGE_PATH})`;
+    targetElement.style.backgroundImage = `url(${config.staticImagePath})`;
     targetElement.style.backgroundSize = 'contain';
     targetElement.style.backgroundRepeat = 'no-repeat';
     targetElement.style.backgroundPosition = 'center';
-    targetElement.style.backgroundColor = 'transparent'; // Ensure no background color
+    targetElement.style.backgroundColor = 'transparent';
+    animationStates.set(targetElement, { ...state, animationFrameId: null });
     return;
   }
 
   // Create canvas and context
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
-  const scaledWidth = FLAME_SETTINGS.frames[0].width * SCALE_FACTOR; // ~75px
-  const scaledHeight = FLAME_SETTINGS.frames[0].height * SCALE_FACTOR; // 95px
+  const scaledWidth = config.frames[0].width * config.scaleFactor;
+  const scaledHeight = config.frames[0].height * config.scaleFactor;
   canvas.width = scaledWidth;
   canvas.height = scaledHeight;
   canvas.style.width = `${scaledWidth}px`;
   canvas.style.height = `${scaledHeight}px`;
 
-  // Draw first frame immediately to avoid blink
-  ctx.clearRect(0, 0, canvas.width, canvas.height); // Ensure transparent background
-  const frame = FLAME_SETTINGS.frames[0];
-  const scaledOffsetX = (frame.offsetX + FLAME_SETTINGS.globalOffsetX) * SCALE_FACTOR;
-  const scaledOffsetY = (frame.offsetY + FLAME_SETTINGS.globalOffsetY) * SCALE_FACTOR;
+  // Draw first frame immediately
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const frame = config.frames[0];
+  const scaledOffsetX = (frame.offsetX + config.globalOffsetX) * config.scaleFactor;
+  const scaledOffsetY = (frame.offsetY + config.globalOffsetY) * config.scaleFactor;
   ctx.drawImage(
     spriteSheet,
     frame.x, frame.y, frame.width, frame.height,
-    scaledOffsetX, scaledOffsetY, frame.width * SCALE_FACTOR, frame.height * SCALE_FACTOR
+    scaledOffsetX, scaledOffsetY, frame.width * config.scaleFactor, frame.height * config.scaleFactor
   );
 
-  // Clear background before appending canvas
+  // Clear background and append canvas
   targetElement.style.backgroundImage = 'none';
   targetElement.style.background = 'none';
-  targetElement.style.backgroundColor = 'transparent'; // Ensure no background color
-
-  // Append canvas to DOM
+  targetElement.style.backgroundColor = 'transparent';
   targetElement.appendChild(canvas);
 
   // Animation loop
   function animate() {
     const now = performance.now();
-    if (now - lastFrameTime >= FLAME_SETTINGS.delayMs) {
-      // Clear canvas for transparent background
+    if (now - state.lastFrameTime >= config.delayMs) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Draw current frame
-      const frame = FLAME_SETTINGS.frames[currentFrame];
-      const scaledOffsetX = (frame.offsetX + FLAME_SETTINGS.globalOffsetX) * SCALE_FACTOR;
-      const scaledOffsetY = (frame.offsetY + FLAME_SETTINGS.globalOffsetY) * SCALE_FACTOR;
+      const frame = config.frames[state.currentFrame];
+      const scaledOffsetX = (frame.offsetX + config.globalOffsetX) * config.scaleFactor;
+      const scaledOffsetY = (frame.offsetY + config.globalOffsetY) * config.scaleFactor;
       ctx.drawImage(
         spriteSheet,
         frame.x, frame.y, frame.width, frame.height,
-        scaledOffsetX, scaledOffsetY, frame.width * SCALE_FACTOR, frame.height * SCALE_FACTOR
+        scaledOffsetX, scaledOffsetY, frame.width * config.scaleFactor, frame.height * config.scaleFactor
       );
 
-      // Advance frame
-      currentFrame = (currentFrame + 1) % FLAME_SETTINGS.frames.length;
-      if (!FLAME_SETTINGS.loop && currentFrame === 0) {
-        cancelAnimationFrame(animationFrameId);
+      state.currentFrame = (state.currentFrame + 1) % config.frames.length;
+      if (!config.loop && state.currentFrame === 0) {
+        cancelAnimationFrame(state.animationFrameId);
+        animationStates.set(targetElement, { ...state, animationFrameId: null });
         return;
       }
-      lastFrameTime = now;
+      state.lastFrameTime = now;
     }
-    animationFrameId = requestAnimationFrame(animate);
+    state.animationFrameId = requestAnimationFrame(animate);
+    animationStates.set(targetElement, state);
   }
 
   // Start animation
-  lastFrameTime = performance.now();
-  currentFrame = 0; // Reset to first frame
+  state = {
+    currentFrame: 0,
+    lastFrameTime: performance.now(),
+    animationFrameId: null
+  };
   animate();
+  animationStates.set(targetElement, state);
 }
 
 // Initialize sprite sheet loading
-preloadSpriteSheet();
+preloadSpriteSheets();

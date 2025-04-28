@@ -357,11 +357,11 @@ export function updateFlameButton(playerState, sidPlayer) {
     }
   
     // Render sprite animation or static image
-    renderSpriteAnimation(flameButton, playerState.isFlameActive);
+    renderSpriteAnimation(flameButton, "flame", playerState.isFlameActive);
   
     // Add accessibility title
     flameButton.setAttribute('title', playerState.isFlameActive ? 'Cancel Flame' : 'Flame Contender');
-  }
+}
 
 export function updateReviveButton(isReviveActive) {
     const reviveButton = document.getElementById("reviveButton");
