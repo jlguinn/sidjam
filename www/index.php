@@ -254,7 +254,7 @@ $cxn->close();
         </div>
     </div>
     <div id="jam-controls">
-        <button id="jamButton" class="control-button" onclick="window.jamToggle()" disabled>jAM</button>
+        <button id="jamButton" class="control-button" onclick="window.jamToggle()" disabled></button>
     </div>
     <div id="winner-controls">
         <div id="winner0" class="bitmap-button" onclick="window.setWinner(0)"></div>

@@ -95,11 +95,11 @@ export function initPlayer(getPlayerState, updateWinnerButtons, updateFlameButto
     });
 }
 
-export function togglePlayPause(updateRoundInfo, updatePlayPauseButton, updateWinnerButtons, updateFlameButton, initPlayerFn, updatePlayerState) {
+export function togglePlayPause(updateRoundInfo, updatePlayPauseButton, updateWinnerButtons, updateFlameButton, updateJamButton, initPlayerFn, updatePlayerState) {
     if (!sidPlayer) {
         initPlayerFn();
         console.log("Note: Please ignore ScriptProcessorNode Deprecation warning. We will not be remediating at this time.");
-        window.logmsg("[>]",1);
+        window.logmsg("[>]", 1);
     } else if (isPlaying) {
         sidPlayer.pause();
         setIsPlaying(false);
@@ -109,10 +109,11 @@ export function togglePlayPause(updateRoundInfo, updatePlayPauseButton, updateWi
         setIsPlaying(true);
         startTimer(updateTimer);
     }
-    updatePlayerState({ hasPlayed: true }); // Use passed function
+    updatePlayerState({ hasPlayed: true });
     updateRoundInfo();
     updatePlayPauseButton();
     updateWinnerButtons();
+    updateJamButton(); // Add this
     document.getElementById("jamButton").disabled = false;
     document.getElementById("flameButton").disabled = false;
     document.getElementById("prevButton").disabled = false;

@@ -92,6 +92,7 @@ const updateVsMatchupBound = () => ui.updateVsMatchup(brackets.getPlayerState())
 const updateRoundInfoBound = () => ui.updateRoundInfo(brackets.getPlayerState());
 const updateWinnerButtonsBound = () => ui.updateWinnerButtons(brackets.getPlayerState(), player.sidPlayer);
 const updateFlameButtonBound = () => ui.updateFlameButton(brackets.getPlayerState(), player.sidPlayer);
+const updateJamButtonBound = () => ui.updateJamButton(player.isPlaying, brackets.getPlayerState(), player.sidPlayer); // Add this
 
 window.togglePlayPause = () => {
     const wasPlaying = player.isPlaying; // Capture state before toggle
@@ -100,13 +101,14 @@ window.togglePlayPause = () => {
         () => ui.updatePlayPauseButton(player.isPlaying),
         updateWinnerButtonsBound,
         updateFlameButtonBound,
+        updateJamButtonBound, // Add this
         () => player.initPlayer(
             brackets.getPlayerState,
             updateWinnerButtonsBound,
             updateFlameButtonBound,
             loadSongBound
         ),
-        brackets.updatePlayerState // Pass updatePlayerState
+        brackets.updatePlayerState
     );
     // Log based on new state
     if (player.isPlaying && !wasPlaying) {

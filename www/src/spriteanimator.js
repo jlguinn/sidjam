@@ -1,8 +1,10 @@
+// spriteanimator.js
+
 // Configuration map for animations
 const ANIMATION_CONFIGS = {
   flame: {
-    spriteSheetPath: '/image/flame-sprite.png',
-    staticImagePath: '/image/flame-static.png',
+    spriteSheetPath: '../image/flame-sprite.png',
+    staticImagePath: '../image/flame-static.png',
     scaleFactor: 95 / 330,
     frames: [
       { x: 0, y: 0, width: 261, height: 330, offsetX: -10, offsetY: 0 },
@@ -18,20 +20,18 @@ const ANIMATION_CONFIGS = {
     loop: true
   },
   jam: {
-    spriteSheetPath: '/image/jam-sprite.png', // Placeholder
-    staticImagePath: '/image/jam-static.png', // Placeholder
-    scaleFactor: 95 / 330, // Placeholder, same as flame for now
+    spriteSheetPath: '/image/jam-sprite.png',
+    staticImagePath: '/image/jam-static.png',
+    scaleFactor: 160 / 320, // Scales 320px width to 160px
     frames: [
-      { x: 0, y: 0, width: 261, height: 330, offsetX: 0, offsetY: 0 }, // Placeholder
-      { x: 261, y: 0, width: 261, height: 330, offsetX: 0, offsetY: 0 },
-      { x: 522, y: 0, width: 261, height: 330, offsetX: 0, offsetY: 0 },
-      { x: 0, y: 330, width: 261, height: 330, offsetX: 0, offsetY: 0 },
-      { x: 261, y: 330, width: 261, height: 330, offsetX: 0, offsetY: 0 },
-      { x: 522, y: 330, width: 261, height: 330, offsetX: 0, offsetY: 0 }
+      { x: 0, y: 0, width: 320, height: 238, offsetX: -6, offsetY: -1 },
+      { x: 320, y: 0, width: 320, height: 238, offsetX: -1, offsetY: 0 },
+      { x: 0, y: 238, width: 320, height: 238, offsetX: -6, offsetY: 3 },
+      { x: 320, y: 238, width: 320, height: 238, offsetX: -2, offsetY: -1 }
     ],
-    globalOffsetX: 0, // Placeholder
-    globalOffsetY: 0, // Placeholder
-    delayMs: 128, // Placeholder
+    globalOffsetX: 0,
+    globalOffsetY: 0,
+    delayMs: 400,
     loop: true
   }
 };
@@ -62,7 +62,7 @@ export function renderSpriteAnimation(targetElement, animationId, isActive) {
   // Validate animationId
   if (!ANIMATION_CONFIGS[animationId]) {
     window.logmsg(`Invalid animationId: ${animationId}`, 2);
-    targetElement.style.backgroundImage = `url(${ANIMATION_CONFIGS.flame.staticImagePath})`; // Fallback to flame static
+    targetElement.style.backgroundImage = `url(${ANIMATION_CONFIGS.flame.staticImagePath})`;
     targetElement.style.backgroundSize = 'contain';
     targetElement.style.backgroundRepeat = 'no-repeat';
     targetElement.style.backgroundPosition = 'center';

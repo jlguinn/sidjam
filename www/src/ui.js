@@ -319,6 +319,24 @@ export function updateWinnerButtons(playerState, sidPlayer) {
     document.getElementById("jamButton").disabled = !sidPlayer;
 }
 
+export function updateJamButton(isPlaying, playerState, sidPlayer) {
+    const jamButton = document.getElementById("jamButton");
+
+    // Update disabled state (existing logic)
+    if (playerState.currentMode === "nowPlaying") {
+        jamButton.disabled = !sidPlayer;
+    } else {
+        jamButton.disabled = !sidPlayer;
+    }
+
+    // Render sprite animation or static image
+    renderSpriteAnimation(jamButton, "jam", isPlaying);
+
+    // Add accessibility title
+    jamButton.setAttribute('title', isPlaying ? 'Pause and Switch Mode' : 'Play and Switch Mode');
+}
+
+
 export function updateFlameButton(playerState, sidPlayer) {
     const flameControls = document.getElementById("flame-controls");
     const flameButton = document.getElementById("flameButton");
