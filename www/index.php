@@ -260,6 +260,12 @@ $cxn->close();
         <div id="winner0" class="bitmap-button" onclick="window.setWinner(0)"></div>
         <div id="winner1" class="bitmap-button" onclick="window.setWinner(1)"></div>
     </div>
+    <div id="voice-visualizations">
+        <canvas id="voice1-canvas" width="250" height="100"></canvas>
+        <canvas id="voice2-canvas" width="250" height="100"></canvas>
+        <canvas id="voice3-canvas" width="250" height="100"></canvas>
+    </div>
+
     <div id="bracket-flame-row">
         <div id="bracket-controls">
             <span id="bracket-label">Bracket</span>

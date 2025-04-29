@@ -112,10 +112,23 @@ body {
     display: inline-block;
     margin: 0 auto;
 }
-#player-info { background-color: #fff; padding: 10px; border-radius: 5px; margin-bottom: 10px; text-align: center; transition: background-color 0.3s; width: 600px; margin-left: auto; margin-right: auto; }
+#player-info {
+    background-color: #fff;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    text-align: center;
+    transition: background-color 0.3s;
+    width: 400px; /* Reduced from 600px */
+    margin-left: auto;
+    margin-right: auto;
+}
 #song-title { margin-bottom: 10px; }
 .revive-highlight { background-color: #90ee90; padding: 2px 5px; border-radius: 3px; }
-#track-details { margin-left: 30%; text-align: left; }
+#track-details {
+    margin-left: 10px; /* Reduced from 30% to align text closer to the left */
+    text-align: left;
+}
 .active-song { background-color: #00ffff; padding: 2px 5px; border-radius: 3px; }
 .flame-song { background-color: #8B0000; padding: 2px 5px; border-radius: 3px; color: white; }
 .winner-highlight { background-color: #90ee90; padding: 2px 5px; border-radius: 3px; }
@@ -516,4 +529,23 @@ body {
 
 #winner1 {
     margin-right: 180px;
+}
+
+#voice-visualizations {
+    position: absolute;
+    top: 200px; /* Aligns top of canvases roughly with #player-info */
+    left: 35%; /* Anchor from the center of the body */
+    transform: translateX(calc(-50% + 530px)); /* Adjusted to position left edge at 405px from center */
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Space between canvases */
+}
+
+#voice1-canvas,
+#voice2-canvas,
+#voice3-canvas {
+    width: 250px;
+    height: 100px;
+    border: 1px solid #fff; 
+    background-color: #444; 
 }

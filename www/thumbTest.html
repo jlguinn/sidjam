@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thumb Rotation Test</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #ff9999; /* Match your app's background */
+            font-family: Arial, sans-serif;
+        }
+
+        .bitmap-button {
+            width: 92px;
+            height: 144px;
+            cursor: pointer;
+            transition: transform 0.3s ease; /* Smooth rotation */
+            transform-origin: center center; /* Rotate from the center of the thumb */
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #fff;
+            border: 1px solid #000;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div id="winner0" class="bitmap-button"></div>
+    <button id="rotateButton">Rotate 30°</button>
+
+    <script type="module">
+        // Import bitmap.js
+        import { renderWinnerButtonBitmap } from './src/bitmap.js';
+
+        // Mock playerState for renderWinnerButtonBitmap
+        const playerState = {
+            winner: null,
+            selectedContender: null
+        };
+
+        // Render the thumb
+        renderWinnerButtonBitmap(0, playerState);
+
+        // Rotation logic
+        let currentRotation = 0;
+        const rotateButton = document.getElementById('rotateButton');
+        const thumb = document.getElementById('winner0');
+
+        rotateButton.addEventListener('click', () => {
+            currentRotation = (currentRotation + 30) % 360; // Increment by 30 degrees, wrap at 360
+            thumb.style.transform = `rotate(${currentRotation}deg)`;
+            console.log(`Thumb rotated to ${currentRotation} degrees`);
+        });
+    </script>
+</body>
+</html>
