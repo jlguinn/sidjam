@@ -101,14 +101,18 @@ export async function togglePlayPause(updateRoundInfo, updatePlayPauseButton, up
         await initPlayerFn();
         console.log("Note: Please ignore ScriptProcessorNode Deprecation warning. We will not be remediating at this time.");
         window.logmsg("[>]", 1);
+        // Directly start the animation if playback is active
+        if (isPlaying && updateJamButton) {
+            updateJamButton(true);
+        }
     } else if (isPlaying) {
         sidPlayer.pause();
         setIsPlaying(false);
-        stopTimer(updateJamButton); // Animation handled by stopTimer
+        stopTimer(updateJamButton);
     } else {
         sidPlayer.resume();
         setIsPlaying(true);
-        startTimer(updateTimer, updateJamButton); // Animation handled by startTimer
+        startTimer(updateTimer, updateJamButton);
     }
     updatePlayerState({ hasPlayed: true });
     updateRoundInfo();
@@ -149,6 +153,7 @@ export function prevTrack(getPlayerState, loadSongFn) {
 
 
 export function startTimer(updateTimer, updateJamButton) {
+    console.log("startTimer: Starting timer and animation"); // Debug log
     updateTimer();
     timerInterval = setInterval(updateTimer, 1000);
     if (updateJamButton) {
@@ -157,6 +162,7 @@ export function startTimer(updateTimer, updateJamButton) {
 }
 
 export function stopTimer(updateJamButton) {
+    console.log("stopTimer: Stopping timer and animation"); // Debug log
     clearInterval(timerInterval);
     timerInterval = null;
     if (updateJamButton) {
