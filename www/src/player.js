@@ -11,8 +11,8 @@ export function setIsPlaying(value) {
     isPlaying = value;
 }
 
-export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseButton, resetVoiceStates, updateNavigationButtons, updateVsMatchup, autoPlay = true) {
-    if (!filename) return;
+export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseButton, resetVoiceStates, updateNavigationButtons, updateVsMatchup, updateJamButton, autoPlay = true) {
+    if (!filename) return Promise.resolve();
     let onFail = () => console.error("Failed to load song");
     let onProgress = (total, loaded) => {};
     let options = { track: trackNumber, timeout: -1, traceSID: true };
@@ -20,7 +20,7 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
     if (sidPlayer && isPlaying) {
         sidPlayer.pause();
         setIsPlaying(false);
-        stopTimer();
+        stopTimer(updateJamButton); // Pass updateJamButton to stopTimer
     }
 
     if (!sidPlayer) {
@@ -29,11 +29,10 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
         updateNavigationButtons();
         updatePlayPauseButton();
         resetVoiceStates();
-        return;
+        return Promise.resolve();
     }
 
-    ScriptNodePlayer.loadMusicFromURL(filename, options, onFail, onProgress).then(() => {
-        // Check for BASIC ROM error via RAM
+    return ScriptNodePlayer.loadMusicFromURL(filename, options, onFail, onProgress).then(() => {
         if (window.backend.getRAM && window.backend.getRAM(0x0801) !== 0) {
             console.log(`[sID JAm] Detected unplayable BASIC SID file: ${filename}`);
             const state = brackets.getPlayerState();
@@ -53,7 +52,7 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
         if (autoPlay) {
             sidPlayer.resume();
             setIsPlaying(true);
-            startTimer(updateTimer);
+            startTimer(updateTimer, updateJamButton); // Pass updateJamButton to startTimer
         }
         updatePlayPauseButton();
         resetVoiceStates();
@@ -68,52 +67,53 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
         if (!autoPlay) {
             sidPlayer.pause();
             setIsPlaying(false);
-            stopTimer();
+            stopTimer(updateJamButton); // Pass updateJamButton to stopTimer
         }
     });
 }
 
-export function initPlayer(getPlayerState, updateWinnerButtons, updateFlameButton, loadSongBound) {
+export async function initPlayer(getPlayerState, updateWinnerButtons, updateFlameButton, updateJamButton, loadSongBound) {
     const state = getPlayerState();
     let BASIC_ROM, KERNAL_ROM, CHAR_ROM;
     window.backend = new SIDBackendAdapter(BASIC_ROM, CHAR_ROM, KERNAL_ROM);
     let onTrackEnd = () => window.logmsg("Track ended - stopping music");
 
-    ScriptNodePlayer.initialize(window.backend, onTrackEnd).then((msg) => {
-        sidPlayer = ScriptNodePlayer.getInstance();
-        if (state.contenders.length > 0 && state.currentMode === "bout") {
-            loadSongBound(state.contenders[state.activeContender], -1);
-        } else if (state.nowPlayingSong && state.currentMode === "nowPlaying") {
-            loadSongBound(state.nowPlayingSong, -1);
-        } else if (state.peekPlayingSong) {
-            loadSongBound(state.peekPlayingSong, -1);
-        } else {
-            window.logmsg("No contenders or songs available to load");
-        }
-        updateWinnerButtons();
-        updateFlameButton();
-    });
+    await ScriptNodePlayer.initialize(window.backend, onTrackEnd);
+    sidPlayer = ScriptNodePlayer.getInstance();
+
+    if (state.contenders.length > 0 && state.currentMode === "bout") {
+        await loadSongBound(state.contenders[state.activeContender], -1);
+    } else if (state.nowPlayingSong && state.currentMode === "nowPlaying") {
+        await loadSongBound(state.nowPlayingSong, -1);
+    } else if (state.peekPlayingSong) {
+        await loadSongBound(state.peekPlayingSong, -1);
+    } else {
+        window.logmsg("No contenders or songs available to load");
+    }
+
+    updateWinnerButtons();
+    updateFlameButton();
+    updateJamButton(); // Ensure initial state is set
 }
 
-export function togglePlayPause(updateRoundInfo, updatePlayPauseButton, updateWinnerButtons, updateFlameButton, updateJamButton, initPlayerFn, updatePlayerState) {
+export async function togglePlayPause(updateRoundInfo, updatePlayPauseButton, updateWinnerButtons, updateFlameButton, updateJamButton, initPlayerFn, updatePlayerState) {
     if (!sidPlayer) {
-        initPlayerFn();
+        await initPlayerFn();
         console.log("Note: Please ignore ScriptProcessorNode Deprecation warning. We will not be remediating at this time.");
         window.logmsg("[>]", 1);
     } else if (isPlaying) {
         sidPlayer.pause();
         setIsPlaying(false);
-        stopTimer();
+        stopTimer(updateJamButton); // Animation handled by stopTimer
     } else {
         sidPlayer.resume();
         setIsPlaying(true);
-        startTimer(updateTimer);
+        startTimer(updateTimer, updateJamButton); // Animation handled by startTimer
     }
     updatePlayerState({ hasPlayed: true });
     updateRoundInfo();
     updatePlayPauseButton();
     updateWinnerButtons();
-    updateJamButton(); // Add this
     document.getElementById("jamButton").disabled = false;
     document.getElementById("flameButton").disabled = false;
     document.getElementById("prevButton").disabled = false;
@@ -121,6 +121,7 @@ export function togglePlayPause(updateRoundInfo, updatePlayPauseButton, updateWi
     document.getElementById("reviveButton").classList.remove("disabled");
     updateFlameButton();
 }
+
 
 export function nextTrack(getPlayerState, loadSongFn) {
     const state = getPlayerState();
@@ -146,13 +147,21 @@ export function prevTrack(getPlayerState, loadSongFn) {
     }
 }
 
-export function startTimer(updateTimer) {
+
+export function startTimer(updateTimer, updateJamButton) {
     updateTimer();
     timerInterval = setInterval(updateTimer, 1000);
+    if (updateJamButton) {
+        updateJamButton(true); // Start animation
+    }
 }
 
-export function stopTimer() {
+export function stopTimer(updateJamButton) {
     clearInterval(timerInterval);
+    timerInterval = null;
+    if (updateJamButton) {
+        updateJamButton(false); // Stop animation
+    }
 }
 
 export function updateTimer() {

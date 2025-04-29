@@ -2,8 +2,9 @@ import { baseColorSchemes, getInvertedTheme } from './themes.js';
 import * as brackets from './brackets.js';
 import { renderProfileBitmap, renderWinnerButtonBitmap } from './bitmap.js';
 import { renderSpriteAnimation } from './spriteAnimator.js'; 
+import * as player from './player.js';
 
-export let currentThemeIndex = 0;
+export let currentThemeIndex = 0;;
 
 export function setCurrentThemeIndex(index) {
     currentThemeIndex = index;
@@ -319,22 +320,21 @@ export function updateWinnerButtons(playerState, sidPlayer) {
     document.getElementById("jamButton").disabled = !sidPlayer;
 }
 
-export function updateJamButton(isPlaying, playerState, sidPlayer) {
+export function updateJamButton(isPlaying) {
     const jamButton = document.getElementById("jamButton");
+    const playerState = brackets.getPlayerState();
+    const sidPlayer = player.sidPlayer;
 
-    // Update disabled state (existing logic)
     if (playerState.currentMode === "nowPlaying") {
         jamButton.disabled = !sidPlayer;
     } else {
         jamButton.disabled = !sidPlayer;
     }
 
-    // Render sprite animation or static image
     renderSpriteAnimation(jamButton, "jam", isPlaying);
-
-    // Add accessibility title
     jamButton.setAttribute('title', isPlaying ? 'Pause and Switch Mode' : 'Play and Switch Mode');
 }
+
 
 
 export function updateFlameButton(playerState, sidPlayer) {

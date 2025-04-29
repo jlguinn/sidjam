@@ -85,6 +85,7 @@ const loadSongBound = (filename, trackNumber, autoPlay = true) => player.loadSon
     player.resetVoiceStates,
     () => ui.updateNavigationButtons(player.sidPlayer),
     updateVsMatchupBound,
+    updateJamButtonBound, // Add updateJamButton
     autoPlay
 );
 
@@ -92,29 +93,29 @@ const updateVsMatchupBound = () => ui.updateVsMatchup(brackets.getPlayerState())
 const updateRoundInfoBound = () => ui.updateRoundInfo(brackets.getPlayerState());
 const updateWinnerButtonsBound = () => ui.updateWinnerButtons(brackets.getPlayerState(), player.sidPlayer);
 const updateFlameButtonBound = () => ui.updateFlameButton(brackets.getPlayerState(), player.sidPlayer);
-const updateJamButtonBound = () => ui.updateJamButton(player.isPlaying, brackets.getPlayerState(), player.sidPlayer); // Add this
+const updateJamButtonBound = (isPlaying) => ui.updateJamButton(isPlaying, brackets.getPlayerState(), player.sidPlayer);
 
-window.togglePlayPause = () => {
-    const wasPlaying = player.isPlaying; // Capture state before toggle
-    player.togglePlayPause(
+window.togglePlayPause = async () => {
+    const wasPlaying = player.isPlaying;
+    await player.togglePlayPause(
         updateRoundInfoBound,
         () => ui.updatePlayPauseButton(player.isPlaying),
         updateWinnerButtonsBound,
         updateFlameButtonBound,
-        updateJamButtonBound, // Add this
+        updateJamButtonBound,
         () => player.initPlayer(
             brackets.getPlayerState,
             updateWinnerButtonsBound,
             updateFlameButtonBound,
+            updateJamButtonBound, // Add updateJamButton
             loadSongBound
         ),
         brackets.updatePlayerState
     );
-    // Log based on new state
     if (player.isPlaying && !wasPlaying) {
-        window.logmsg("[>]", 1); // Log play action
+        window.logmsg("[>]", 1);
     } else if (!player.isPlaying && wasPlaying) {
-        window.logmsg("[||]", 1); // Log pause action
+        window.logmsg("[||]", 1);
     }
     document.getElementById("ellipsis-button").disabled = false;
 };

@@ -1,5 +1,3 @@
-// spriteanimator.js
-
 // Configuration map for animations
 const ANIMATION_CONFIGS = {
   flame: {
@@ -20,8 +18,8 @@ const ANIMATION_CONFIGS = {
     loop: true
   },
   jam: {
-    spriteSheetPath: '/image/jam-sprite.png',
-    staticImagePath: '/image/jam-static.png',
+    spriteSheetPath: '../image/jam-sprite.png',
+    staticImagePath: '../image/jam-static.png',
     scaleFactor: 160 / 320, // Scales 320px width to 160px
     frames: [
       { x: 0, y: 0, width: 320, height: 238, offsetX: -6, offsetY: -1 },
