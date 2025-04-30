@@ -1,13 +1,12 @@
-// viz.js - Oscilloscope waveform visualizations for sID JAm voice canvases
+// viz.js - Real-time oscilloscope waveform visualizations for sID JAm voice canvases
 
-// Rolling buffer for waveform samples
-const BUFFER_SIZE = 250; // Matches canvas width
+// Static buffer for waveform samples (short time window)
+const BUFFER_SIZE = 10; // ~0.227ms at 44100 Hz, shows 1-2 cycles at 1 kHz
 const voiceBuffers = [
     new Float32Array(BUFFER_SIZE), // Voice 1
     new Float32Array(BUFFER_SIZE), // Voice 2
     new Float32Array(BUFFER_SIZE)  // Voice 3
 ];
-let bufferIndex = 0;
 let retryCount = 0;
 const MAX_RETRIES = 5;
 let traceStreams = null;
@@ -43,10 +42,23 @@ function drawVoiceWaveform(canvasId, voiceIdx) {
     ctx.lineWidth = 2;
 
     const buffer = voiceBuffers[voiceIdx];
+    // Dynamically scale amplitude to fill 90% of height
+    let maxAmplitude = 0;
+    for (let i = 0; i < BUFFER_SIZE; i++) {
+        maxAmplitude = Math.max(maxAmplitude, Math.abs(buffer[i]));
+    }
+    const scale = maxAmplitude > 0 ? (0.9 * height / 2) / maxAmplitude : 1;
+
+    // Interpolate samples across canvas width
     for (let x = 0; x < width; x++) {
-        const bufferPos = (bufferIndex - width + x + BUFFER_SIZE) % BUFFER_SIZE;
-        const sample = buffer[bufferPos]; // Range: -1 to 1
-        const y = midY - (sample * (height / 2) * 0.8); // Scale to 80% height
+        const t = x / (width - 1); // 0 to 1
+        const sampleIdx = t * (BUFFER_SIZE - 1);
+        const i0 = Math.floor(sampleIdx);
+        const i1 = Math.min(i0 + 1, BUFFER_SIZE - 1);
+        const frac = sampleIdx - i0;
+        // Linear interpolation
+        const sample = buffer[i0] + (buffer[i1] - buffer[i0]) * frac;
+        const y = midY - (sample * scale);
         if (x === 0) {
             ctx.moveTo(x, y);
         } else {
@@ -56,7 +68,7 @@ function drawVoiceWaveform(canvasId, voiceIdx) {
     ctx.stroke();
 }
 
-// Update voice buffers with waveform samples
+// Update voice buffers with triggered waveform samples
 function updateVoiceBuffers() {
     const player = window.player;
     if (!player || player.isPaused() || !player._isSongReady) {
@@ -72,31 +84,41 @@ function updateVoiceBuffers() {
     const Module = window.backend_SID.Module;
     try {
         if (useTraceStreams && traceStreams && traceStreams.length >= 3) {
-            // Read raw waveform samples from trace streams
+            // Read triggered waveform samples
+            const SAMPLE_WINDOW = 20; // Scan window for trigger
             for (let voiceIdx = 0; voiceIdx < 3; voiceIdx++) {
                 const stream = traceStreams[voiceIdx];
-                // Read latest sample (assuming HEAP16, scaled to -1 to 1)
-                const sample = Module.HEAP16[stream] / 32768;
-                voiceBuffers[voiceIdx][bufferIndex] = sample;
+                // Find trigger point (first rising zero-crossing)
+                let triggerIdx = 0;
+                for (let i = 0; i < SAMPLE_WINDOW - 1; i++) {
+                    const sample0 = Module.HEAP16[stream + i] / 32768;
+                    const sample1 = Module.HEAP16[stream + i + 1] / 32768;
+                    if (sample0 <= 0 && sample1 > 0) {
+                        triggerIdx = i + 1;
+                        break;
+                    }
+                }
+                // Read BUFFER_SIZE samples from trigger point
+                for (let i = 0; i < BUFFER_SIZE; i++) {
+                    const idx = triggerIdx + i;
+                    voiceBuffers[voiceIdx][i] = Module.HEAP16[stream + idx] / 32768;
+                }
             }
         } else {
-            // Fallback to readVoiceLevel
+            // Fallback to readVoiceLevel (less detailed)
             if (!player._externalTicker) {
                 window.logmsg('External ticker not enabled, voice levels may be inaccurate', 1);
             }
             for (let voiceIdx = 0; voiceIdx < 3; voiceIdx++) {
                 const level = adapter.readVoiceLevel(0, voiceIdx); // 0-1 range
-                voiceBuffers[voiceIdx][bufferIndex] = (level * 2) - 1; // Normalize to -1 to 1
+                // Fill buffer with single value (envelope approximation)
+                voiceBuffers[voiceIdx].fill((level * 2) - 1); // Normalize to -1 to 1
             }
         }
     } catch (error) {
         window.logmsg(`Error fetching waveform data: ${error.message}`, 1);
-        voiceBuffers[0][bufferIndex] = 0;
-        voiceBuffers[1][bufferIndex] = 0;
-        voiceBuffers[2][bufferIndex] = 0;
+        voiceBuffers.forEach(buffer => buffer.fill(0));
     }
-
-    bufferIndex = (bufferIndex + 1) % BUFFER_SIZE;
 }
 
 // Initialize trace streams
@@ -153,7 +175,7 @@ function animateVoiceWaveforms() {
 
 // Initialize visualizations
 function initVisualizations() {
-    window.logmsg('Initializing oscilloscope waveform visualizations', 1);
+    window.logmsg('Initializing real-time oscilloscope visualizations', 1);
     if (!window.player || !window.player._backendAdapter) {
         retryCount++;
         if (retryCount <= MAX_RETRIES) {
@@ -173,7 +195,6 @@ function initVisualizations() {
 
     // Clear buffers
     voiceBuffers.forEach(buffer => buffer.fill(0));
-    bufferIndex = 0;
     animateVoiceWaveforms();
 }
 
