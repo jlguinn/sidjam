@@ -197,6 +197,7 @@ $cxn->close();
         window.logmsg(`Log Level: ${window.LOG_LEVEL === 1 ? "VERBOSE" : window.LOG_LEVEL === 2 ? "DEBUGGING" : window.LOG_LEVEL === 0 ? "TERSE" : window.LOG_LEVEL === -1 ? "SILENT" : window.LOG_LEVEL.toString()}`, 1);
     </script>
     <script type="module" src="src/script.js"></script>
+    <script type="module" src="src/viz.js"></script>
 </head>
 <body>
     <div id="header">
