@@ -7,7 +7,17 @@
 // - 15 (~0.34ms, ~2.5 cycles, current)
 // - 18 (~0.408ms, ~3 cycles, wider)
 // - 20 (~0.453ms, ~3-4 cycles, very wide)
-const BUFFER_SIZE = 15; // ~0.34ms at 44100 Hz, shows ~2.5 cycles at 1 kHz
+const BUFFER_SIZE = 150; // ~0.34ms at 44100 Hz, shows ~2.5 cycles at 1 kHz
+
+// Target refresh rate (FPS)
+// Tweak TARGET_FPS to adjust refresh rate:
+// - 60 (16.67ms per frame, standard)
+// - 120 (8.33ms, smoother, high-refresh displays)
+// - 144 (6.94ms, very smooth, gaming monitors)
+// - 172 (5.8ms, matches emulator ticker, max responsiveness)
+const TARGET_FPS = 172; // 120 FPS for smoother animations (172=Emulator tick)
+const TIME_LIMIT = 1000 / TARGET_FPS; // Time per frame in ms
+
 const voiceBuffers = [
     new Float32Array(BUFFER_SIZE), // Voice 1
     new Float32Array(BUFFER_SIZE), // Voice 2
@@ -153,16 +163,18 @@ function initTraceStreams() {
     }
 }
 
-// Animation loop with 60 FPS throttling
+// Animation loop with configurable FPS
 let lastRenderTime = 0;
-const TIME_LIMIT = 1000 / 60; // 60 FPS
 let refreshCounter = 0;
+// Optional FPS tracking (uncomment to monitor actual refresh rate)
+// let frameCount = 0;
+// let fpsStartTime = performance.now();
 
 function animateVoiceWaveforms() {
     const now = performance.now();
     const renderTime = now - lastRenderTime;
 
-    // Throttle rendering
+    // Throttle rendering to TARGET_FPS
     const slowdownFactor = TIME_LIMIT ? Math.max(1, renderTime / TIME_LIMIT) : 1;
     refreshCounter++;
     if (refreshCounter >= slowdownFactor) {
@@ -172,6 +184,17 @@ function animateVoiceWaveforms() {
         drawVoiceWaveform('voice2-canvas', 1);
         drawVoiceWaveform('voice3-canvas', 2);
     }
+
+    // Optional FPS logging (uncomment to debug)
+    /*
+    frameCount++;
+    if (now - fpsStartTime >= 1000) {
+        const actualFps = frameCount / ((now - fpsStartTime) / 1000);
+        window.logmsg(`Actual FPS: ${actualFps.toFixed(1)}`, 1);
+        frameCount = 0;
+        fpsStartTime = now;
+    }
+    */
 
     lastRenderTime = now;
     requestAnimationFrame(animateVoiceWaveforms);
