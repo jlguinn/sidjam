@@ -533,9 +533,9 @@ body {
 
 #voice-visualizations {
     position: absolute;
-    top: 200px; /* Aligns top of canvases roughly with #player-info */
-    left: 35%; /* Anchor from the center of the body */
-    transform: translateX(calc(-50% + 530px)); /* Adjusted to position left edge at 405px from center */
+    top: 170px; /* Adjusted to align better with #player-info */
+    left: 48%; /* Anchor from the center of the body */
+    transform: translateX(calc(-50% - 330px)); /* Positions center of canvases at -530px from center */
     display: flex;
     flex-direction: column;
     gap: 10px; /* Space between canvases */
