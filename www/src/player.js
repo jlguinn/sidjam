@@ -80,6 +80,7 @@ export async function initPlayer(getPlayerState, updateWinnerButtons, updateFlam
 
     await ScriptNodePlayer.initialize(window.backend, onTrackEnd);
     sidPlayer = ScriptNodePlayer.getInstance();
+    window.player = sidPlayer; // Ensure viz.js access
 
     if (state.contenders.length > 0 && state.currentMode === "bout") {
         await loadSongBound(state.contenders[state.activeContender], -1);
