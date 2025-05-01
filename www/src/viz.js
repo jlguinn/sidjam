@@ -8,13 +8,19 @@ const TIME_LIMIT = 1000 / TARGET_FPS; // Time per frame in ms
 // VU meter configuration
 const VU_METER_COUNT = 3; // One per voice
 const NEEDLE_LENGTH = 25; // Pixels, scaled for 80x60px canvas
-const ANGLE_RANGE = [-45, 45]; // Degrees, -60 dB to +3 dB
-const ATTACK_RATE = 0.05; // Seconds, tweakable 0.03–0.1
-const DECAY_RATE = 0.4; // Seconds, tweakable 0.2–0.6
-const OVERSHOOT = 0.1; // 10% past target, tweakable 0–0.2
+const ANGLE_RANGE = [-45, 45]; // Degrees, -80 dB to -20 dB
+const ATTACK_RATE = 0.0001; // Seconds, tweakable 0.005–0.015 (10ms for fast peaks)
+const DECAY_RATE = 0.0002; // Seconds, tweakable 0.15–0.25 (200ms for quick decay)
+const OVERSHOOT = 0.25; // 25% past target, tweakable 0.2–0.3 (clear bounce)
 const NEEDLE_COLOR = '#FF0000'; // Red needle
 const GLOW_COLOR = '#FFFF00'; // Yellow glow
 const BACKGROUND_COLOR = '#333333'; // Dark grey
+const LOG_INTERVAL = 0.1; // Seconds, log 4 times per second (250ms)
+const ZERO_TICK_THRESHOLD = 2; // Stop logging after 2 consecutive all-zero ticks
+
+let logTimer = 0; // Track time for logging
+let logCounter = 0; // Frame counter for throttling
+let zeroTickCount = 0; // Count consecutive all-zero ticks
 
 const voiceBuffers = [
     new Float32Array(BUFFER_SIZE), // Voice 1
@@ -49,6 +55,11 @@ function drawVoiceWaveform(canvasId, voiceIdx) {
     // Check player state
     const player = window.player;
     if (!player || player.isPaused() || !player._isSongReady) {
+        voiceBuffers.forEach(buffer => buffer.fill(0));
+        vuLevels.fill(0);
+        needleAngles.fill(ANGLE_RANGE[0]);
+        needleVelocities.fill(0);
+        // window.logmsg(`Paused, vuLevels: ${vuLevels.join(', ')}`, 1);
         return;
     }
 
@@ -138,6 +149,8 @@ function updateVoiceBuffers() {
     if (!player || player.isPaused() || !player._isSongReady) {
         voiceBuffers.forEach(buffer => buffer.fill(0));
         vuLevels.fill(0);
+        needleAngles.fill(ANGLE_RANGE[0]); // Reset needles to minimum
+        needleVelocities.fill(0); // Reset velocities
         return;
     }
 
@@ -177,7 +190,8 @@ function updateVoiceBuffers() {
                 voiceBuffers[voiceIdx][i] = sample;
                 rmsSum += sample * sample;
             }
-            vuLevels[voiceIdx] = Math.min(Math.sqrt(rmsSum / BUFFER_SIZE), 1.0);
+            const rms = Math.sqrt(rmsSum / BUFFER_SIZE) * 0.4; // Lower scaling to reduce saturation
+            vuLevels[voiceIdx] = Math.min(rms, 1.0);
         }
     } catch (error) {
         window.logmsg(`Error fetching waveform data: ${error.message}`, 1);
@@ -189,22 +203,46 @@ function updateVoiceBuffers() {
 // Update needle physics
 function updateNeedlePhysics() {
     const dt = 1 / TARGET_FPS; // Time step
-    const kAttack = -Math.log(0.1) / ATTACK_RATE; // Spring constant for attack
-    const kDecay = -Math.log(0.1) / DECAY_RATE; // Spring constant for decay
-    const damping = 0.8; // Damping factor
+    const kAttack = -Math.log(0.01) / ATTACK_RATE; // Stronger spring for attack
+    const kDecay = -Math.log(0.01) / DECAY_RATE; // Stronger spring for decay
+    const damping = 0.4; // Lower damping for fluid motion, tweakable 0.3–0.5
+
+    logTimer += dt;
+    logCounter++;
+    if (logTimer >= LOG_INTERVAL) {
+        // Check if all voices are zero
+        const allZero = vuLevels.every(level => level === 0);
+        if (allZero) {
+            zeroTickCount++;
+        } else {
+            zeroTickCount = 0; // Reset if any voice is active
+        }
+
+        // Log only if we haven't hit the zero-tick threshold
+        if (zeroTickCount < ZERO_TICK_THRESHOLD) {
+            for (let i = 0; i < VU_METER_COUNT; i++) {
+                const db = vuLevels[i] > 0 ? 20 * Math.log10(vuLevels[i]) - 20 : -80; // -80 dB to -20 dB
+                const targetAngle = ANGLE_RANGE[0] + (db + 80) / 60 * (ANGLE_RANGE[1] - ANGLE_RANGE[0]);
+                window.logmsg(`Voice ${i + 1}: Angle=${needleAngles[i].toFixed(1)}°, Magnitude=${vuLevels[i].toFixed(3)}, TargetAngle=${targetAngle.toFixed(1)}°`, 1);
+            }
+        }
+
+        logTimer = 0; // Reset timer
+        logCounter = 0;
+    }
 
     for (let i = 0; i < VU_METER_COUNT; i++) {
         // Map amplitude to angle (logarithmic scale)
         const level = vuLevels[i];
-        const db = level > 0 ? 20 * Math.log10(level) : -60; // -60 dB to 0 dB
-        const targetAngle = ANGLE_RANGE[0] + (db + 60) / 63 * (ANGLE_RANGE[1] - ANGLE_RANGE[0]); // Map -60 dB to +3 dB
+        const db = level > 0 ? 20 * Math.log10(level) - 20 : -80; // -80 dB to -20 dB
+        const targetAngle = ANGLE_RANGE[0] + (db + 80) / 60 * (ANGLE_RANGE[1] - ANGLE_RANGE[0]); // Map -80 dB to -20 dB
 
         // Apply physics
         const currentAngle = needleAngles[i];
         const velocity = needleVelocities[i];
         const k = currentAngle < targetAngle ? kAttack : kDecay; // Faster attack, slower decay
         const acceleration = k * (targetAngle - currentAngle) * (1 + OVERSHOOT) - damping * velocity;
-        needleVelocities[i] += acceleration * dt;
+        needleVelocities[i] = Math.max(velocity + acceleration * dt, -30); // Stronger decay
         needleAngles[i] += needleVelocities[i] * dt;
 
         // Clamp angle
