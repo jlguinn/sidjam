@@ -171,6 +171,13 @@ body {
     z-index: 1; /* Ensure canvas is above background */
   }
 #jam-controls { display: flex; justify-content: center; margin-bottom: 5px; margin-top: 15px; }
+#equalizer-canvas {
+    width: 120px;
+    height: 100px;
+    border: 1px solid #fff;
+    background-color: #444;
+    margin-left: 20px; /* Space between jAM button and canvas */
+}
 #bracket-flame-row {
     display: flex;
     align-items: center;

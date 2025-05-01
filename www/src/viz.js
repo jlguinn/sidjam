@@ -92,24 +92,26 @@ function drawVoiceWaveform(canvasId, voiceIdx) {
 function updateVoiceBuffers() {
     const player = window.player;
     if (!player || player.isPaused() || !player._isSongReady) {
+        equalizerLevels.fill(0); // Clear levels when paused
         return;
     }
 
     const adapter = player._backendAdapter;
     if (!adapter || !adapter.isAdapterReady()) {
         window.logmsg('SIDBackendAdapter not ready for waveform data', 1);
+        equalizerLevels.fill(0);
         return;
     }
 
     if (!traceStreams || traceStreams.length < 3) {
         window.logmsg('Trace streams not initialized or insufficient', 1);
         voiceBuffers.forEach(buffer => buffer.fill(0));
+        equalizerLevels.fill(0);
         return;
     }
 
     const Module = window.backend_SID.Module;
     try {
-        // Read triggered waveform samples
         const SAMPLE_WINDOW = 20; // Scan window for trigger
         for (let voiceIdx = 0; voiceIdx < 3; voiceIdx++) {
             const stream = traceStreams[voiceIdx];
@@ -124,14 +126,20 @@ function updateVoiceBuffers() {
                 }
             }
             // Read BUFFER_SIZE samples from trigger point
+            let rmsSum = 0;
             for (let i = 0; i < BUFFER_SIZE; i++) {
                 const idx = triggerIdx + i;
-                voiceBuffers[voiceIdx][i] = Module.HEAP16[stream + idx] / 32768;
+                const sample = Module.HEAP16[stream + idx] / 32768;
+                voiceBuffers[voiceIdx][i] = sample;
+                rmsSum += sample * sample; // Sum of squares for RMS
             }
+            // Calculate RMS amplitude for equalizer
+            equalizerLevels[voiceIdx] = Math.min(Math.sqrt(rmsSum / BUFFER_SIZE), 1.0);
         }
     } catch (error) {
         window.logmsg(`Error fetching waveform data: ${error.message}`, 1);
         voiceBuffers.forEach(buffer => buffer.fill(0));
+        equalizerLevels.fill(0);
     }
 }
 
@@ -183,18 +191,8 @@ function animateVoiceWaveforms() {
         drawVoiceWaveform('voice1-canvas', 0);
         drawVoiceWaveform('voice2-canvas', 1);
         drawVoiceWaveform('voice3-canvas', 2);
+        drawEqualizer(); // Add equalizer rendering
     }
-
-    // Optional FPS logging (uncomment to debug)
-    /*
-    frameCount++;
-    if (now - fpsStartTime >= 1000) {
-        const actualFps = frameCount / ((now - fpsStartTime) / 1000);
-        window.logmsg(`Actual FPS: ${actualFps.toFixed(1)}`, 1);
-        frameCount = 0;
-        fpsStartTime = now;
-    }
-    */
 
     lastRenderTime = now;
     requestAnimationFrame(animateVoiceWaveforms);
@@ -233,5 +231,53 @@ if (document.readyState === 'loading') {
 } else {
     initVisualizations();
 }
+
+
+
+// Equalizer configuration
+const EQUALIZER_BARS = 3; // One bar per voice
+const BAR_WIDTH = 20; // Pixels per bar
+const BAR_GAP = 10; // Pixels between bars
+const EQUALIZER_WIDTH = EQUALIZER_BARS * BAR_WIDTH + (EQUALIZER_BARS - 1) * BAR_GAP; // 80px for 3 bars
+
+const equalizerLevels = new Float32Array(EQUALIZER_BARS); // Amplitude for each voice
+
+function drawEqualizer() {
+    const canvas = document.getElementById('equalizer-canvas');
+    if (!canvas) {
+        window.logmsg('Equalizer canvas not found', 1);
+        return;
+    }
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width; // 120
+    const height = canvas.height; // 100
+
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = '#444'; // Match voice canvas background
+    ctx.fillRect(0, 0, width, height);
+
+    // Check player state
+    const player = window.player;
+    if (!player || player.isPaused() || !player._isSongReady) {
+        return; // Skip rendering when paused or not ready
+    }
+
+    // Draw bars
+    const barColor = '#00FF00'; // Green to match waveforms
+    const maxBarHeight = height * 0.8; // 80% of canvas height
+    const offsetX = (width - EQUALIZER_WIDTH) / 2; // Center bars
+
+    for (let i = 0; i < EQUALIZER_BARS; i++) {
+        const level = equalizerLevels[i]; // 0 to 1
+        const barHeight = level * maxBarHeight;
+        const x = offsetX + i * (BAR_WIDTH + BAR_GAP);
+        const y = height - barHeight; // Bars grow upward from bottom
+
+        ctx.fillStyle = barColor;
+        ctx.fillRect(x, y, BAR_WIDTH, barHeight);
+    }
+}
+
 
 export { initVisualizations, drawVoiceWaveform };

@@ -256,6 +256,7 @@ $cxn->close();
     </div>
     <div id="jam-controls">
         <button id="jamButton" class="control-button" onclick="window.jamToggle()" disabled></button>
+        <canvas id="equalizer-canvas" width="120" height="100" title="Equalizer visualization for SID voices"></canvas>
     </div>
     <div id="winner-controls">
         <div id="winner0" class="bitmap-button" onclick="window.setWinner(0)"></div>
