@@ -8,14 +8,14 @@ const TIME_LIMIT = 1000 / TARGET_FPS; // Time per frame in ms
 // VU meter configuration
 const VU_METER_COUNT = 3; // One per voice
 const NEEDLE_LENGTH = 25; // Pixels, scaled for 80x60px canvas
-const ANGLE_RANGE = [-60, 60]; // Degrees, -90 dB to 0 dB
-const ATTACK_RATE = 0.001; // Seconds, tweakable 0.005–0.015 (10ms for fast peaks)
-const DECAY_RATE = 0.001; // Seconds, tweakable 0.15–0.25 (200ms for quick decay)
-const OVERSHOOT = 0.2; // 30% past target, tweakable 0.2–0.4 (visible bounce)
+const ANGLE_RANGE = [-60, 60]; // Degrees, -100 dB to 0 dB
+const ATTACK_RATE = 0.002; // Seconds, for smoothing (2ms for fast peaks)
+const DECAY_RATE = 0.03; // Seconds, for smoothing (30ms for quick decay)
+const OVERSHOOT = 0.0; // Disable overshoot temporarily
 const NEEDLE_COLOR = '#FF0000'; // Red needle
 const GLOW_COLOR = '#FFFF00'; // Yellow glow
 const BACKGROUND_COLOR = '#333333'; // Dark grey
-const LOG_INTERVAL = 0.001; // Seconds, log 10 times per second (100ms)
+const LOG_INTERVAL = 0.01; // Seconds, log 100 times per second (10ms)
 const ZERO_TICK_THRESHOLD = 2; // Stop logging after 2 consecutive all-zero ticks
 
 let logTimer = 0; // Track time for logging
@@ -190,7 +190,7 @@ function updateVoiceBuffers() {
                 voiceBuffers[voiceIdx][i] = sample;
                 rmsSum += sample * sample;
             }
-            const rms = Math.sqrt(rmsSum / BUFFER_SIZE) * 0.01; // Lower scaling to widen range
+            const rms = Math.sqrt(rmsSum / BUFFER_SIZE) * 0.2; // Moderate scaling for SID amplitudes
             vuLevels[voiceIdx] = Math.min(rms, 1.0);
         }
     } catch (error) {
@@ -203,9 +203,6 @@ function updateVoiceBuffers() {
 // Update needle physics
 function updateNeedlePhysics() {
     const dt = 1 / TARGET_FPS; // Time step
-    const kAttack = 150 / ATTACK_RATE; // Stronger spring for attack
-    const kDecay = 50 / DECAY_RATE; // Stronger spring for decay
-    const damping = 0.3; // Very low damping for bouncy motion, tweakable 0.2–0.4
 
     logTimer += dt;
     logCounter++;
@@ -221,8 +218,8 @@ function updateNeedlePhysics() {
         // Log only if we haven't hit the zero-tick threshold
         if (zeroTickCount < ZERO_TICK_THRESHOLD) {
             for (let i = 0; i < VU_METER_COUNT; i++) {
-                const db = vuLevels[i] > 0 ? 20 * Math.log10(vuLevels[i]) - 10 : -80; // -80 dB to -10 dB
-                const targetAngle = ANGLE_RANGE[0] + (db + 80) / 70 * (ANGLE_RANGE[1] - ANGLE_RANGE[0]); // Map -80 dB to -10 dB
+                const db = vuLevels[i] > 0 ? 20 * Math.log10(vuLevels[i]) : -100; // -100 dB to 0 dB
+                const targetAngle = ANGLE_RANGE[0] + (db + 100) / 100 * (ANGLE_RANGE[1] - ANGLE_RANGE[0]); // Map -100 dB to 0 dB
                 window.logmsg(`Voice ${i + 1}: Angle=${needleAngles[i].toFixed(1)}°, Magnitude=${vuLevels[i].toFixed(3)}, TargetAngle=${targetAngle.toFixed(1)}°`, 1);
             }
         }
@@ -234,18 +231,16 @@ function updateNeedlePhysics() {
     for (let i = 0; i < VU_METER_COUNT; i++) {
         // Map amplitude to angle (logarithmic scale)
         const level = vuLevels[i];
-        const db = level > 0 ? 20 * Math.log10(level) - 10 : -80; // -80 dB to -10 dB
-        const targetAngle = ANGLE_RANGE[0] + (db + 80) / 70 * (ANGLE_RANGE[1] - ANGLE_RANGE[0]); // Map -80 dB to -10 dB
+        const db = level > 0 ? 20 * Math.log10(level) : -100; // -100 dB to 0 dB
+        const targetAngle = ANGLE_RANGE[0] + (db + 100) / 100 * (ANGLE_RANGE[1] - ANGLE_RANGE[0]); // Map -100 dB to 0 dB
 
-        // Apply physics
-        const currentAngle = needleAngles[i];
-        const velocity = needleVelocities[i];
-        const k = currentAngle < targetAngle ? kAttack : kDecay; // Faster attack, slower decay
-        const acceleration = k * (targetAngle - currentAngle) * (1 + OVERSHOOT) - damping * velocity;
-        needleVelocities[i] += acceleration * dt; // Allow full velocity range
-        needleAngles[i] += needleVelocities[i] * dt;
+        // Exponential smoothing with capped alpha
+        const alphaAttack = Math.min(1.0, dt / ATTACK_RATE); // Cap at 1 to prevent overshoot
+        const alphaDecay = Math.min(1.0, dt / DECAY_RATE);
+        const alpha = needleAngles[i] < targetAngle ? alphaAttack : alphaDecay;
+        needleAngles[i] = needleAngles[i] + alpha * (targetAngle - needleAngles[i]);
 
-        // Clamp angle after physics
+        // Clamp angle
         needleAngles[i] = Math.max(ANGLE_RANGE[0], Math.min(ANGLE_RANGE[1], needleAngles[i]));
     }
 }
@@ -286,11 +281,8 @@ function animateVoiceWaveforms() {
     const now = performance.now();
     const renderTime = now - lastRenderTime;
 
-    // Throttle rendering to TARGET_FPS
-    const slowdownFactor = TIME_LIMIT ? Math.max(1, renderTime / TIME_LIMIT) : 1;
-    refreshCounter++;
-    if (refreshCounter >= slowdownFactor) {
-        refreshCounter = 0;
+    // Update at TARGET_FPS (172 Hz)
+    if (renderTime >= TIME_LIMIT) {
         updateVoiceBuffers();
         updateNeedlePhysics();
         drawVoiceWaveform('voice1-canvas', 0);
@@ -299,9 +291,9 @@ function animateVoiceWaveforms() {
         drawVUMeter('vu1-canvas', 0);
         drawVUMeter('vu2-canvas', 1);
         drawVUMeter('vu3-canvas', 2);
+        lastRenderTime = now;
     }
 
-    lastRenderTime = now;
     requestAnimationFrame(animateVoiceWaveforms);
 }
 
