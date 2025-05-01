@@ -8,14 +8,14 @@ const TIME_LIMIT = 1000 / TARGET_FPS; // Time per frame in ms
 // VU meter configuration
 const VU_METER_COUNT = 3; // One per voice
 const NEEDLE_LENGTH = 25; // Pixels, scaled for 80x60px canvas
-const ANGLE_RANGE = [-45, 45]; // Degrees, -80 dB to -20 dB
-const ATTACK_RATE = 0.0001; // Seconds, tweakable 0.005–0.015 (10ms for fast peaks)
-const DECAY_RATE = 0.0002; // Seconds, tweakable 0.15–0.25 (200ms for quick decay)
-const OVERSHOOT = 0.25; // 25% past target, tweakable 0.2–0.3 (clear bounce)
+const ANGLE_RANGE = [-60, 60]; // Degrees, -90 dB to 0 dB
+const ATTACK_RATE = 0.001; // Seconds, tweakable 0.005–0.015 (10ms for fast peaks)
+const DECAY_RATE = 0.001; // Seconds, tweakable 0.15–0.25 (200ms for quick decay)
+const OVERSHOOT = 0.2; // 30% past target, tweakable 0.2–0.4 (visible bounce)
 const NEEDLE_COLOR = '#FF0000'; // Red needle
 const GLOW_COLOR = '#FFFF00'; // Yellow glow
 const BACKGROUND_COLOR = '#333333'; // Dark grey
-const LOG_INTERVAL = 0.1; // Seconds, log 4 times per second (250ms)
+const LOG_INTERVAL = 0.001; // Seconds, log 10 times per second (100ms)
 const ZERO_TICK_THRESHOLD = 2; // Stop logging after 2 consecutive all-zero ticks
 
 let logTimer = 0; // Track time for logging
@@ -190,7 +190,7 @@ function updateVoiceBuffers() {
                 voiceBuffers[voiceIdx][i] = sample;
                 rmsSum += sample * sample;
             }
-            const rms = Math.sqrt(rmsSum / BUFFER_SIZE) * 0.4; // Lower scaling to reduce saturation
+            const rms = Math.sqrt(rmsSum / BUFFER_SIZE) * 0.01; // Lower scaling to widen range
             vuLevels[voiceIdx] = Math.min(rms, 1.0);
         }
     } catch (error) {
@@ -203,9 +203,9 @@ function updateVoiceBuffers() {
 // Update needle physics
 function updateNeedlePhysics() {
     const dt = 1 / TARGET_FPS; // Time step
-    const kAttack = -Math.log(0.01) / ATTACK_RATE; // Stronger spring for attack
-    const kDecay = -Math.log(0.01) / DECAY_RATE; // Stronger spring for decay
-    const damping = 0.4; // Lower damping for fluid motion, tweakable 0.3–0.5
+    const kAttack = 150 / ATTACK_RATE; // Stronger spring for attack
+    const kDecay = 50 / DECAY_RATE; // Stronger spring for decay
+    const damping = 0.3; // Very low damping for bouncy motion, tweakable 0.2–0.4
 
     logTimer += dt;
     logCounter++;
@@ -221,8 +221,8 @@ function updateNeedlePhysics() {
         // Log only if we haven't hit the zero-tick threshold
         if (zeroTickCount < ZERO_TICK_THRESHOLD) {
             for (let i = 0; i < VU_METER_COUNT; i++) {
-                const db = vuLevels[i] > 0 ? 20 * Math.log10(vuLevels[i]) - 20 : -80; // -80 dB to -20 dB
-                const targetAngle = ANGLE_RANGE[0] + (db + 80) / 60 * (ANGLE_RANGE[1] - ANGLE_RANGE[0]);
+                const db = vuLevels[i] > 0 ? 20 * Math.log10(vuLevels[i]) - 10 : -80; // -80 dB to -10 dB
+                const targetAngle = ANGLE_RANGE[0] + (db + 80) / 70 * (ANGLE_RANGE[1] - ANGLE_RANGE[0]); // Map -80 dB to -10 dB
                 window.logmsg(`Voice ${i + 1}: Angle=${needleAngles[i].toFixed(1)}°, Magnitude=${vuLevels[i].toFixed(3)}, TargetAngle=${targetAngle.toFixed(1)}°`, 1);
             }
         }
@@ -234,18 +234,18 @@ function updateNeedlePhysics() {
     for (let i = 0; i < VU_METER_COUNT; i++) {
         // Map amplitude to angle (logarithmic scale)
         const level = vuLevels[i];
-        const db = level > 0 ? 20 * Math.log10(level) - 20 : -80; // -80 dB to -20 dB
-        const targetAngle = ANGLE_RANGE[0] + (db + 80) / 60 * (ANGLE_RANGE[1] - ANGLE_RANGE[0]); // Map -80 dB to -20 dB
+        const db = level > 0 ? 20 * Math.log10(level) - 10 : -80; // -80 dB to -10 dB
+        const targetAngle = ANGLE_RANGE[0] + (db + 80) / 70 * (ANGLE_RANGE[1] - ANGLE_RANGE[0]); // Map -80 dB to -10 dB
 
         // Apply physics
         const currentAngle = needleAngles[i];
         const velocity = needleVelocities[i];
         const k = currentAngle < targetAngle ? kAttack : kDecay; // Faster attack, slower decay
         const acceleration = k * (targetAngle - currentAngle) * (1 + OVERSHOOT) - damping * velocity;
-        needleVelocities[i] = Math.max(velocity + acceleration * dt, -30); // Stronger decay
+        needleVelocities[i] += acceleration * dt; // Allow full velocity range
         needleAngles[i] += needleVelocities[i] * dt;
 
-        // Clamp angle
+        // Clamp angle after physics
         needleAngles[i] = Math.max(ANGLE_RANGE[0], Math.min(ANGLE_RANGE[1], needleAngles[i]));
     }
 }
