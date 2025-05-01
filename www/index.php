@@ -255,8 +255,12 @@ $cxn->close();
         </div>
     </div>
     <div id="jam-controls">
-        <button id="jamButton" class="control-button" onclick="window.jamToggle()" disabled></button>
-        <canvas id="equalizer-canvas" width="120" height="100" title="Equalizer visualization for SID voices"></canvas>
+    <button id="jamButton" class="control-button" onclick="window.jamToggle()" disabled></button>
+        <div id="vu-meters">
+            <canvas id="vu1-canvas" width="80" height="60" title="Voice 1 VU Meter"></canvas>
+            <canvas id="vu2-canvas" width="80" height="60" title="Voice 2 VU Meter"></canvas>
+            <canvas id="vu3-canvas" width="80" height="60" title="Voice 3 VU Meter"></canvas>
+        </div>
     </div>
     <div id="winner-controls">
         <div id="winner0" class="bitmap-button" onclick="window.setWinner(0)"></div>
