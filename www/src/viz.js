@@ -1,4 +1,4 @@
-// viz.js - Real-time oscilloscope waveform and VU meter visualizations for sID JAm
+// viz.js - Real-time oscilloscope waveform and VU meter visualizations for SID JAm
 
 // Static buffer for waveform samples
 const BUFFER_SIZE = 150; // ~0.34ms at 44100 Hz, shows ~2.5 cycles at 1 kHz
@@ -9,9 +9,9 @@ const TIME_LIMIT = 1000 / TARGET_FPS; // Time per frame in ms
 const VU_METER_COUNT = 3; // One per voice
 const NEEDLE_LENGTH = 25; // Pixels, scaled for 80x60px canvas
 const ANGLE_RANGE = [-60, 60]; // Degrees, -100 dB to 0 dB
-const ATTACK_RATE = 0.002; // Seconds, for smoothing (2ms for fast peaks)
-const DECAY_RATE = 0.03; // Seconds, for smoothing (30ms for quick decay)
-const OVERSHOOT = 0.0; // Disable overshoot temporarily
+const ATTACK_RATE = 0.002; // Seconds, for spring strength (2ms for fast peaks)
+const DECAY_RATE = 0.01; // Seconds, for spring strength (10ms for bouncy decay)
+const OVERSHOOT = 0.1; // 10% overshoot for controlled 70s bounce
 const NEEDLE_COLOR = '#FF0000'; // Red needle
 const GLOW_COLOR = '#FFFF00'; // Yellow glow
 const BACKGROUND_COLOR = '#333333'; // Dark grey
@@ -59,7 +59,6 @@ function drawVoiceWaveform(canvasId, voiceIdx) {
         vuLevels.fill(0);
         needleAngles.fill(ANGLE_RANGE[0]);
         needleVelocities.fill(0);
-        // window.logmsg(`Paused, vuLevels: ${vuLevels.join(', ')}`, 1);
         return;
     }
 
@@ -202,7 +201,10 @@ function updateVoiceBuffers() {
 
 // Update needle physics
 function updateNeedlePhysics() {
-    const dt = 1 / TARGET_FPS; // Time step
+    const dt = 1 / 60; // Time step for 60 FPS (~0.0167s)
+    const kAttack = 100 / ATTACK_RATE; // Strong spring for attack
+    const kDecay = 50 / DECAY_RATE; // Moderate spring for decay
+    const damping = 0.8; // Strong damping for control
 
     logTimer += dt;
     logCounter++;
@@ -234,11 +236,21 @@ function updateNeedlePhysics() {
         const db = level > 0 ? 20 * Math.log10(level) : -100; // -100 dB to 0 dB
         const targetAngle = ANGLE_RANGE[0] + (db + 100) / 100 * (ANGLE_RANGE[1] - ANGLE_RANGE[0]); // Map -100 dB to 0 dB
 
-        // Exponential smoothing with capped alpha
-        const alphaAttack = Math.min(1.0, dt / ATTACK_RATE); // Cap at 1 to prevent overshoot
-        const alphaDecay = Math.min(1.0, dt / DECAY_RATE);
-        const alpha = needleAngles[i] < targetAngle ? alphaAttack : alphaDecay;
-        needleAngles[i] = needleAngles[i] + alpha * (targetAngle - needleAngles[i]);
+        const angleDiff = targetAngle - needleAngles[i];
+        if (angleDiff < -10) {
+            // Use smoothing for large downward swings
+            const alphaDecay = Math.min(1.0, dt / DECAY_RATE);
+            needleAngles[i] = needleAngles[i] + alphaDecay * (targetAngle - needleAngles[i]);
+            needleVelocities[i] = 0; // Reset velocity
+        } else {
+            // Use physics for attack and small decays
+            const currentAngle = needleAngles[i];
+            const velocity = needleVelocities[i];
+            const k = currentAngle < targetAngle ? kAttack : kDecay;
+            const acceleration = k * angleDiff * (1 + OVERSHOOT) - damping * velocity;
+            needleVelocities[i] += acceleration * dt;
+            needleAngles[i] += needleVelocities[i] * dt;
+        }
 
         // Clamp angle
         needleAngles[i] = Math.max(ANGLE_RANGE[0], Math.min(ANGLE_RANGE[1], needleAngles[i]));
@@ -281,8 +293,8 @@ function animateVoiceWaveforms() {
     const now = performance.now();
     const renderTime = now - lastRenderTime;
 
-    // Update at TARGET_FPS (172 Hz)
-    if (renderTime >= TIME_LIMIT) {
+    // Update at 60 FPS
+    if (renderTime >= 1000 / 60) {
         updateVoiceBuffers();
         updateNeedlePhysics();
         drawVoiceWaveform('voice1-canvas', 0);
@@ -330,5 +342,3 @@ if (document.readyState === 'loading') {
 } else {
     initVisualizations();
 }
-
-export { initVisualizations, drawVoiceWaveform, drawVUMeter };
