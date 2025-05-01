@@ -9,9 +9,9 @@ const TIME_LIMIT = 1000 / TARGET_FPS; // Time per frame in ms
 const VU_METER_COUNT = 3; // One per voice
 const NEEDLE_LENGTH = 25; // Pixels, scaled for 80x60px canvas
 const ANGLE_RANGE = [-60, 60]; // Degrees, -100 dB to 0 dB
-const ATTACK_RATE = 0.002; // Seconds, for spring strength (2ms for fast peaks)
-const DECAY_RATE = 0.01; // Seconds, for spring strength (10ms for bouncy decay)
-const OVERSHOOT = 0.1; // 10% overshoot for controlled 70s bounce
+const ATTACK_RATE = 0.004; // Seconds, for spring strength (2ms for fast peaks)
+const DECAY_RATE = 0.05; // Seconds, for spring strength (10ms for bouncy decay)
+const OVERSHOOT = 0.2; // 10% overshoot for controlled 70s bounce
 const NEEDLE_COLOR = '#FF0000'; // Red needle
 const GLOW_COLOR = '#FFFF00'; // Yellow glow
 const BACKGROUND_COLOR = '#333333'; // Dark grey
@@ -204,7 +204,7 @@ function updateNeedlePhysics() {
     const dt = 1 / 60; // Time step for 60 FPS (~0.0167s)
     const kAttack = 100 / ATTACK_RATE; // Strong spring for attack
     const kDecay = 50 / DECAY_RATE; // Moderate spring for decay
-    const damping = 0.8; // Strong damping for control
+    const damping = 0.9; // Strong damping for control
 
     logTimer += dt;
     logCounter++;
