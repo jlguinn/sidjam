@@ -9,9 +9,9 @@ const TIME_LIMIT = 1000 / TARGET_FPS; // Time per frame in ms
 const VU_METER_COUNT = 3; // One per voice
 const NEEDLE_LENGTH = 25; // Pixels, scaled for 80x60px canvas
 const ANGLE_RANGE = [-60, 60]; // Degrees, -100 dB to 0 dB
-const ATTACK_RATE = 0.004; // Seconds, for spring strength (2ms for fast peaks)
-const DECAY_RATE = 0.05; // Seconds, for spring strength (10ms for bouncy decay)
-const OVERSHOOT = 0.2; // 10% overshoot for controlled 70s bounce
+const ATTACK_RATE = 0.006; // Seconds, for spring strength (~3–6ms attack)
+const DECAY_RATE = 0.07; // Seconds, for spring strength (~50–100ms decay)
+const OVERSHOOT = 0.15; // 15% overshoot for controlled 70s bounce
 const NEEDLE_COLOR = '#FF0000'; // Red needle
 const GLOW_COLOR = '#FFFF00'; // Yellow glow
 const BACKGROUND_COLOR = '#333333'; // Dark grey
@@ -54,7 +54,7 @@ function drawVoiceWaveform(canvasId, voiceIdx) {
 
     // Check player state
     const player = window.player;
-    if (!player || player.isPaused() || !player._isSongReady) {
+    if (!player || !player._isSongReady) {
         voiceBuffers.forEach(buffer => buffer.fill(0));
         vuLevels.fill(0);
         needleAngles.fill(ANGLE_RANGE[0]);
@@ -62,7 +62,7 @@ function drawVoiceWaveform(canvasId, voiceIdx) {
         return;
     }
 
-    // Draw waveform
+    // Draw waveform (use last buffer state, even if paused)
     ctx.beginPath();
     ctx.strokeStyle = '#00FF00';
     ctx.lineWidth = 2;
@@ -111,7 +111,7 @@ function drawVUMeter(canvasId, voiceIdx) {
 
     // Check player state
     const player = window.player;
-    if (!player || player.isPaused() || !player._isSongReady) {
+    if (!player || !player._isSongReady) {
         return;
     }
 
@@ -122,7 +122,7 @@ function drawVUMeter(canvasId, voiceIdx) {
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    // Draw needle
+    // Draw needle (use current angle, even if paused)
     const angleDeg = needleAngles[voiceIdx];
     const angleRad = (angleDeg * Math.PI) / 180;
     const endX = pivotX + NEEDLE_LENGTH * Math.sin(angleRad);
@@ -145,11 +145,16 @@ function drawVUMeter(canvasId, voiceIdx) {
 // Update voice buffers and VU levels
 function updateVoiceBuffers() {
     const player = window.player;
-    if (!player || player.isPaused() || !player._isSongReady) {
+    if (!player || !player._isSongReady) {
         voiceBuffers.forEach(buffer => buffer.fill(0));
         vuLevels.fill(0);
-        needleAngles.fill(ANGLE_RANGE[0]); // Reset needles to minimum
-        needleVelocities.fill(0); // Reset velocities
+        needleAngles.fill(ANGLE_RANGE[0]);
+        needleVelocities.fill(0);
+        return;
+    }
+
+    if (player.isPaused()) {
+        vuLevels.fill(0); // Set to 0 for needle decay, keep voiceBuffers
         return;
     }
 
@@ -204,7 +209,7 @@ function updateNeedlePhysics() {
     const dt = 1 / 60; // Time step for 60 FPS (~0.0167s)
     const kAttack = 100 / ATTACK_RATE; // Strong spring for attack
     const kDecay = 50 / DECAY_RATE; // Moderate spring for decay
-    const damping = 0.9; // Strong damping for control
+    const damping = 0.95; // Tighter damping for control
 
     logTimer += dt;
     logCounter++;
@@ -230,6 +235,11 @@ function updateNeedlePhysics() {
         logCounter = 0;
     }
 
+    const player = window.player;
+    if (!player || !player._isSongReady) {
+        return; // Skip physics updates
+    }
+
     for (let i = 0; i < VU_METER_COUNT; i++) {
         // Map amplitude to angle (logarithmic scale)
         const level = vuLevels[i];
@@ -237,8 +247,7 @@ function updateNeedlePhysics() {
         const targetAngle = ANGLE_RANGE[0] + (db + 100) / 100 * (ANGLE_RANGE[1] - ANGLE_RANGE[0]); // Map -100 dB to 0 dB
 
         const angleDiff = targetAngle - needleAngles[i];
-        if (angleDiff < -10) {
-            // Use smoothing for large downward swings
+        if (angleDiff < -20) { // Smoothing for very large drops
             const alphaDecay = Math.min(1.0, dt / DECAY_RATE);
             needleAngles[i] = needleAngles[i] + alphaDecay * (targetAngle - needleAngles[i]);
             needleVelocities[i] = 0; // Reset velocity
