@@ -180,12 +180,12 @@ body {
     margin: 0 auto;
 }
 
-/* New parent container for player-info, voice-controls-container, and voice-visualizations */
+/* Parent container for player-info, voice-controls-container, and voice-visualizations */
 #player-section {
     position: relative;
     max-width: 800px;
     margin: 0 auto;
-    text-align: center; /* Ensures child elements like #player-info can be centered */
+    text-align: center;
 }
 
 #player-info {
@@ -328,15 +328,15 @@ body {
     margin-top: 15px;
 }
 
-/* Updated container for voice controls and VU meters */
+/* Must and VU Meters */
 #voice-controls-container {
     position: absolute;
-    top: 190px; /* Align with the top of #voice-visualizations */
-    left: calc(400px + 10px); /* 400px (#player-info width) + 10px gap */
-    transform: none; /* Remove viewport-dependent transform */
+    top: -10px;
+    left: 600px;
+    transform: none;
     display: flex;
     flex-direction: column;
-    gap: 10px; /* Matches gap in #voice-visualizations */
+    gap: 10px;
 }
 
 /* Style for each voice control row */
@@ -511,9 +511,9 @@ body {
 
 #color-toggle {
     position: absolute;
-    top: 190px; /* Align with #voice-controls-container */
-    left: calc(400px + 110px + 10px); /* #player-info width (400px) + #voice-controls-container width (110px) + 10px gap */
-    transform: none; /* Remove transform for consistency */
+    top: 202px; 
+    left: 934px; /* Adjusted to be closer to #voice-controls-container */
+    transform: none;
     display: flex;
     margin-bottom: 0;
 }
@@ -1076,12 +1076,12 @@ body {
 
 #voice-visualizations {
     position: absolute;
-    top: 155px; /* Adjusted to align better with #player-info */
-    left: calc(-260px - 10px); /* Align left of #player-info with 10px gap */
-    transform: none; /* Remove viewport-dependent transform */
+    top: -30px;
+    left: -90px;
+    transform: none;
     display: flex;
     flex-direction: column;
-    gap: 10px; /* Space between canvases */
+    gap: 10px;
 }
 
 #voice1-canvas,
@@ -1121,11 +1121,12 @@ body {
     }
 
     #color-toggle {
-        position: relative; /* Stack below #voice-visualizations */
-        left: 50%;
-        transform: translateX(-50%); /* Center on smaller screens */
-        top: auto; /* Remove absolute top positioning */
-        margin-top: 20px; /* Add spacing below #voice-visualizations */
+        position: absolute;
+        top: 2px;
+        left: calc(400px + 100px + 5px);
+        transform: none;
+        display: flex;
+        margin-bottom: 0;
     }
 
     .voice-control-row canvas {
