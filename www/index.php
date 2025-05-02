@@ -246,6 +246,10 @@ $cxn->close();
                     <p id="timer">Time: 00:00</p>
                 </div>
             </div>
+            <!-- Moved color-toggle inside player-info -->
+            <div id="color-toggle">
+                <button id="colorButton" onclick="window.toggleColorScheme()"><span class="inner-box"></span></button>
+            </div>
         </div>
 
         <div id="voice-controls-container">
@@ -269,7 +273,6 @@ $cxn->close();
             <canvas id="voice3-canvas" width="250" height="100"></canvas>
         </div>
     </div>
-
     <div id="color-toggle">
         <button id="colorButton" onclick="window.toggleColorScheme()"><span class="inner-box"></span></button>
     </div>

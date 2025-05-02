@@ -39,7 +39,7 @@ body {
     transition: color 0.3s;
     margin: 0;
     font-family: 'Tektur', sans-serif;
-    font-size: 2.5em; /* Increase the size */
+    font-size: 2.5em;
 }
 
 #version { 
@@ -52,9 +52,9 @@ body {
 
 #profile-package {
     position: absolute;
-    top: 30px; /* Adjusted to be just above #player-info */
-    left: 50%; /* Anchor from the center of the body */
-    transform: translateX(calc(-50% + 270px)); /* Center the package on the right edge of #player-info */
+    top: 30px;
+    left: 50%;
+    transform: translateX(calc(-50% + 270px));
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -63,7 +63,7 @@ body {
 #user-info {
     font-size: 0.9em;
     margin-bottom: 5px;
-    transition: color 0.3s; /* Added transition for consistency */
+    transition: color 0.3s;
 }
 
 #greeting { 
@@ -82,26 +82,24 @@ body {
 }
 
 #auth-link a {
-    color: inherit; /* Fallback until theme applies */
+    color: inherit;
     text-decoration: underline;
     cursor: pointer;
     transition: filter 0.3s ease;
 }
 
 #preferences-link a {
-    color: inherit; /* Fallback until theme applies */
+    color: inherit;
     text-decoration: underline;
     cursor: pointer;
     transition: filter 0.3s ease;
 }
 
-/* Style for the profile icon */
 #profile-icon {
     transition: filter 0.3s ease;
-    cursor: pointer; /* Ensure it looks clickable */
+    cursor: pointer;
 }
 
-/* Brighten on hover (for dark text/icons) */
 #auth-link a.brighten-on-hover:hover,
 #profile-icon.brighten-on-hover:hover,
 #auth-link a.brighten-on-hover.hover,
@@ -113,7 +111,6 @@ body {
     transition: filter 0.3s ease, transform 0.3s ease;
 }
 
-/* Darken on hover (for bright text/icons) */
 #auth-link a.darken-on-hover:hover,
 #profile-icon.darken-on-hover:hover,
 #auth-link a.darken-on-hover.hover,
@@ -163,8 +160,8 @@ body {
     text-align: center;
     margin-bottom: 10px;
     transition: color 0.3s;
-    min-height: 31px; /* Match the tallest content (winner-highlight: 24px line-height + 4px padding) */
-    line-height: 24px; /* Match the inherited line-height */
+    min-height: 31px;
+    line-height: 24px;
 }
 
 #round-info span, 
@@ -180,7 +177,6 @@ body {
     margin: 0 auto;
 }
 
-/* Parent container for player-info, voice-controls-container, and voice-visualizations */
 #player-section {
     position: relative;
     max-width: 800px;
@@ -210,36 +206,36 @@ body {
 }
 
 #track-details p {
-    margin: 8px 0; /* Uniform spacing */
+    margin: 8px 0;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis; /* Handle long text */
+    text-overflow: ellipsis;
 }
 
 #track-timer-controls-row {
     display: flex;
-    justify-content: space-between; /* Track left, timer right */
+    justify-content: space-between;
     align-items: center;
-    min-height: 39px; /* Match button height */
-    position: relative; /* Context for absolute positioning */
+    min-height: 39px;
+    position: relative;
 }
 
 #track-info {
-    flex: 0 0 auto; /* Fixed width */
-    padding-left: 10px; /* Prevent overlap with buttons */
+    flex: 0 0 auto;
+    padding-left: 10px;
 }
 
 #timer {
-    flex: 0 0 auto; /* Fixed width */
-    padding-right: 10px; /* Prevent overlap with buttons */
+    flex: 0 0 auto;
+    padding-right: 10px;
 }
 
 #player-controls {
     position: absolute;
     left: 50%;
-    transform: translateX(-50%); /* Center at 200px */
+    transform: translateX(-50%);
     top: 50%;
-    transform: translate(-50%, -50%); /* Center horizontally and vertically */
+    transform: translate(-50%, -50%);
     display: flex;
     align-items: center;
 }
@@ -289,10 +285,10 @@ body {
 }
 
 #jamButton {
-    width: 160px; /* Matches scaled width (320px * 0.5) */
-    height: 119px; /* Matches scaled height (238px * 0.5) */
+    width: 160px;
+    height: 119px;
     border: none;
-    background: url('../image/jam-static.png'); /* Fallback */
+    background: url('../image/jam-static.png');
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
@@ -300,11 +296,11 @@ body {
     cursor: pointer;
     vertical-align: middle;
     padding: 0;
-    position: relative; /* For canvas positioning */
+    position: relative;
 }
 
 #jamButton:hover:not(:disabled) {
-    filter: brightness(1.2); /* Matches #reviveButton:hover */
+    filter: brightness(1.2);
 }
 
 #jamButton:disabled {
@@ -318,7 +314,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 1; /* Ensure canvas is above background */
+    z-index: 1;
 }
 
 #jam-controls {
@@ -328,45 +324,41 @@ body {
     margin-top: 15px;
 }
 
-/* Must and VU Meters */
+/* Mute and VU Meter */
 #voice-controls-container {
     position: absolute;
     top: -10px;
-    left: 600px;
-    transform: none;
+    left: 80%;
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
 
-/* Style for each voice control row */
 .voice-control-row {
     display: flex;
     align-items: center;
-    gap: 10px; /* Space between checkbox and VU meter */
+    gap: 10px;
 }
 
-/* Style for voice mute checkboxes */
 .voice-control-row input[type="checkbox"] {
     width: 20px;
     height: 20px;
     cursor: pointer;
 }
 
-/* Style for VU meter canvases */
 .voice-control-row canvas {
     width: 80px;
     height: 60px;
     border: 1px solid #fff;
-    background-color: #333333; /* Dark grey for retro look */
+    background-color: #333333;
 }
 
 #bracket-flame-row {
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    margin-top: -25px; /* Pull up closer to winner-controls */
-    margin-bottom: 2px; /* Reduced from 5px */
+    margin-top: -25px;
+    margin-bottom: 2px;
     position: relative;
 }
 
@@ -400,20 +392,19 @@ body {
     line-height: 20px; 
 }
 
-/* styles.css (relevant excerpt) */
 #flameButton {
-    width: 75px; /* Adjusted for aspect ratio: 95px * (261/330) ≈ 75px */
-    height: 95px; /* New height */
+    width: 75px;
+    height: 95px;
     border: none;
-    background: url('../image/flame-static.png'); /* Fallback for JS failure */
+    background: url('../image/flame-static.png');
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
-    background-color: transparent; /* Allow theme color to show through */
+    background-color: transparent;
     cursor: pointer;
     vertical-align: middle;
     padding: 0;
-    position: relative; /* For canvas positioning */
+    position: relative;
 }
 
 #flameButton:disabled {
@@ -427,17 +418,15 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 1; /* Ensure canvas is above any background */
+    z-index: 1;
 }
 
-/* Adjust flame-wrapper positioning to center the larger button */
 #flame-wrapper {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
 }
 
-/* Ensure flame-controls accommodates the larger button */
 #flame-controls {
     display: flex;
     justify-content: center;
@@ -452,12 +441,11 @@ body {
     width: 80px;
     height: 80px;
     position: absolute;
-    left: 100%; /* Places Revive immediately to the right of jAM */
-    margin-left: 20px; /* Small gap between jAM and Revive */
-    top: -30px; /* Align halo with middle of jAM button */
+    left: 100%;
+    margin-left: 20px;
+    top: -30px;
 }
 
-/* Define the throb animation */
 @keyframes throb {
     0% { filter: brightness(1.0); }
     50% { filter: brightness(1.3); }
@@ -478,7 +466,6 @@ body {
     100% { transform: translate(0, 0); }
 }
 
-/* Define the blink animation for "Revive Activated" */
 @keyframes blink {
     0%, 20%, 40%, 60%, 80% { opacity: 1; }
     10%, 30%, 50%, 70%, 90% { opacity: 0; }
@@ -486,7 +473,7 @@ body {
 }
 
 .revive-activated {
-    animation: blink 2s forwards; /* 5 blinks, 0.4s each */
+    animation: blink 2s forwards;
 }
 
 #reviveButton:hover {
@@ -501,19 +488,18 @@ body {
 
 #reviveButton.active {
     animation: 
-        throb 0.7s infinite ease-in-out, /* Existing throbbing effect */
-        flitter 2.82s infinite ease-in-out; /* New flittering effect */
+        throb 0.7s infinite ease-in-out,
+        flitter 2.82s infinite ease-in-out;
 }
 
 .revive-highlight {
-    color: #90ee90; /* Same green as previously used for background */
+    color: #90ee90;
 }
 
 #color-toggle {
     position: absolute;
-    top: 202px; 
-    left: 934px; /* Adjusted to be closer to #voice-controls-container */
-    transform: none;
+    top: 5px;
+    right: 5px;
     display: flex;
     margin-bottom: 0;
 }
@@ -536,7 +522,6 @@ body {
     transform: translate(-50%, -50%); 
 }
 
-/* Song List Overlay Styles */
 #songListOverlay { 
     display: none; 
     position: fixed; 
@@ -613,7 +598,7 @@ body {
     transform: translateY(-50%);
     width: 0;
     height: 0;
-    border-left: 11px solid black; /* Widened to 12px */
+    border-left: 11px solid black;
     border-top: 7px solid transparent;
     border-bottom: 7px solid transparent;
 }
@@ -655,7 +640,6 @@ body {
     text-align: center; 
 }
 
-/* Auth Pop-Up Styles */
 #authOverlay { 
     display: none; 
     position: fixed; 
@@ -779,7 +763,6 @@ body {
     margin-top: 10px; 
 }
 
-/* Preferences Pop-Up Styles (updated) */
 #preferencesOverlay { 
     display: none; 
     position: fixed; 
@@ -793,16 +776,16 @@ body {
 
 #preferencesContainer { 
     position: absolute; 
-    top: 20px; /* Fix the top position */
-    left: 50%; 
-    transform: translateX(-50%); /* Center horizontally only */
-    background: white; 
-    padding: 20px; 
-    border-radius: 5px; 
-    width: 80%; 
-    max-width: 400px; 
-    box-sizing: border-box; 
-    min-height: 350px; /* Set based on Password tab height */
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 20px;
+    border-radius: 5px;
+    width: 80%;
+    max-width: 400px;
+    box-sizing: border-box;
+    min-height: 350px;
 }
 
 #closePreferences { 
@@ -920,11 +903,10 @@ body {
     text-decoration: underline; 
 }
 
-/* Ensure email display in confirmation section is styled */
 #newEmailDisplay {
     font-weight: bold;
     margin-bottom: 10px;
-    word-break: break-all; /* Prevent long emails from overflowing */
+    word-break: break-all;
 }
 
 .success-message {
@@ -937,12 +919,12 @@ body {
 .button-diffusion {
     display: flex;
     flex-direction: column;
-    gap: 8px; /* Adds a small "sliver" of whitespace between buttons */
+    gap: 8px;
 }
 
 .button-diffusion button {
-    width: 100%; /* Makes buttons full-width */
-    box-sizing: border-box; /* Ensures padding doesn't affect width */
+    width: 100%;
+    box-sizing: border-box;
 }
 
 #resetPasswordContainer {
@@ -1047,13 +1029,13 @@ body {
 .bitmap-button.disabled {
     filter: grayscale(100%) brightness(0.8) opacity(0.5);
     cursor: not-allowed;
-    pointer-events: none; /* Block hover and clicks */
+    pointer-events: none;
 }
 
 .bitmap-button.disabled * {
     filter: inherit;
     opacity: inherit;
-    pointer-events: none; /* Ensure pixel divs are non-interactive */
+    pointer-events: none;
 }
 
 .bitmap-button:hover:not(.disabled) {
@@ -1093,61 +1075,51 @@ body {
     background-color: #444; 
 }
 
-/* Responsive adjustment for smaller screens */
 @media (max-width: 700px) {
     #player-section {
-        max-width: 100%; /* Allow full width on smaller screens */
+        max-width: 100%;
     }
 
     #player-info {
-        width: 100%; /* Full width on smaller screens */
-        max-width: 400px; /* Maintain max width */
+        width: 100%;
+        max-width: 400px;
     }
 
     #voice-controls-container {
-        position: relative; /* Stack below #player-info */
+        position: relative;
         left: 50%;
-        transform: translateX(-50%); /* Center on smaller screens */
-        top: auto; /* Remove absolute top positioning */
-        margin-top: 20px; /* Add spacing below #player-info */
+        transform: translateX(-50%);
+        top: auto;
+        margin-top: 20px;
     }
 
     #voice-visualizations {
-        position: relative; /* Stack below #voice-controls-container */
+        position: relative;
         left: 50%;
-        transform: translateX(-50%); /* Center on smaller screens */
-        top: auto; /* Remove absolute top positioning */
-        margin-top: 20px; /* Add spacing below #voice-controls-container */
-    }
-
-    #color-toggle {
-        position: absolute;
-        top: 2px;
-        left: calc(400px + 100px + 5px);
-        transform: none;
-        display: flex;
-        margin-bottom: 0;
+        transform: translateX(-50%);
+        top: auto;
+        margin-top: 20px;
     }
 
     .voice-control-row canvas {
-        width: 60px; /* Smaller size on narrow screens */
+        width: 60px;
         height: 45px;
     }
 
     #track-timer-controls-row {
-        flex-direction: column; /* Stack track, controls, timer */
+        flex-direction: column;
         align-items: center;
     }
 
     #track-info, 
     #player-controls, 
     #timer {
-        margin-bottom: 10px; /* Space between elements */
-        flex: 0 0 auto; /* Reset flex for stacking */
+        margin-bottom: 10px;
+        flex: 0 0 auto;
     }
 
     #player-controls {
-        position: relative; /* Revert to relative for stacking */
+        position: relative;
         left: auto;
         top: auto;
         transform: none;
@@ -1155,10 +1127,10 @@ body {
     }
 
     #track-details {
-        text-align: center; /* Center text */
+        text-align: center;
     }
 
     #track-details p {
-        white-space: normal; /* Allow wrapping */
+        white-space: normal;
     }
 }
