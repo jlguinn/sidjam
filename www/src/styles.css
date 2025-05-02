@@ -205,7 +205,7 @@ body {
 #voice-controls-container {
     position: absolute;
     top: 190px; /* Align with the top of #voice-visualizations, per commit d3aee57 */
-    left: 460px; /* Anchor from the center of the body */
+    left: 590px; /* Anchor from the center of the body */
     transform: translateX(calc(-50% + 330px)); /* Positions center of container at +530px from center, aligning with right edge of player-info */
     display: flex;
     flex-direction: column;
@@ -356,7 +356,7 @@ body {
 
 #color-toggle {
     position: absolute;
-    top: 210px; /* Restored to original position */
+    top: 205px; /* Restored to original position */
     left: 40%; /* Anchor from the center of the body */
     transform: translateX(calc(-50% + 288px)); /* Restored to original position */
     display: flex;
@@ -595,7 +595,7 @@ body {
 
 #voice-visualizations {
     position: absolute;
-    top: 135px; /* Adjusted to align better with #player-info, per commit d3aee57 */
+    top: 155px; /* Adjusted to align better with #player-info, per commit d3aee57 */
     left: 48%; /* Anchor from the center of the body */
     transform: translateX(calc(-50% - 330px)); /* Positions center of canvases at -530px from center */
     display: flex;
