@@ -136,23 +136,27 @@ body {
 }
 #track-timer-controls-row {
     display: flex;
+    justify-content: space-between; /* Track left, timer right */
     align-items: center;
-    justify-content: space-between;
-    min-height: 39px; /* Match button height for alignment */
+    min-height: 39px; /* Match button height */
+    position: relative; /* Context for absolute positioning */
 }
 #track-info {
     flex: 0 0 auto; /* Fixed width */
-    align-self: center;
-}
-#player-controls {
-    flex: 1; /* Take available space to center */
-    display: flex;
-    justify-content: center; /* Center buttons within flex space */
-    align-items: center;
+    padding-left: 10px; /* Prevent overlap with buttons */
 }
 #timer {
     flex: 0 0 auto; /* Fixed width */
-    align-self: center;
+    padding-right: 10px; /* Prevent overlap with buttons */
+}
+#player-controls {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%); /* Center at 200px */
+    top: 50%;
+    transform: translate(-50%, -50%); /* Center horizontally and vertically */
+    display: flex;
+    align-items: center;
 }
 .image-button { width: 47px; height: 39px; border: none; background: none; cursor: pointer; vertical-align: middle; padding: 2px; }
 .image-button:disabled { filter: grayscale(100%) opacity(0.5); cursor: not-allowed; }
@@ -638,6 +642,10 @@ body {
     }
 
     #player-controls {
+        position: relative; /* Revert to relative for stacking */
+        left: auto;
+        top: auto;
+        transform: none;
         justify-content: center;
     }
 
