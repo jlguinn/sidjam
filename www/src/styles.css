@@ -568,7 +568,7 @@ body {
 
 #voice-visualizations {
     position: absolute;
-    top: 170px; /* Adjusted to align better with #player-info */
+    top: 135px; /* Adjusted to align better with #player-info */
     left: 48%; /* Anchor from the center of the body */
     transform: translateX(calc(-50% - 330px)); /* Positions center of canvases at -530px from center */
     display: flex;
