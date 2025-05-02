@@ -6,6 +6,17 @@ const TARGET_FPS = 172; // Emulator tick rate
 const TIME_LIMIT = 1000 / TARGET_FPS; // Time per frame in ms
 
 // VU meter configuration
+/* Tweakable Parameters for Needle Physics
+ * - ATTACK_RATE (Baseline: 0.006): Time (seconds) for needle attack (~3–6ms). Lower (e.g., 0.004) for snappier peaks (~2–4ms), higher (e.g., 0.01) for softer (~5–10ms). Range: 0.002–0.02.
+ * - DECAY_RATE (Baseline: 0.07): Time (seconds) for needle decay (~50–100ms). Lower (e.g., 0.05) for faster decay (~20–30ms), higher (e.g., 0.1) for floatier (~100–150ms). Range: 0.01–0.2.
+ * - OVERSHOOT (Baseline: 0.15): Overshoot percentage for bouncy swings (~4.5°–9°). Lower (e.g., 0.1) for subtler bounce (~3°–6°), higher (e.g., 0.2) for livelier (~6°–12°). Range: 0.05–0.3.
+ * - damping (Baseline: 0.95): Damping factor in updateNeedlePhysics. Higher (e.g., 0.98) for tighter 1–2 bounces, lower (e.g., 0.9) for looser 2–3 bounces. Range: 0.7–0.99.
+ * - angleDiff Threshold (Baseline: -20): In updateNeedlePhysics, triggers smoothing for large drops. Stricter (e.g., -30) for smoother Voice 2 silence, looser (e.g., -10) for more physics. Range: -10 to -50.
+ * Safe Inline Adjustments:
+ * - alphaDecay: In updateNeedlePhysics, adjust `Math.min(1.0, dt / DECAY_RATE)` to `Math.min(0.5, dt / DECAY_RATE)` for slower smoothing (~2x decay time).
+ * - Dynamic k: In updateNeedlePhysics, modify `k *= 0.5` for large drops to `k *= 0.3` for softer decays or `k *= 0.7` for more bounce.
+ * Notes: Test tweaks with ~10s playback, check logs for pegging (>50°) or dips (<-30°). Baseline values optimized for 70s VU meter vibe with ~6 Hz bassline.
+ */
 const VU_METER_COUNT = 3; // One per voice
 const NEEDLE_LENGTH = 25; // Pixels, scaled for 80x60px canvas
 const ANGLE_RANGE = [-60, 60]; // Degrees, -100 dB to 0 dB
