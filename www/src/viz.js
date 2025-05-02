@@ -238,7 +238,7 @@ function updateNeedlePhysics() {
             for (let i = 0; i < VU_METER_COUNT; i++) {
                 const db = vuLevels[i] > 0 ? 20 * Math.log10(vuLevels[i]) : -100; // -100 dB to 0 dB
                 const targetAngle = ANGLE_RANGE[0] + (db + 100) / 100 * (ANGLE_RANGE[1] - ANGLE_RANGE[0]); // Map -100 dB to 0 dB
-                window.logmsg(`Voice ${i + 1}: Angle=${needleAngles[i].toFixed(1)}°, Magnitude=${vuLevels[i].toFixed(3)}, TargetAngle=${targetAngle.toFixed(1)}°`, 1);
+                // window.logmsg(`Voice ${i + 1}: Angle=${needleAngles[i].toFixed(1)}°, Magnitude=${vuLevels[i].toFixed(3)}, TargetAngle=${targetAngle.toFixed(1)}°`, 2);
             }
         }
 
@@ -293,7 +293,7 @@ function initTraceStreams() {
             for (let i = 0; i < numStreams && i < 3; i++) {
                 traceStreams.push(streamsArray[i] >> 1);
             }
-            window.logmsg(`Initialized ${traceStreams.length} trace streams`, 1);
+            // window.logmsg(`Initialized ${traceStreams.length} trace streams`, 1);
             return true;
         } else {
             window.logmsg(`Insufficient trace streams: ${numStreams}`, 1);
