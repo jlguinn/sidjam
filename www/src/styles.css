@@ -205,7 +205,7 @@ body {
 #voice-controls-container {
     position: absolute;
     top: 190px; /* Align with the top of #voice-visualizations, per commit d3aee57 */
-    left: 530px; /* Anchor from the center of the body */
+    left: 460px; /* Anchor from the center of the body */
     transform: translateX(calc(-50% + 330px)); /* Positions center of container at +530px from center, aligning with right edge of player-info */
     display: flex;
     flex-direction: column;
@@ -356,8 +356,8 @@ body {
 
 #color-toggle {
     position: absolute;
-    top: 350px; /* Restored to original position */
-    left: 41%; /* Anchor from the center of the body */
+    top: 210px; /* Restored to original position */
+    left: 40%; /* Anchor from the center of the body */
     transform: translateX(calc(-50% + 288px)); /* Restored to original position */
     display: flex;
     margin-bottom: 0;
