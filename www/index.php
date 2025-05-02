@@ -235,12 +235,18 @@ $cxn->close();
     <div id="track-details">
         <p id="song-author">Author: -</p>
         <p id="song-released">Released: -</p>
-        <p id="track-info">Track: -</p>
-        <p id="timer">Time: 00:00</p>
+        <div id="track-timer-controls-row">
+            <p id="track-info">Track: -</p>
+            <div id="player-controls">
+                <button id="prevButton" class="control-button image-button" style="background-image: url('image/prev.png')" onclick="window.prevTrack()" disabled></button>
+                <button id="playPauseButton" class="control-button image-button" style="background-image: url('image/play.png')" onclick="window.togglePlayPause()" disabled></button>
+                <button id="nextButton" class="control-button image-button" style="background-image: url('image/next.png')" onclick="window.nextTrack()" disabled></button>
+            </div>
+            <p id="timer">Time: 00:00</p>
+        </div>
     </div>
 </div>
 
-<!-- New container for voice controls and VU meters to the right of player-info -->
 <div id="voice-controls-container">
     <div class="voice-control-row" data-voice="1">
         <input type="checkbox" id="voice1" checked>
@@ -252,20 +258,12 @@ $cxn->close();
     </div>
     <div class="voice-control-row" data-voice="3">
         <input type="checkbox" id="voice3" checked>
-        <canvas id="vu3-canvas" width="80" height="60" title="Voice 3 VU Meter"></canvas>
+        <canvas id="vu3-canvas" width="80" height="60" title="Voice 1 VU Meter"></canvas>
     </div>
 </div>
 
 <div id="color-toggle">
     <button id="colorButton" onclick="window.toggleColorScheme()"><span class="inner-box"></span></button>
-</div>
-
-<div id="control-row">
-    <div id="player-controls">
-        <button id="prevButton" class="control-button image-button" style="background-image: url('image/prev.png')" onclick="window.prevTrack()" disabled></button>
-        <button id="playPauseButton" class="control-button image-button" style="background-image: url('image/play.png')" onclick="window.togglePlayPause()" disabled></button>
-        <button id="nextButton" class="control-button image-button" style="background-image: url('image/next.png')" onclick="window.nextTrack()" disabled></button>
-    </div>
 </div>
 
 <div id="jam-controls">

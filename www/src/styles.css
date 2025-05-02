@@ -119,25 +119,48 @@ body {
     margin-bottom: 10px;
     text-align: center;
     transition: background-color 0.3s;
-    width: 400px; /* Reduced from 600px */
+    width: 400px;
     margin-left: auto;
     margin-right: auto;
     position: relative;
 }
 #song-title { margin-bottom: 10px; }
-.revive-highlight { background-color: #90ee90; padding: 2px 5px; border-radius: 3px; }
 #track-details {
-    margin-left: 10px; /* Reduced from 30% to align text closer to the left */
     text-align: left;
 }
-.active-song { background-color: #00ffff; padding: 2px 5px; border-radius: 3px; }
-.flame-song { background-color: #8B0000; padding: 2px 5px; border-radius: 3px; color: white; }
-.winner-highlight { background-color: #90ee90; padding: 2px 5px; border-radius: 3px; }
+#track-details p {
+    margin: 8px 0; /* Uniform spacing */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Handle long text */
+}
+#track-timer-controls-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 39px; /* Match button height for alignment */
+}
+#track-info {
+    flex: 0 0 auto; /* Fixed width */
+    align-self: center;
+}
+#player-controls {
+    flex: 1; /* Take available space to center */
+    display: flex;
+    justify-content: center; /* Center buttons within flex space */
+    align-items: center;
+}
+#timer {
+    flex: 0 0 auto; /* Fixed width */
+    align-self: center;
+}
 .image-button { width: 47px; height: 39px; border: none; background: none; cursor: pointer; vertical-align: middle; padding: 2px; }
 .image-button:disabled { filter: grayscale(100%) opacity(0.5); cursor: not-allowed; }
 #playPauseButton { padding: 0; }
-#control-row { display: flex; justify-content: center; margin-bottom: 5px; }
-#player-controls { display: flex; justify-content: center; }
+.revive-highlight { background-color: #90ee90; padding: 2px 5px; border-radius: 3px; }
+.active-song { background-color: #00ffff; padding: 2px 5px; border-radius: 3px; }
+.flame-song { background-color: #8B0000; padding: 2px 5px; border-radius: 3px; color: white; }
+.winner-highlight { background-color: #90ee90; padding: 2px 5px; border-radius: 3px; }
 #jamButton {
     width: 160px; /* Matches scaled width (320px * 0.5) */
     height: 119px; /* Matches scaled height (238px * 0.5) */
@@ -177,7 +200,7 @@ body {
 /* New container for voice controls and VU meters */
 #voice-controls-container {
     position: absolute;
-    top: 190px; /* Align with the top of #voice-visualizations */
+    top: 190px; /* Align with the top of #voice-visualizations, per commit d3aee57 */
     left: 530px; /* Anchor from the center of the body */
     transform: translateX(calc(-50% + 330px)); /* Positions center of container at +530px from center, aligning with right edge of player-info */
     display: flex;
@@ -329,9 +352,9 @@ body {
 
 #color-toggle {
     position: absolute;
-    top: 350px; /* Just below the bottom of #player-info */
+    top: 350px; /* Restored to original position */
     left: 41%; /* Anchor from the center of the body */
-    transform: translateX(calc(-50% + 288px)); /* Center the button on the right edge of #player-info */
+    transform: translateX(calc(-50% + 288px)); /* Restored to original position */
     display: flex;
     margin-bottom: 0;
 }
@@ -435,12 +458,12 @@ body {
     font-weight: bold;
     margin-bottom: 15px;
 }
-.button-group {
+.button-diffusion {
     display: flex;
     flex-direction: column;
     gap: 8px; /* Adds a small "sliver" of whitespace between buttons */
 }
-.button-group button {
+.button-diffusion button {
     width: 100%; /* Makes buttons full-width */
     box-sizing: border-box; /* Ensures padding doesn't affect width */
 }
@@ -568,7 +591,7 @@ body {
 
 #voice-visualizations {
     position: absolute;
-    top: 135px; /* Adjusted to align better with #player-info */
+    top: 135px; /* Adjusted to align better with #player-info, per commit d3aee57 */
     left: 48%; /* Anchor from the center of the body */
     transform: translateX(calc(-50% - 330px)); /* Positions center of canvases at -530px from center */
     display: flex;
@@ -602,5 +625,27 @@ body {
     .voice-control-row canvas {
         width: 60px; /* Smaller size on narrow screens */
         height: 45px;
+    }
+
+    #track-timer-controls-row {
+        flex-direction: column; /* Stack track, controls, timer */
+        align-items: center;
+    }
+
+    #track-info, #player-controls, #timer {
+        margin-bottom: 10px; /* Space between elements */
+        flex: 0 0 auto; /* Reset flex for stacking */
+    }
+
+    #player-controls {
+        justify-content: center;
+    }
+
+    #track-details {
+        text-align: center; /* Center text */
+    }
+
+    #track-details p {
+        white-space: normal; /* Allow wrapping */
     }
 }
