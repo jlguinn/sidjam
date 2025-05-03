@@ -252,6 +252,7 @@ $cxn->close();
         </div>
 
         <div id="voice-controls-container">
+            <button id="vu-toggle-button" class="viz-toggle-button" style="background-image: url('image/vu_button.png')" title="Toggle VU Meters"></button>
             <div class="voice-control-row" data-voice="1">
                 <button id="voice1" class="voice-button" data-state="on" title="Toggle Voice 1 Mute"></button>
                 <span class="voice-label" data-state="on"></span>
@@ -270,6 +271,7 @@ $cxn->close();
         </div>
 
         <div id="voice-visualizations">
+            <button id="wave-toggle-button" class="viz-toggle-button" style="background-image: url('image/wave_button.png')" title="Toggle Waveforms"></button>
             <canvas id="voice1-canvas" width="250" height="100"></canvas>
             <canvas id="voice2-canvas" width="250" height="100"></canvas>
             <canvas id="voice3-canvas" width="250" height="100"></canvas>

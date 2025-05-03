@@ -1127,6 +1127,94 @@ body {
     margin-right: 180px;
 }
 
+/* Voice Controls Container (VU Meters) */
+#voice-controls-container {
+    position: absolute;
+    top: -10px;
+    left: 80%; /* Original positioning */
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Waveform Visualizations */
+#voice-visualizations {
+    position: absolute;
+    top: -30px;
+    left: -90px; /* Original positioning */
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Waveform Controls (for toggle button) */
+#waveform-controls {
+    position: relative;
+    width: 250px; /* Match canvas width */
+    height: 21px; /* Match button height */
+    margin-bottom: 5px; /* Small gap before canvases */
+}
+
+/* Visualization Toggle Buttons */
+.viz-toggle-button {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 21px;
+    height: 21px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: transparent;
+    border: 1px solid #fff;
+    border-radius: 3px;
+    cursor: pointer;
+    z-index: 10; /* Ensure button stays above canvases */
+    transition: filter 0.3s ease, transform 0.3s ease;
+}
+
+.viz-toggle-button:hover {
+    filter: brightness(1.3);
+    transform: scale(1.1);
+}
+
+.viz-toggle-button:disabled {
+    filter: grayscale(100%) opacity(0.5);
+    cursor: not-allowed;
+}
+
+/* Responsive adjustments */
+@media (max-width: 700px) {
+    #voice-controls-container {
+        position: relative;
+        left: 50%;
+        transform: translateX(-50%);
+        top: auto;
+        margin-top: 20px;
+    }
+
+    #voice-visualizations {
+        position: relative;
+        left: 50%;
+        transform: translateX(-50%);
+        top: auto;
+        margin-top: 20px;
+    }
+
+    #waveform-controls {
+        width: 250px; /* Maintain canvas width */
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .viz-toggle-button {
+        top: 0;
+        right: 0;
+        width: 18px;
+        height: 18px;
+    }
+}
+
 #voice-visualizations {
     position: absolute;
     top: -30px;
