@@ -399,7 +399,30 @@ body {
     box-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
 }
 
+.voice-label {
+    color: #00ffff; /* Cyan, matching the retro aesthetic */
+    font-family: 'C64', monospace;
+    font-size: 14px;
+    transition: color 0.3s ease;
+}
 
+.voice-label[data-state="off"] {
+    color: #444444; /* Dark gray for muted state */
+}
+
+#voice-controls-container canvas {
+    border: 2px solid #fff; /* Unchanged frame */
+    background-color: #000;
+    transition: filter 0.3s ease;
+}
+
+#voice-controls-container canvas[data-state="on"] {
+    filter: brightness(100%);
+}
+
+#voice-controls-container canvas[data-state="off"] {
+    filter: brightness(50%); /* Darkened for muted state */
+}
 
 #bracket-flame-row {
     display: flex;

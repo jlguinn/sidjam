@@ -187,9 +187,14 @@ export function updateTimer() {
 export function toggleVoice(voiceNum) {
     if (window.backend) {
         const button = document.getElementById(`voice${voiceNum}`);
+        const canvas = document.getElementById(`vu${voiceNum}-canvas`);
+        const label = document.querySelector(`.voice-control-row[data-voice="${voiceNum}"] .voice-label`);
         const isOn = button.getAttribute('data-state') === 'on';
         const newState = !isOn;
-        button.setAttribute('data-state', newState ? 'on' : 'off');
+        const stateAttr = newState ? 'on' : 'off';
+        button.setAttribute('data-state', stateAttr);
+        canvas.setAttribute('data-state', stateAttr);
+        label.setAttribute('data-state', stateAttr);
         window.backend.enableVoice(0, voiceNum - 1, newState);
     }
 }
@@ -198,7 +203,11 @@ export function resetVoiceStates() {
     if (window.backend) {
         for (let i = 1; i <= 3; i++) {
             const button = document.getElementById(`voice${i}`);
+            const canvas = document.getElementById(`vu${i}-canvas`);
+            const label = document.querySelector(`.voice-control-row[data-voice="${i}"] .voice-label`);
             button.setAttribute('data-state', 'on');
+            canvas.setAttribute('data-state', 'on');
+            label.setAttribute('data-state', 'on');
             window.backend.enableVoice(0, i - 1, true);
         }
     }
