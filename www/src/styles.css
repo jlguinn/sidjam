@@ -1130,8 +1130,8 @@ body {
 /* Voice Controls Container (VU Meters) */
 #voice-controls-container {
     position: absolute;
-    top: -10px;
-    left: 80%; /* Original positioning */
+    top: 15px; /* Nudged down previously to avoid overlap with song name */
+    left: 80%;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -1140,8 +1140,8 @@ body {
 /* Waveform Visualizations */
 #voice-visualizations {
     position: absolute;
-    top: -30px;
-    left: -90px; /* Original positioning */
+    top: -5px; /* Nudged down previously to avoid overlap with song name */
+    left: -90px;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -1149,10 +1149,20 @@ body {
 
 /* Waveform Controls (for toggle button) */
 #waveform-controls {
-    position: relative;
+    position: absolute;
+    top: -26px; /* Position above #voice-visualizations: -5px (parent top) - 21px (button height) */
+    left: -90px; /* Match #voice-visualizations left */
     width: 250px; /* Match canvas width */
     height: 21px; /* Match button height */
-    margin-bottom: 5px; /* Small gap before canvases */
+}
+
+/* VU Controls (for toggle button) */
+#vu-controls {
+    position: absolute;
+    top: -6px; /* Position above #voice-controls-container: 15px (parent top) - 21px (button height) */
+    left: 80%; /* Match #voice-controls-container left */
+    width: 120px; /* Match VU canvas width */
+    height: 21px; /* Match button height */
 }
 
 /* Visualization Toggle Buttons */
@@ -1190,7 +1200,16 @@ body {
         left: 50%;
         transform: translateX(-50%);
         top: auto;
-        margin-top: 20px;
+        margin-top: 45px; /* Adjusted for button and spacing */
+    }
+
+    #vu-controls {
+        position: relative;
+        left: 50%;
+        transform: translateX(-50%);
+        top: auto;
+        margin-top: 20px; /* Position above VU meters on small screens */
+        width: 120px;
     }
 
     #voice-visualizations {
@@ -1198,13 +1217,16 @@ body {
         left: 50%;
         transform: translateX(-50%);
         top: auto;
-        margin-top: 20px;
+        margin-top: 45px; /* Adjusted for button and spacing */
     }
 
     #waveform-controls {
-        width: 250px; /* Maintain canvas width */
-        margin-left: auto;
-        margin-right: auto;
+        position: relative;
+        left: 50%;
+        transform: translateX(-50%);
+        top: auto;
+        margin-top: 20px; /* Position above waveforms on small screens */
+        width: 250px;
     }
 
     .viz-toggle-button {
