@@ -33,6 +33,30 @@ let logTimer = 0; // Track time for logging
 let logCounter = 0; // Frame counter for throttling
 let zeroTickCount = 0; // Count consecutive all-zero ticks
 
+
+const vuLabelImage = new Image();
+vuLabelImage.src = '../image/vu_label.png'; // Adjust path if needed
+const vuFrameImage = new Image();
+vuFrameImage.src = '../image/vu_frame.png'; // Adjust path if needed
+let isLabelImageLoaded = false;
+let isFrameImageLoaded = false;
+
+vuLabelImage.onload = () => {
+    isLabelImageLoaded = true;
+    window.logmsg('VU label image loaded successfully', 1);
+};
+vuLabelImage.onerror = () => {
+    window.logmsg('Failed to load VU label image', 1);
+};
+vuFrameImage.onload = () => {
+    isFrameImageLoaded = true;
+    window.logmsg('VU frame image loaded successfully', 1);
+};
+vuFrameImage.onerror = () => {
+    window.logmsg('Failed to load VU frame image', 1);
+};
+
+
 const voiceBuffers = [
     new Float32Array(BUFFER_SIZE), // Voice 1
     new Float32Array(BUFFER_SIZE), // Voice 2
@@ -110,15 +134,18 @@ function drawVUMeter(canvasId, voiceIdx) {
         return;
     }
     const ctx = canvas.getContext('2d');
-    const width = canvas.width; // 80
-    const height = canvas.height; // 60
+    const width = canvas.width; // 100
+    const height = canvas.height; // 57
     const pivotX = width / 2;
-    const pivotY = height * 0.9; // Near bottom
+    const pivotY = height * 0.9; // Keep as-is for now
 
     // Clear canvas
     ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = BACKGROUND_COLOR;
-    ctx.fillRect(0, 0, width, height);
+
+    // Draw VU label image as background if loaded
+    if (isLabelImageLoaded) {
+        ctx.drawImage(vuLabelImage, 0, 0, width, height); // Scale to canvas size
+    }
 
     // Check player state
     const player = window.player;
@@ -126,14 +153,7 @@ function drawVUMeter(canvasId, voiceIdx) {
         return;
     }
 
-    // Draw simple background (semi-circle)
-    ctx.beginPath();
-    ctx.arc(pivotX, pivotY, NEEDLE_LENGTH + 5, Math.PI, 2 * Math.PI);
-    ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    // Draw needle (use current angle, even if paused)
+    // Draw the needle
     const angleDeg = needleAngles[voiceIdx];
     const angleRad = (angleDeg * Math.PI) / 180;
     const endX = pivotX + NEEDLE_LENGTH * Math.sin(angleRad);
@@ -142,16 +162,16 @@ function drawVUMeter(canvasId, voiceIdx) {
     ctx.beginPath();
     ctx.moveTo(pivotX, pivotY);
     ctx.lineTo(endX, endY);
-    ctx.strokeStyle = NEEDLE_COLOR;
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#000000'; // Black needle
+    ctx.lineWidth = 1; // Skinny needle
     ctx.stroke();
 
-    // Draw glow at needle tip
-    ctx.beginPath();
-    ctx.arc(endX, endY, 3, 0, 2 * Math.PI);
-    ctx.fillStyle = GLOW_COLOR;
-    ctx.fill();
+    // Draw VU frame image as top layer if loaded
+    if (isFrameImageLoaded) {
+        ctx.drawImage(vuFrameImage, 0, 0, width, height); // Scale to canvas size
+    }
 }
+
 
 // Update voice buffers and VU levels
 function updateVoiceBuffers() {
@@ -309,24 +329,24 @@ function initTraceStreams() {
 let lastRenderTime = 0;
 let refreshCounter = 0;
 
-function animateVoiceWaveforms() {
+function updateViz() {
     const now = performance.now();
     const renderTime = now - lastRenderTime;
 
     // Update at 60 FPS
     if (renderTime >= 1000 / 60) {
         updateVoiceBuffers();
-        // updateNeedlePhysics();
+        updateNeedlePhysics();
         drawVoiceWaveform('voice1-canvas', 0);
         drawVoiceWaveform('voice2-canvas', 1);
         drawVoiceWaveform('voice3-canvas', 2);
-        // drawVUMeter('vu1-canvas', 0);
-        // drawVUMeter('vu2-canvas', 1);
-        // drawVUMeter('vu3-canvas', 2);
+        drawVUMeter('vu1-canvas', 0);
+        drawVUMeter('vu2-canvas', 1);
+        drawVUMeter('vu3-canvas', 2);
         lastRenderTime = now;
     }
 
-    requestAnimationFrame(animateVoiceWaveforms);
+    requestAnimationFrame(updateViz);
 }
 
 // Initialize visualizations
@@ -354,7 +374,7 @@ function initVisualizations() {
     vuLevels.fill(0);
     needleAngles.fill(ANGLE_RANGE[0]);
     needleVelocities.fill(0);
-    animateVoiceWaveforms();
+    updateViz();
 }
 
 if (document.readyState === 'loading') {

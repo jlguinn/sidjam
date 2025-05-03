@@ -346,17 +346,19 @@ body {
     cursor: pointer;
 }
 
-.voice-control-row img {
+.voice-control-row canvas {
     width: 100px;
     height: 57px;
     border: 1px solid #fff;
+    background-color: transparent;
 }
 @media (max-width: 700px) {
-    .voice-control-row img {
-        width: 75px; /* Scaled proportionally from 100px */
-        height: 43px; /* 75 / 1.74 ≈ 43 to maintain aspect ratio */
+    .voice-control-row canvas {
+        width: 75px;
+        height: 43px;
     }
 }
+
 #bracket-flame-row {
     display: flex;
     align-items: center;
