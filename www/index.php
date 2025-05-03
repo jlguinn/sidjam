@@ -253,15 +253,15 @@ $cxn->close();
 
         <div id="voice-controls-container">
             <div class="voice-control-row" data-voice="1">
-                <input type="checkbox" id="voice1" checked>
-                <canvas id="vu1-canvas" width="120" height="70 title="Voice 1 VU Meter"></canvas>
+                <button id="voice1" class="voice-button" data-state="on" title="Toggle Voice 1 Mute"></button>
+                <canvas id="vu1-canvas" width="120" height="70" title="Voice 1 VU Meter"></canvas>
             </div>
             <div class="voice-control-row" data-voice="2">
-                <input type="checkbox" id="voice2" checked>
+                <button id="voice2" class="voice-button" data-state="on" title="Toggle Voice 2 Mute"></button>
                 <canvas id="vu2-canvas" width="120" height="70" title="Voice 2 VU Meter"></canvas>
             </div>
             <div class="voice-control-row" data-voice="3">
-                <input type="checkbox" id="voice3" checked>
+                <button id="voice3" class="voice-button" data-state="on" title="Toggle Voice 3 Mute"></button>
                 <canvas id="vu3-canvas" width="120" height="70" title="Voice 3 VU Meter"></canvas>
             </div>
         </div>

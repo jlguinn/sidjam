@@ -369,6 +369,38 @@ body {
     }
 }
 
+.voice-button {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #fff;
+    background-color: #333;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: background-color 0.3s ease;
+}
+
+.voice-button[data-state="on"] {
+    background: radial-gradient(circle at center, #ff0000 0%, #800000 50%, #333 70%);
+    box-shadow: 0 0 8px rgba(255, 0, 0, 0.6);
+}
+
+.voice-button[data-state="off"] {
+    background: #333;
+    box-shadow: none;
+}
+
+.voice-button:hover {
+    filter: brightness(1.2);
+}
+
+.voice-button:focus {
+    outline: none;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+}
+
+
+
 #bracket-flame-row {
     display: flex;
     align-items: center;

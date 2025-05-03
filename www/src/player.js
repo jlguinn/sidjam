@@ -186,15 +186,19 @@ export function updateTimer() {
 
 export function toggleVoice(voiceNum) {
     if (window.backend) {
-        const checkbox = document.getElementById(`voice${voiceNum}`);
-        window.backend.enableVoice(0, voiceNum - 1, checkbox.checked);
+        const button = document.getElementById(`voice${voiceNum}`);
+        const isOn = button.getAttribute('data-state') === 'on';
+        const newState = !isOn;
+        button.setAttribute('data-state', newState ? 'on' : 'off');
+        window.backend.enableVoice(0, voiceNum - 1, newState);
     }
 }
 
 export function resetVoiceStates() {
     if (window.backend) {
         for (let i = 1; i <= 3; i++) {
-            document.getElementById(`voice${i}`).checked = true;
+            const button = document.getElementById(`voice${i}`);
+            button.setAttribute('data-state', 'on');
             window.backend.enableVoice(0, i - 1, true);
         }
     }

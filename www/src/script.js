@@ -1118,8 +1118,8 @@ async function initializeApp() {
     
       document.getElementById("playPauseButton").disabled = false;
       for (let i = 1; i <= 3; i++) {
-        document.getElementById(`voice${i}`).addEventListener('change', () => player.toggleVoice(i));
-      }
+        document.getElementById(`voice${i}`).addEventListener('click', () => player.toggleVoice(i));
+    }
     
       // Apply initial theme and render winner button bitmaps
       ui.applyTheme(brackets.getPlayerState().currentMode);
