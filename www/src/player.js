@@ -107,7 +107,7 @@ export async function initPlayer(getPlayerState, updateWinnerButtons, updateFlam
 export async function togglePlayPause(updateRoundInfo, updatePlayPauseButton, updateWinnerButtons, updateFlameButton, updateJamButton, initPlayerFn, updatePlayerState) {
     if (!sidPlayer) {
         await initPlayerFn();
-        console.log("Note: Please ignore ScriptProcessorNode Deprecation warning. We will not be remediating at this time.");
+        console.log("Note: Please ignore ScriptNodePlayer Deprecation warning. We will not be remediating at this time.");
         window.logmsg("[>]", 1);
         if (isPlaying && updateJamButton) {
             updateJamButton(true);
@@ -127,10 +127,9 @@ export async function togglePlayPause(updateRoundInfo, updatePlayPauseButton, up
     updateWinnerButtons();
     document.getElementById("jamButton").disabled = false;
     document.getElementById("flameButton").disabled = false;
-    document.getElementById("prevButton").disabled = false;
-    document.getElementById("nextButton").disabled = false;
     document.getElementById("reviveButton").classList.remove("disabled");
     updateFlameButton();
+    ui.updateNavigationButtons(sidPlayer); // Update navigation buttons based on song info
 }
 
 export function nextTrack(getPlayerState, loadSongFn) {

@@ -107,7 +107,7 @@ window.togglePlayPause = async () => {
             brackets.getPlayerState,
             updateWinnerButtonsBound,
             updateFlameButtonBound,
-            updateJamButtonBound, // Add updateJamButton
+            updateJamButtonBound,
             loadSongBound
         ),
         brackets.updatePlayerState
@@ -118,6 +118,7 @@ window.togglePlayPause = async () => {
         window.logmsg("[||]", 1);
     }
     document.getElementById("ellipsis-button").disabled = false;
+    updateVsMatchupBound(); // Ensure matchup UI updates to reflect active song highlight
 };
 
 
