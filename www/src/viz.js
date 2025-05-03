@@ -13,6 +13,8 @@
  * Notes: Test tweaks with ~10s playback, check logs for pegging (>50°) or dips (<-30°). Baseline values optimized for 70s VU meter vibe with ~6 Hz bassline.
  */
 
+// viz.js - Real-time oscilloscope waveform and VU meter visualizations for SID JAm
+
 // Static buffer for waveform samples
 const BUFFER_SIZE = 150; // ~0.34ms at 44100 Hz, shows ~2.5 cycles at 1 kHz
 const TARGET_FPS = 172; // Emulator tick rate
@@ -21,7 +23,7 @@ const TIME_LIMIT = 1000 / TARGET_FPS; // Time per frame in ms
 // VU meter configuration
 const VU_METER_COUNT = 3; // One per voice
 const NEEDLE_LENGTH = 40; // Pixels, scaled for 100x57px canvas
-const ANGLE_RANGE = [-60, 60]; // Degrees, -100 dB to 0 dB
+const ANGLE_RANGE = [-60, 50]; // Degrees, -100 dB to 0 dB
 const ATTACK_RATE = 0.009; // Seconds, for spring strength (~3–6ms attack)
 const DECAY_RATE = 0.07; // Seconds, for spring strength (~50–100ms decay)
 const OVERSHOOT = 0.15; // 15% overshoot for controlled 70s bounce
@@ -35,16 +37,26 @@ let zeroTickCount = 0; // Count consecutive all-zero ticks
 
 const vuLabelImage = new Image();
 vuLabelImage.src = '../image/vu_label.png'; // Adjust path if needed
+const vuFrameImage = new Image();
+vuFrameImage.src = '../image/vu_frame.png'; // Adjust path if needed
 let isLabelImageLoaded = false;
+let isFrameImageLoaded = false;
 
 vuLabelImage.onload = () => {
     isLabelImageLoaded = true;
     window.logmsg('VU label image loaded successfully', 1);
-    // Redraw static VU meters once the image is loaded
     renderStaticVUMeters();
 };
 vuLabelImage.onerror = () => {
     window.logmsg('Failed to load VU label image', 1);
+};
+vuFrameImage.onload = () => {
+    isFrameImageLoaded = true;
+    window.logmsg('VU frame image loaded successfully', 1);
+    renderStaticVUMeters();
+};
+vuFrameImage.onerror = () => {
+    window.logmsg('Failed to load VU frame image', 1);
 };
 
 const voiceBuffers = [
@@ -71,12 +83,10 @@ function drawStaticWaveform(canvasId) {
     const height = canvas.height; // 100
     const midY = height / 2;
 
-    // Clear canvas
     ctx.clearRect(0, 0, width, height);
     ctx.fillStyle = BACKGROUND_COLOR;
     ctx.fillRect(0, 0, width, height);
 
-    // Draw flatline
     ctx.beginPath();
     ctx.strokeStyle = '#00FF00';
     ctx.lineWidth = 2;
@@ -98,15 +108,12 @@ function drawStaticVUMeter(canvasId) {
     const pivotX = width / 2;
     const pivotY = height * 0.9;
 
-    // Clear canvas
     ctx.clearRect(0, 0, width, height);
 
-    // Draw VU label image if loaded
     if (isLabelImageLoaded) {
         ctx.drawImage(vuLabelImage, 0, 0, width, height);
     }
 
-    // Draw needle at zero position (ANGLE_RANGE[0] = -60°)
     const angleDeg = ANGLE_RANGE[0];
     const angleRad = (angleDeg * Math.PI) / 180;
     const endX = pivotX + NEEDLE_LENGTH * Math.sin(angleRad);
@@ -118,16 +125,17 @@ function drawStaticVUMeter(canvasId) {
     ctx.strokeStyle = '#000000'; // Black needle
     ctx.lineWidth = 1; // Skinny needle
     ctx.stroke();
+
+    if (isFrameImageLoaded) {
+        ctx.drawImage(vuFrameImage, 0, 0, width, height);
+    }
 }
 
 // Render static visualizations for all canvases
 function renderStaticVisualizations() {
-    // Static waveforms (flatlines)
     drawStaticWaveform('voice1-canvas');
     drawStaticWaveform('voice2-canvas');
     drawStaticWaveform('voice3-canvas');
-
-    // Static VU meters (needle at zero)
     renderStaticVUMeters();
 }
 
@@ -150,12 +158,10 @@ function drawVoiceWaveform(canvasId, voiceIdx) {
     const height = canvas.height; // 100
     const midY = height / 2;
 
-    // Clear canvas
     ctx.clearRect(0, 0, width, height);
     ctx.fillStyle = BACKGROUND_COLOR;
     ctx.fillRect(0, 0, width, height);
 
-    // Check player state
     const player = window.player;
     if (!player || !player._isSongReady) {
         voiceBuffers.forEach(buffer => buffer.fill(0));
@@ -165,7 +171,6 @@ function drawVoiceWaveform(canvasId, voiceIdx) {
         return;
     }
 
-    // Draw waveform (use last buffer state, even if paused)
     ctx.beginPath();
     ctx.strokeStyle = '#00FF00';
     ctx.lineWidth = 2;
@@ -228,6 +233,10 @@ function drawVUMeter(canvasId, voiceIdx) {
     ctx.strokeStyle = '#000000';
     ctx.lineWidth = 1;
     ctx.stroke();
+
+    if (isFrameImageLoaded) {
+        ctx.drawImage(vuFrameImage, 0, 0, width, height);
+    }
 }
 
 // Update voice buffers and VU levels
@@ -302,45 +311,41 @@ function updateNeedlePhysics() {
     logTimer += dt;
     logCounter++;
     if (logTimer >= LOG_INTERVAL) {
-        // Check if all voices are zero
         const allZero = vuLevels.every(level => level === 0);
         if (allZero) {
             zeroTickCount++;
         } else {
-            zeroTickCount = 0; // Reset if any voice is active
+            zeroTickCount = 0;
         }
 
-        // Log only if we haven't hit the zero-tick threshold
         if (zeroTickCount < ZERO_TICK_THRESHOLD) {
             for (let i = 0; i < VU_METER_COUNT; i++) {
-                const db = vuLevels[i] > 0 ? 20 * Math.log10(vuLevels[i]) : -100; // -100 dB to 0 dB
-                const targetAngle = ANGLE_RANGE[0] + (db + 100) / 100 * (ANGLE_RANGE[1] - ANGLE_RANGE[0]); // Map -100 dB to 0 dB
+                const db = vuLevels[i] > 0 ? 20 * Math.log10(vuLevels[i]) : -100;
+                const targetAngle = ANGLE_RANGE[0] + (db + 100) / 100 * (ANGLE_RANGE[1] - ANGLE_RANGE[0]);
                 // window.logmsg(`Voice ${i + 1}: Angle=${needleAngles[i].toFixed(1)}°, Magnitude=${vuLevels[i].toFixed(3)}, TargetAngle=${targetAngle.toFixed(1)}°`, 2);
             }
         }
 
-        logTimer = 0; // Reset timer
+        logTimer = 0;
         logCounter = 0;
     }
 
     const player = window.player;
     if (!player || !player._isSongReady) {
-        return; // Skip physics updates
+        return;
     }
 
     for (let i = 0; i < VU_METER_COUNT; i++) {
-        // Map amplitude to angle (logarithmic scale)
         const level = vuLevels[i];
-        const db = level > 0 ? 20 * Math.log10(level) : -100; // -100 dB to 0 dB
-        const targetAngle = ANGLE_RANGE[0] + (db + 100) / 100 * (ANGLE_RANGE[1] - ANGLE_RANGE[0]); // Map -100 dB to 0 dB
+        const db = level > 0 ? 20 * Math.log10(level) : -100;
+        const targetAngle = ANGLE_RANGE[0] + (db + 100) / 100 * (ANGLE_RANGE[1] - ANGLE_RANGE[0]);
 
         const angleDiff = targetAngle - needleAngles[i];
-        if (angleDiff < -20) { // Smoothing for very large drops
+        if (angleDiff < -20) {
             const alphaDecay = Math.min(1.0, dt / DECAY_RATE);
             needleAngles[i] = needleAngles[i] + alphaDecay * (targetAngle - needleAngles[i]);
-            needleVelocities[i] = 0; // Reset velocity
+            needleVelocities[i] = 0;
         } else {
-            // Use physics for attack and small decays
             const currentAngle = needleAngles[i];
             const velocity = needleVelocities[i];
             const k = currentAngle < targetAngle ? kAttack : kDecay;
@@ -349,7 +354,6 @@ function updateNeedlePhysics() {
             needleAngles[i] += needleVelocities[i] * dt;
         }
 
-        // Clamp angle
         needleAngles[i] = Math.max(ANGLE_RANGE[0], Math.min(ANGLE_RANGE[1], needleAngles[i]));
     }
 }
@@ -358,6 +362,7 @@ function updateNeedlePhysics() {
 function initTraceStreams() {
     const player = window.player;
     if (!player || !player._backendAdapter) {
+        window.logmsg('ScriptNodePlayer not ready for trace streams', 1);
         return false;
     }
     const Module = window.backend_SID.Module;
@@ -387,13 +392,13 @@ let lastRenderTime = 0;
 
 function updateViz() {
     if (!isVisualizationActive) {
-        return; // Stop the loop if visualizations are not active
+        window.logmsg('Visualization loop stopped: isVisualizationActive is false', 2);
+        return;
     }
 
     const now = performance.now();
     const renderTime = now - lastRenderTime;
 
-    // Update at 60 FPS
     if (renderTime >= 1000 / 60) {
         updateVoiceBuffers();
         updateNeedlePhysics();
@@ -410,27 +415,41 @@ function updateViz() {
 }
 
 // Start dynamic visualizations (called from player.js)
-export function startVisualizations() {
+function startVisualizations() {
     window.logmsg('Starting real-time oscilloscope and VU meter visualizations', 1);
     if (!window.player || !window.player._backendAdapter) {
         window.logmsg('ScriptNodePlayer not ready for visualizations', 1);
         return;
     }
 
-    if (!initTraceStreams()) {
-        window.logmsg('Failed to initialize trace streams, visualizations disabled', 1);
-        return;
+    let retryCount = 0;
+    const maxRetries = 12;
+    const retryInterval = 300; // 1 second
+
+    function attemptTraceStreamInit() {
+        if (initTraceStreams()) {
+            window.logmsg(`External ticker enabled: ${!!window.player._externalTicker}`, 1);
+            voiceBuffers.forEach(buffer => buffer.fill(0));
+            vuLevels.fill(0);
+            needleAngles.fill(ANGLE_RANGE[0]);
+            needleVelocities.fill(0);
+            isVisualizationActive = true;
+            lastRenderTime = performance.now();
+            updateViz();
+        } else if (retryCount < maxRetries) {
+            retryCount++;
+            window.logmsg(`Trace streams not ready, retrying in ${retryInterval}ms (${retryCount}/${maxRetries})`, 1);
+            setTimeout(attemptTraceStreamInit, retryInterval);
+        } else {
+            window.logmsg('Max retries reached, visualizations disabled', 1);
+        }
     }
 
-    window.logmsg(`External ticker enabled: ${!!window.player._externalTicker}`, 1);
-    voiceBuffers.forEach(buffer => buffer.fill(0));
-    vuLevels.fill(0);
-    needleAngles.fill(ANGLE_RANGE[0]);
-    needleVelocities.fill(0);
-    isVisualizationActive = true; // Start the animation loop
-    lastRenderTime = performance.now();
-    updateViz();
+    attemptTraceStreamInit();
 }
+
+// Make startVisualizations globally accessible
+window.startVisualizations = startVisualizations;
 
 // Initialize static visualizations on page load
 function initStaticVisualizations() {

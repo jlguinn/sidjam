@@ -1,6 +1,5 @@
 import * as brackets from './brackets.js';
 import * as ui from './ui.js';
-import * as viz from './viz.js'; // Add import for viz.js
 
 export let sidPlayer = null;
 export let isPlaying = false;
@@ -83,6 +82,13 @@ export async function initPlayer(getPlayerState, updateWinnerButtons, updateFlam
     sidPlayer = ScriptNodePlayer.getInstance();
     window.player = sidPlayer; // Ensure viz.js access
 
+    // Start visualizations after player initialization
+    if (window.startVisualizations) {
+        window.startVisualizations();
+    } else {
+        console.error('startVisualizations function not found on window object');
+    }
+
     if (state.contenders.length > 0 && state.currentMode === "bout") {
         await loadSongBound(state.contenders[state.activeContender], -1);
     } else if (state.nowPlayingSong && state.currentMode === "nowPlaying") {
@@ -95,7 +101,7 @@ export async function initPlayer(getPlayerState, updateWinnerButtons, updateFlam
 
     updateWinnerButtons();
     updateFlameButton();
-    updateJamButton(); // Ensure initial state is set
+    updateJamButton();
 }
 
 export async function togglePlayPause(updateRoundInfo, updatePlayPauseButton, updateWinnerButtons, updateFlameButton, updateJamButton, initPlayerFn, updatePlayerState) {
@@ -127,7 +133,6 @@ export async function togglePlayPause(updateRoundInfo, updatePlayPauseButton, up
     updateFlameButton();
 }
 
-
 export function nextTrack(getPlayerState, loadSongFn) {
     const state = getPlayerState();
     if (sidPlayer) {
@@ -152,22 +157,21 @@ export function prevTrack(getPlayerState, loadSongFn) {
     }
 }
 
-
 export function startTimer(updateTimer, updateJamButton) {
-    console.log("startTimer: Starting timer and animation"); // Debug log
+    console.log("startTimer: Starting timer and animation");
     updateTimer();
     timerInterval = setInterval(updateTimer, 1000);
     if (updateJamButton) {
-        updateJamButton(true); // Start animation
+        updateJamButton(true);
     }
 }
 
 export function stopTimer(updateJamButton) {
-    console.log("stopTimer: Stopping timer and animation"); // Debug log
+    console.log("stopTimer: Stopping timer and animation");
     clearInterval(timerInterval);
     timerInterval = null;
     if (updateJamButton) {
-        updateJamButton(false); // Stop animation
+        updateJamButton(false);
     }
 }
 
