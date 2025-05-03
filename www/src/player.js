@@ -1,5 +1,6 @@
 import * as brackets from './brackets.js';
 import * as ui from './ui.js';
+import * as viz from './viz.js'; // Add import for viz.js
 
 export let sidPlayer = null;
 export let isPlaying = false;
@@ -20,7 +21,7 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
     if (sidPlayer && isPlaying) {
         sidPlayer.pause();
         setIsPlaying(false);
-        stopTimer(updateJamButton); // Pass updateJamButton to stopTimer
+        stopTimer(updateJamButton);
     }
 
     if (!sidPlayer) {
@@ -52,7 +53,7 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
         if (autoPlay) {
             sidPlayer.resume();
             setIsPlaying(true);
-            startTimer(updateTimer, updateJamButton); // Pass updateJamButton to startTimer
+            startTimer(updateTimer, updateJamButton);
         }
         updatePlayPauseButton();
         resetVoiceStates();
@@ -67,7 +68,7 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
         if (!autoPlay) {
             sidPlayer.pause();
             setIsPlaying(false);
-            stopTimer(updateJamButton); // Pass updateJamButton to stopTimer
+            stopTimer(updateJamButton);
         }
     });
 }
@@ -102,7 +103,6 @@ export async function togglePlayPause(updateRoundInfo, updatePlayPauseButton, up
         await initPlayerFn();
         console.log("Note: Please ignore ScriptProcessorNode Deprecation warning. We will not be remediating at this time.");
         window.logmsg("[>]", 1);
-        // Directly start the animation if playback is active
         if (isPlaying && updateJamButton) {
             updateJamButton(true);
         }
