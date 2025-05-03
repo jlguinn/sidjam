@@ -18,9 +18,9 @@ const TIME_LIMIT = 1000 / TARGET_FPS; // Time per frame in ms
  * Notes: Test tweaks with ~10s playback, check logs for pegging (>50°) or dips (<-30°). Baseline values optimized for 70s VU meter vibe with ~6 Hz bassline.
  */
 const VU_METER_COUNT = 3; // One per voice
-const NEEDLE_LENGTH = 25; // Pixels, scaled for 80x60px canvas
+const NEEDLE_LENGTH = 40; // Pixels, scaled for 80x60px canvas
 const ANGLE_RANGE = [-60, 60]; // Degrees, -100 dB to 0 dB
-const ATTACK_RATE = 0.006; // Seconds, for spring strength (~3–6ms attack)
+const ATTACK_RATE = 0.009; // Seconds, for spring strength (~3–6ms attack)
 const DECAY_RATE = 0.07; // Seconds, for spring strength (~50–100ms decay)
 const OVERSHOOT = 0.15; // 15% overshoot for controlled 70s bounce
 const NEEDLE_COLOR = '#FF0000'; // Red needle
