@@ -316,13 +316,13 @@ function animateVoiceWaveforms() {
     // Update at 60 FPS
     if (renderTime >= 1000 / 60) {
         updateVoiceBuffers();
-        updateNeedlePhysics();
+        // updateNeedlePhysics();
         drawVoiceWaveform('voice1-canvas', 0);
         drawVoiceWaveform('voice2-canvas', 1);
         drawVoiceWaveform('voice3-canvas', 2);
-        drawVUMeter('vu1-canvas', 0);
-        drawVUMeter('vu2-canvas', 1);
-        drawVUMeter('vu3-canvas', 2);
+        // drawVUMeter('vu1-canvas', 0);
+        // drawVUMeter('vu2-canvas', 1);
+        // drawVUMeter('vu3-canvas', 2);
         lastRenderTime = now;
     }
 

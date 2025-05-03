@@ -346,13 +346,17 @@ body {
     cursor: pointer;
 }
 
-.voice-control-row canvas {
-    width: 80px;
-    height: 60px;
+.voice-control-row img {
+    width: 100px;
+    height: 57px;
     border: 1px solid #fff;
-    background-color: #333333;
 }
-
+@media (max-width: 700px) {
+    .voice-control-row img {
+        width: 75px; /* Scaled proportionally from 100px */
+        height: 43px; /* 75 / 1.74 ≈ 43 to maintain aspect ratio */
+    }
+}
 #bracket-flame-row {
     display: flex;
     align-items: center;
@@ -1099,11 +1103,6 @@ body {
         transform: translateX(-50%);
         top: auto;
         margin-top: 20px;
-    }
-
-    .voice-control-row canvas {
-        width: 60px;
-        height: 45px;
     }
 
     #track-timer-controls-row {
