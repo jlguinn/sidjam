@@ -328,10 +328,20 @@ body {
 #voice-controls-container {
     position: absolute;
     top: -10px;
-    left: 80%;
+    left: 80%; /* Adjusted from 80% to account for wider canvases */
     display: flex;
     flex-direction: column;
     gap: 10px;
+}
+
+@media (max-width: 700px) {
+    .voice-control-row canvas {
+        width: 90px; /* Scaled proportionally from 120px */
+        height: 53px; /* 90 / 1.71 ≈ 52.63, round to 53px */
+    }
+    #voice-controls-container {
+        left: 65%; /* Further adjusted for smaller screens */
+    }
 }
 
 .voice-control-row {
@@ -347,8 +357,8 @@ body {
 }
 
 .voice-control-row canvas {
-    width: 100px;
-    height: 58px;
+    width: 120px;
+    height: 70px;
     border: 1px solid #fff;
     background-color: transparent;
 }

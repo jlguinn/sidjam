@@ -134,44 +134,33 @@ function drawVUMeter(canvasId, voiceIdx) {
         return;
     }
     const ctx = canvas.getContext('2d');
-    const width = canvas.width; // 100
-    const height = canvas.height; // 57
-    const pivotX = width / 2;
-    const pivotY = height * 0.9; // Keep as-is for now
+    const width = canvas.width; // Now 120
+    const height = canvas.height; // Now 70
+    const pivotX = width / 2; // Now 60
+    const pivotY = height * 0.9; // Now 70 * 0.9 = 63px (previously 52.2px)
 
-    // Clear canvas
     ctx.clearRect(0, 0, width, height);
-
-    // Draw VU label image as background if loaded
     if (isLabelImageLoaded) {
-        ctx.drawImage(vuLabelImage, 0, 0, width, height); // Scale to canvas size
+        ctx.drawImage(vuLabelImage, 0, 0, width, height);
     }
-
-    // Check player state
     const player = window.player;
     if (!player || !player._isSongReady) {
         return;
     }
-
-    // Draw the needle
     const angleDeg = needleAngles[voiceIdx];
     const angleRad = (angleDeg * Math.PI) / 180;
     const endX = pivotX + NEEDLE_LENGTH * Math.sin(angleRad);
     const endY = pivotY - NEEDLE_LENGTH * Math.cos(angleRad);
-
     ctx.beginPath();
     ctx.moveTo(pivotX, pivotY);
     ctx.lineTo(endX, endY);
-    ctx.strokeStyle = '#000000'; // Black needle
-    ctx.lineWidth = 1; // Skinny needle
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 1;
     ctx.stroke();
-
-    // Draw VU frame image as top layer if loaded
     if (isFrameImageLoaded) {
-        ctx.drawImage(vuFrameImage, 0, 0, width, height); // Scale to canvas size
+        ctx.drawImage(vuFrameImage, 0, 0, width, height);
     }
 }
-
 
 // Update voice buffers and VU levels
 function updateVoiceBuffers() {
