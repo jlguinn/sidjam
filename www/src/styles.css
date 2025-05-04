@@ -298,6 +298,7 @@ body {
     vertical-align: middle;
     padding: 0;
     position: relative;
+    margin-top: 20px; /* Center jAM vertically within the container */
 }
 
 #jamButton:hover:not(:disabled) {
@@ -321,18 +322,20 @@ body {
 #jam-controls {
     display: flex;
     justify-content: space-around;
-    align-items: center;
+    align-items: flex-start; /* For vertical positioning */
     margin-bottom: 5px;
     margin-top: 15px;
-    width: 600px;
+    width: 450px; /* Pulls Winner buttons closer */
     margin-left: auto;
     margin-right: auto;
-    /* Ensure flexbox doesn't reserve space for hidden elements */
-    & > [style*="visibility: hidden"] {
-        flex: 0 0 0;
-        width: 0;
-        margin: 0;
-    }
+    height: 216px; /* Accommodates Winner button offset */
+}
+
+#jam-controls > .hidden {
+    visibility: hidden;
+    flex: 0 0 0;
+    width: 0;
+    margin: 0;
 }
 
 .bitmap-button {
@@ -340,7 +343,7 @@ body {
     height: 144px;
     cursor: pointer;
     transition: filter 0.3s ease, opacity 0.3s ease;
-    visibility: visible; /* Initial state */
+    visibility: visible; /* Default state, overridden by .hidden */
 }
 
 .bitmap-button.disabled {
@@ -365,26 +368,10 @@ body {
     pointer-events: none;
 }
 
-/* REMOVED: The following rules are no longer needed since #winner-controls is removed
-#winner-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: -12px;
-    margin-bottom: -20px;
-    width: 600px;
-    margin-left: auto;
-    margin-right: auto;
+#winner0, #winner1 {
+    margin: 0 10px;
+    margin-top: 72px; /* Offset by half the Winner button height */
 }
-
-#winner0 {
-    margin-left: 180px;
-}
-
-#winner1 {
-    margin-right: 180px;
-}
-*/
 
 /* Mute and VU Meter */
 #voice-controls-container {
@@ -545,6 +532,7 @@ body {
 #flame-controls {
     display: flex;
     justify-content: center;
+    margin-top: 10px; /* Aligns with Winner buttons */
 }
 
 #flame-controls.hidden {
@@ -1272,20 +1260,32 @@ body {
         white-space: normal;
     }
 
-    /* ADDED: Responsive adjustments for jAM and Winner buttons */
+    /* Responsive adjustments for jAM, Winner, and Flame buttons */
     #jam-controls {
         width: 100%;
-        max-width: 400px; /* Match player-info width on smaller screens */
-        justify-content: space-between; /* Tighter spacing on small screens */
+        max-width: 400px;
+        justify-content: space-between;
+        height: 162px; /* Scaled: 216px * 0.75 */
     }
 
     #jamButton {
-        width: 120px; /* Scale down: 160px * 0.75 */
-        height: 89px; /* Scale down: 119px * 0.75 */
+        width: 120px; /* 160px * 0.75 */
+        height: 89px; /* 119px * 0.75 */
+        margin-top: 15px; /* Scaled: 20px * 0.75 */
     }
 
     .bitmap-button {
-        width: 69px; /* Scale down: 92px * 0.75 */
-        height: 108px; /* Scale down: 144px * 0.75 */
+        width: 69px; /* 92px * 0.75 */
+        height: 108px; /* 144px * 0.75 */
+        margin-top: 54px; /* 72px * 0.75 */
+    }
+
+    #flame-controls {
+        margin-top: 8px; /* Scaled: 10px * 0.8 */
+    }
+
+    #flameButton {
+        width: 60px; /* 75px * 0.8 */
+        height: 76px; /* 95px * 0.8 */
     }
 }

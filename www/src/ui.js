@@ -306,14 +306,14 @@ export function updateWinnerButtons(playerState, sidPlayer) {
     const winner1 = document.getElementById("winner1");
 
     if (playerState.currentMode === "nowPlaying") {
-        winner0.style.visibility = "hidden";
-        winner1.style.visibility = "hidden";
+        winner0.classList.add("hidden");
+        winner1.classList.add("hidden");
         document.getElementById("jamButton").disabled = !sidPlayer;
         return;
     }
 
-    winner0.style.visibility = "visible";
-    winner1.style.visibility = "visible";
+    winner0.classList.remove("hidden");
+    winner1.classList.remove("hidden");
     const disabled = !playerState.hasPlayed || (playerState.roundCount === 1 && !playerState.hasJammed) || playerState.isFlameActive;
     winner0.disabled = disabled;
     winner1.disabled = disabled;
