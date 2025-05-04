@@ -145,9 +145,12 @@ function renderStaticVisualizations() {
 
 // Render static VU meters (called separately to handle image loading)
 function renderStaticVUMeters() {
-    drawStaticVUMeter('vu1-canvas');
-    drawStaticVUMeter('vu2-canvas');
-    drawStaticVUMeter('vu3-canvas');
+    const isVUActive = getPlayerState().isVUActive;
+    if (isVUActive) {
+        drawStaticVUMeter('vu1-canvas');
+        drawStaticVUMeter('vu2-canvas');
+        drawStaticVUMeter('vu3-canvas');
+    }
 }
 
 // Draw dynamic oscilloscope waveform for a given voice
@@ -406,15 +409,19 @@ function updateViz() {
     if (renderTime >= 1000 / 60) {
         updateVoiceBuffers();
         updateNeedlePhysics();
-        const isWaveformActive = getPlayerState().isWaveformActive;
+        const playerState = getPlayerState();
+        const isWaveformActive = playerState.isWaveformActive;
+        const isVUActive = playerState.isVUActive;
         if (isWaveformActive) {
             drawVoiceWaveform('voice1-canvas', 0);
             drawVoiceWaveform('voice2-canvas', 1);
             drawVoiceWaveform('voice3-canvas', 2);
         }
-        drawVUMeter('vu1-canvas', 0);
-        drawVUMeter('vu2-canvas', 1);
-        drawVUMeter('vu3-canvas', 2);
+        if (isVUActive) {
+            drawVUMeter('vu1-canvas', 0);
+            drawVUMeter('vu2-canvas', 1);
+            drawVUMeter('vu3-canvas', 2);
+        }
         lastRenderTime = now;
     }
 
@@ -463,7 +470,10 @@ window.startVisualizations = startVisualizations;
 // Initialize static visualizations on page load
 function initStaticVisualizations() {
     window.logmsg('Initializing static oscilloscope and VU meter visualizations', 1);
-    renderStaticVisualizations();
+    drawStaticWaveform('voice1-canvas');
+    drawStaticWaveform('voice2-canvas');
+    drawStaticWaveform('voice3-canvas');
+    renderStaticVUMeters();
 }
 
 // Start static visualizations immediately

@@ -98,11 +98,20 @@ const updateFlameButtonBound = () => ui.updateFlameButton(brackets.getPlayerStat
 const updateJamButtonBound = (isPlaying) => ui.updateJamButton(isPlaying, brackets.getPlayerState(), player.sidPlayer);
 
 
+
 window.toggleWaveform = () => {
     window.logmsg("[Waveform]", 1); // Log waveform toggle button click
     const newState = !brackets.getPlayerState().isWaveformActive;
     brackets.updatePlayerState({ isWaveformActive: newState });
     ui.updateWaveformVisibility(newState);
+    savePlayerState();
+};
+
+window.toggleVUMeters = () => {
+    window.logmsg("[VUMeters]", 1); // Log VU meter toggle button click
+    const newState = !brackets.getPlayerState().isVUActive;
+    brackets.updatePlayerState({ isVUActive: newState });
+    ui.updateVUMeterVisibility(newState);
     savePlayerState();
 };
 
@@ -1031,11 +1040,17 @@ async function initializeApp() {
         });
     }
 
-    // Add waveform toggle button listener
+    // Waveform toggle button listener
     const waveformToggleButton = document.getElementById('wave-toggle-button');
     if (waveformToggleButton) {
         waveformToggleButton.addEventListener('click', window.toggleWaveform);
     }
+
+    // VU toggle button listener
+    const vuToggleButton = document.getElementById('vu-toggle-button');
+    if (vuToggleButton) {
+        vuToggleButton.addEventListener('click', window.toggleVUMeters);
+    }    
 
     if (!window.user || !window.user.id) {
         console.error('window.user.id not defined on DOM load');
@@ -1125,6 +1140,7 @@ async function initializeApp() {
             brackets.updateBracketDropdown();
             brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateFlameButtonBound);
             ui.updateWaveformVisibility(true);
+            ui.updateVUMeterVisibility(true);
         }
     } catch (error) {
         console.error('Error loading data:', error);

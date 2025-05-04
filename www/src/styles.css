@@ -396,6 +396,7 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
+    min-height: 40px; /* Control spacing when disabled */
 }
 
 .voice-control-row input[type="checkbox"] {

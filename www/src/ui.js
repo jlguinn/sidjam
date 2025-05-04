@@ -135,6 +135,7 @@ export function applyTheme(currentMode) {
 
     // Reapply waveform visibility
     updateWaveformVisibility(brackets.getPlayerState().isWaveformActive);
+    updateVUMeterVisibility(brackets.getPlayerState().isVUActive);
 }
 
 // Synchronize hover effects
@@ -301,6 +302,32 @@ export function updateWaveformVisibility(isWaveformActive) {
         waveformToggleButton.title = isWaveformActive ? "Hide Waveforms" : "Show Waveforms";
     }
 }
+
+export function updateVUMeterVisibility(isVUActive) {
+    const vuContainer = document.getElementById("voice-controls-container");
+    const vuToggleButton = document.getElementById("vu-toggle-button");
+    const vuCanvases = [
+        document.getElementById("vu1-canvas"),
+        document.getElementById("vu2-canvas"),
+        document.getElementById("vu3-canvas")
+    ];
+
+    if (vuContainer) {
+        vuCanvases.forEach(canvas => {
+            if (canvas) {
+                canvas.style.display = isVUActive ? "block" : "none";
+            }
+        });
+    }
+
+    if (vuToggleButton) {
+        vuToggleButton.style.filter = isVUActive ? "none" : "brightness(70%)";
+        vuToggleButton.classList.remove("inactive");
+        vuToggleButton.disabled = false;
+        vuToggleButton.title = isVUActive ? "Hide VU Meters" : "Show VU Meters";
+    }
+}
+
 
 export function updateNavigationButtons(sidPlayer) {
     if (sidPlayer) {
