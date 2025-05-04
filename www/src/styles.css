@@ -325,8 +325,8 @@ body {
 /* Mute and VU Meter */
 #voice-controls-container {
     position: absolute;
-    top: 15px; /* Nudged down to avoid song name overlap */
-    left: 80%;
+    top: 2px; /* Nudged down to avoid song name overlap */
+    left: 79%;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -335,10 +335,10 @@ body {
 /* VU Controls (for toggle button) */
 #vu-controls {
     position: absolute;
-    top: -6px; /* Position above #voice-controls-container: 15px (parent top) - 21px (button height) */
-    left: 80%; /* Match #voice-controls-container left */
-    width: 120px; /* Match VU canvas width */
-    height: 21px; /* Match button height */
+    top: -30px; /* Position above #voice-controls-container: 15px (parent top) - 21px (button height) */
+    left: 79%; /* Match #voice-controls-container left */
+    width: 24px; /* Match VU canvas width */
+    height: 24px; /* Match button height */
 }
 
 .voice-control-row {
@@ -388,17 +388,6 @@ body {
 .voice-button:focus {
     outline: none;
     box-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
-}
-
-.voice-label {
-    color: #00ffff; /* Cyan, matching the retro aesthetic */
-    font-family: 'C64', monospace;
-    font-size: 14px;
-    transition: color 0.3s ease;
-}
-
-.voice-label[data-state="off"] {
-    color: #444444; /* Dark gray for muted state */
 }
 
 #voice-controls-container canvas {
@@ -1131,7 +1120,7 @@ body {
 /* Waveform Controls (for toggle button) */
 #waveform-controls {
     position: absolute;
-    top: -31px; /* Position above #voice-visualizations: 0px (parent top) - 21px (button height) - 5px (additional nudge up) */
+    top: -30px; /* Position above #voice-visualizations: 0px (parent top) - 21px (button height) - 5px (additional nudge up) */
     left: -90px; /* Match #voice-visualizations left */
     width: 250px; /* Match canvas width */
     height: 21px; /* Match button height */
@@ -1142,8 +1131,8 @@ body {
     position: absolute;
     top: 0;
     right: 0;
-    width: 21px;
-    height: 21px;
+    width: 24px;
+    height: 24px;
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
