@@ -61,7 +61,9 @@ export let playerState = {
     nowPlayingSong: null,
     peekPlayingSong: null,
     nowPlayingSongBracket: null,
-    isUnplayableSID: false
+    isUnplayableSID: false,
+    isWaveformActive: true,
+    isVUActive: true
 };
 
 export function debug(message) { console.log(`[DEBUG] ${message}`); }

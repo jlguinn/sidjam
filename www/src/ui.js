@@ -93,7 +93,6 @@ export function applyTheme(currentMode) {
     // Synchronize hover effects for both auth and preferences links
     const isLoggedIn = window.isLoggedIn || false;
     const activeLink = isLoggedIn ? preferencesLink : authLink;
-    // // console.// debug(`[applyTheme] isLoggedIn: ${isLoggedIn}, activeLink: ${activeLink ? activeLink.textContent : 'null'}`);
     if (activeLink && profileIcon) {
         // Remove existing listeners to prevent duplicates
         activeLink.removeEventListener('mouseover', syncHoverOn);
@@ -103,12 +102,10 @@ export function applyTheme(currentMode) {
 
         // Add synchronized hover listeners
         const hoverHandler = (e) => {
-            // console.// debug(`[hover] ${e.type} on ${e.target.id || e.target.tagName}, syncing hover`);
             activeLink.classList.add('hover');
             profileIcon.classList.add('hover');
         };
         const hoverOffHandler = (e) => {
-            // console.// debug(`[hover] ${e.type} on ${e.target.id || e.target.tagName}, removing hover`);
             activeLink.classList.remove('hover');
             profileIcon.classList.remove('hover');
         };
@@ -116,9 +113,7 @@ export function applyTheme(currentMode) {
         activeLink.addEventListener('mouseover', hoverHandler);
         activeLink.addEventListener('mouseout', hoverOffHandler);
         profileIcon.addEventListener('mouseover', hoverHandler);
-        profileIcon.addEventListener('mouseout', hoverOffHandler);
-    } else {
-        // console.// debug(`[applyTheme] No hover sync: activeLink=${activeLink ? 'exists' : 'null'}, profileIcon=${profileIcon ? 'exists' : 'null'}`);
+        profileIcon.removeEventListener('mouseout', hoverOffHandler);
     }
 
     // Apply interior styles
@@ -127,7 +122,7 @@ export function applyTheme(currentMode) {
     document.getElementById("song-title").style.color = theme.interiorTextColor;
 
     // Update profile bitmap based on login status
-    renderProfileBitmap(isLoggedIn, theme.exteriorTextColor); // Replace window.renderProfileBitmap
+    renderProfileBitmap(isLoggedIn, theme.exteriorTextColor);
 
     // Update color toggle button
     const nextIndex = (currentThemeIndex + 1) % baseColorSchemes.length;
@@ -137,6 +132,9 @@ export function applyTheme(currentMode) {
     button.style.backgroundColor = nextTheme.exterior;
     button.querySelector('.inner-box').style.backgroundColor = nextTheme.interior;
     button.title = `Switch Theme \n  From: ${baseTheme.name}\n  To: ${nextBaseTheme.name}`;
+
+    // Reapply waveform visibility
+    updateWaveformVisibility(brackets.getPlayerState().isWaveformActive);
 }
 
 // Synchronize hover effects
@@ -285,6 +283,22 @@ export function updateSongInfo(sidPlayer) {
         document.getElementById("song-author").textContent = "Author: " + decodeHtmlEntities(songInfo.songAuthor.replace(/^Author:\s*/i, ''));
         document.getElementById("song-released").textContent = "Released: " + decodeHtmlEntities(songInfo.songReleased);
         document.getElementById("track-info").textContent = "Track: " + (songInfo.actualSubsong + 1) + "/" + songInfo.maxSubsong;
+    }
+}
+
+export function updateWaveformVisibility(isWaveformActive) {
+    const waveformContainer = document.getElementById("voice-visualizations");
+    const waveformToggleButton = document.getElementById("wave-toggle-button");
+    
+    if (waveformContainer) {
+        waveformContainer.style.display = isWaveformActive ? "flex" : "none";
+    }
+    
+    if (waveformToggleButton) {
+        waveformToggleButton.style.filter = isWaveformActive ? "none" : "brightness(70%)"; // Subtle dimming for off state
+        waveformToggleButton.classList.remove("inactive"); // Ensure no inactive class
+        waveformToggleButton.disabled = false; // Ensure button is not disabled
+        waveformToggleButton.title = isWaveformActive ? "Hide Waveforms" : "Show Waveforms";
     }
 }
 

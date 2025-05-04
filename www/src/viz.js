@@ -1,3 +1,7 @@
+import { updateWaveformVisibility } from './ui.js';
+import { getPlayerState } from './brackets.js';
+
+
 // viz.js - Real-time oscilloscope waveform and VU meter visualizations for SID JAm
 
 // VU meter configuration
@@ -402,9 +406,12 @@ function updateViz() {
     if (renderTime >= 1000 / 60) {
         updateVoiceBuffers();
         updateNeedlePhysics();
-        drawVoiceWaveform('voice1-canvas', 0);
-        drawVoiceWaveform('voice2-canvas', 1);
-        drawVoiceWaveform('voice3-canvas', 2);
+        const isWaveformActive = getPlayerState().isWaveformActive;
+        if (isWaveformActive) {
+            drawVoiceWaveform('voice1-canvas', 0);
+            drawVoiceWaveform('voice2-canvas', 1);
+            drawVoiceWaveform('voice3-canvas', 2);
+        }
         drawVUMeter('vu1-canvas', 0);
         drawVUMeter('vu2-canvas', 1);
         drawVUMeter('vu3-canvas', 2);
@@ -436,6 +443,8 @@ function startVisualizations() {
             isVisualizationActive = true;
             lastRenderTime = performance.now();
             updateViz();
+            // Apply initial waveform visibility
+            updateWaveformVisibility(getPlayerState().isWaveformActive);
         } else if (retryCount < maxRetries) {
             retryCount++;
             window.logmsg(`Trace streams not ready, retrying in ${retryInterval}ms (${retryCount}/${maxRetries})`, 1);

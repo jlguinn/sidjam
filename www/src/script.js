@@ -25,7 +25,9 @@ async function savePlayerState() {
         activeBracket: state.activeBracket,
         currentMode: state.currentMode,
         nowPlayingSong: state.nowPlayingSong,
-        theme: ui.currentThemeIndex
+        theme: ui.getCurrentThemeIndex(),
+        isWaveformActive: state.isWaveformActive,
+        isVUActive: state.isVUActive // Add this line
     };
 
     try {
@@ -38,7 +40,7 @@ async function savePlayerState() {
         if (!result.success) {
             console.error('Failed to save state:', result.message);
         } else {
-          //  console.log('[DEBUG] Player state saved:', JSON.stringify(player_state));
+            // console.log('[DEBUG] Player state saved:', JSON.stringify(player_state));
         }
     } catch (error) {
         console.error('Error saving state:', error);
@@ -94,6 +96,15 @@ const updateRoundInfoBound = () => ui.updateRoundInfo(brackets.getPlayerState())
 const updateWinnerButtonsBound = () => ui.updateWinnerButtons(brackets.getPlayerState(), player.sidPlayer);
 const updateFlameButtonBound = () => ui.updateFlameButton(brackets.getPlayerState(), player.sidPlayer);
 const updateJamButtonBound = (isPlaying) => ui.updateJamButton(isPlaying, brackets.getPlayerState(), player.sidPlayer);
+
+
+window.toggleWaveform = () => {
+    window.logmsg("[Waveform]", 1); // Log waveform toggle button click
+    const newState = !brackets.getPlayerState().isWaveformActive;
+    brackets.updatePlayerState({ isWaveformActive: newState });
+    ui.updateWaveformVisibility(newState);
+    savePlayerState();
+};
 
 window.togglePlayPause = async () => {
     const wasPlaying = player.isPlaying;
@@ -985,7 +996,6 @@ async function initializeApp() {
     window.showPromptMessage = false;
   
     // Preload sprite sheet for flame animation
-    // (Note: spriteAnimator.js already preloads, but we ensure it's referenced)
     window.logmsg('Preloading flame sprite sheet', 2);
 
     if (authLink) {
@@ -1021,6 +1031,12 @@ async function initializeApp() {
         });
     }
 
+    // Add waveform toggle button listener
+    const waveformToggleButton = document.getElementById('wave-toggle-button');
+    if (waveformToggleButton) {
+        waveformToggleButton.addEventListener('click', window.toggleWaveform);
+    }
+
     if (!window.user || !window.user.id) {
         console.error('window.user.id not defined on DOM load');
         return;
@@ -1043,79 +1059,88 @@ async function initializeApp() {
     
         const player_state = await loadPlayerState();
         if (player_state && player_state.contenders && player_state.currentMode === "bout" && player_state.contenders[0] && player_state.contenders[1]) {
-          brackets.updatePlayerState({
-            contenders: player_state.contenders,
-            peekBracket: player_state.activeBracket,
-            activeBracket: player_state.activeBracket,
-            currentMode: "bout",
-            nowPlayingSong: null,
-            nowPlayingSongBracket: null,
-            activeContender: 0,
-            hasJammed: false,
-            bothContendersSelected: false,
-            isFlameActive: false
-          });
-          ui.setCurrentThemeIndex(player_state.theme || 0);
-          brackets.updateBracketDropdown();
-          document.getElementById("bracket-select").value = player_state.activeBracket.replace(" - ", "-");
-          updateVsMatchupBound();
-          updateRoundInfoBound();
-          updateWinnerButtonsBound();
-          updateFlameButtonBound();
+            brackets.updatePlayerState({
+                contenders: player_state.contenders,
+                peekBracket: player_state.activeBracket,
+                activeBracket: player_state.activeBracket,
+                currentMode: "bout",
+                nowPlayingSong: null,
+                nowPlayingSongBracket: null,
+                activeContender: 0,
+                hasJammed: false,
+                bothContendersSelected: false,
+                isFlameActive: false,
+                isWaveformActive: player_state.isWaveformActive !== undefined ? player_state.isWaveformActive : true,
+                isVUActive: player_state.isVUActive !== undefined ? player_state.isVUActive : true // Add this line
+            });
+            ui.setCurrentThemeIndex(player_state.theme || 0);
+            brackets.updateBracketDropdown();
+            document.getElementById("bracket-select").value = player_state.activeBracket.replace(" - ", "-");
+            updateVsMatchupBound();
+            updateRoundInfoBound();
+            updateWinnerButtonsBound();
+            updateFlameButtonBound();
+            ui.updateWaveformVisibility(brackets.getPlayerState().isWaveformActive);
         } else if (player_state && player_state.currentMode === "nowPlaying" && player_state.nowPlayingSong) {
-          const nowPlayingSongBracket = brackets.getSongBracket(player_state.nowPlayingSong);
-          brackets.updatePlayerState({
-            contenders: player_state.contenders || [],
-            peekBracket: player_state.peekBracket,
-            activeBracket: player_state.activeBracket,
-            currentMode: "nowPlaying",
-            nowPlayingSong: player_state.nowPlayingSong,
-            nowPlayingSongBracket: nowPlayingSongBracket
-          });
-          ui.setCurrentThemeIndex(player_state.theme || 0);
-          loadSongBound(player_state.nowPlayingSong, -1, false);
-          brackets.updateBracketDropdown();
-          document.getElementById("bracket-select").value = player_state.peekBracket.replace(" - ", "-");
-          updateVsMatchupBound();
-          updateRoundInfoBound();
-          updateWinnerButtonsBound();
-          updateFlameButtonBound();
+            const nowPlayingSongBracket = brackets.getSongBracket(player_state.nowPlayingSong);
+            brackets.updatePlayerState({
+                contenders: player_state.contenders || [],
+                peekBracket: player_state.peekBracket,
+                activeBracket: player_state.activeBracket,
+                currentMode: "nowPlaying",
+                nowPlayingSong: player_state.nowPlayingSong,
+                nowPlayingSongBracket: nowPlayingSongBracket,
+                isWaveformActive: player_state.isWaveformActive !== undefined ? player_state.isWaveformActive : true,
+                isVUActive: player_state.isVUActive !== undefined ? player_state.isVUActive : true // Add this line
+            });
+            ui.setCurrentThemeIndex(player_state.theme || 0);
+            loadSongBound(player_state.nowPlayingSong, -1, false);
+            brackets.updateBracketDropdown();
+            document.getElementById("bracket-select").value = player_state.peekBracket.replace(" - ", "-");
+            updateVsMatchupBound();
+            updateRoundInfoBound();
+            updateWinnerButtonsBound();
+            updateFlameButtonBound();
+            ui.updateWaveformVisibility(brackets.getPlayerState().isWaveformActive);
         } else {
-          window.logmsg("Initializing with default player state");
-          brackets.updatePlayerState({
-            contenders: [],
+            window.logmsg("Initializing with default player state");
+            brackets.updatePlayerState({
+                contenders: [],
+                peekBracket: "0 - 0",
+                activeBracket: "0 - 0",
+                currentMode: "bout",
+                activeContender: 0,
+                roundCount: 1,
+                winner: null,
+                hasPlayed: false,
+                hasJammed: false,
+                bothContendersSelected: false,
+                isFlameActive: false,
+                nowPlayingSong: null,
+                nowPlayingSongBracket: null,
+                isWaveformActive: true,
+                isVUActive: true // Add this line
+            });
+            ui.setCurrentThemeIndex(0);
+            brackets.updateBracketDropdown();
+            brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateFlameButtonBound);
+            ui.updateWaveformVisibility(true);
+        }
+    } catch (error) {
+        console.error('Error loading data:', error);
+        // ... handle error ...
+        brackets.updatePlayerState({
             peekBracket: "0 - 0",
             activeBracket: "0 - 0",
             currentMode: "bout",
-            activeContender: 0,
-            roundCount: 1,
-            winner: null,
-            hasPlayed: false,
-            hasJammed: false,
-            bothContendersSelected: false,
-            isFlameActive: false,
-            nowPlayingSong: null,
-            nowPlayingSongBracket: null
-          });
-          ui.setCurrentThemeIndex(0);
-          brackets.updateBracketDropdown();
-          brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateFlameButtonBound);
-        }
-      } catch (error) {
-        console.error('Error loading data:', error);
-        window.sidJamData.cachedResults = {};
-        window.sidJamData.sidFiles = [];
-        window.sidJamData.pathToId = {};
-        brackets.updatePlayerState({
-          peekBracket: "0 - 0",
-          activeBracket: "0 - 0",
-          currentMode: "bout"
+            isWaveformActive: true,
+            isVUActive: true // Add this line
         });
         ui.setCurrentThemeIndex(0);
         brackets.updateBracketDropdown();
         brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateFlameButtonBound);
-      }
-    
+        ui.updateWaveformVisibility(true);
+    }
       document.getElementById("playPauseButton").disabled = false;
       for (let i = 1; i <= 3; i++) {
         document.getElementById(`voice${i}`).addEventListener('click', () => player.toggleVoice(i));
@@ -1143,7 +1168,7 @@ async function initializeApp() {
       button.title = `Switch Theme \n  From: ${currentTheme.name}\n  To: ${nextTheme.name}`;
     
       checkSong2Clipping();
-    }
+}
 
 document.getElementById('authOverlay').addEventListener('click', function(event) {
     if (event.target === this) {

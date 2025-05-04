@@ -1144,7 +1144,7 @@ body {
     border: 1px solid #fff;
     border-radius: 3px;
     cursor: pointer;
-    z-index: 10; /* Ensure button stays above canvases */
+    z-index: 10;
     transition: filter 0.3s ease, transform 0.3s ease;
 }
 
@@ -1156,6 +1156,10 @@ body {
 .viz-toggle-button:disabled {
     filter: grayscale(100%) opacity(0.5);
     cursor: not-allowed;
+}
+
+.viz-toggle-button.inactive {
+    filter: grayscale(100%) opacity(0.5);
 }
 
 #voice1-canvas,
