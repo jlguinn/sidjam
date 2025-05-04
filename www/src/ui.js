@@ -302,17 +302,19 @@ export function updatePlayPauseButton(isPlaying) {
 }
 
 export function updateWinnerButtons(playerState, sidPlayer) {
-    const winnerControls = document.getElementById("winner-controls");
+    const winner0 = document.getElementById("winner0");
+    const winner1 = document.getElementById("winner1");
+
     if (playerState.currentMode === "nowPlaying") {
-        winnerControls.style.display = "none";
+        winner0.style.visibility = "hidden";
+        winner1.style.visibility = "hidden";
         document.getElementById("jamButton").disabled = !sidPlayer;
         return;
     }
 
-    winnerControls.style.display = "flex";
+    winner0.style.visibility = "visible";
+    winner1.style.visibility = "visible";
     const disabled = !playerState.hasPlayed || (playerState.roundCount === 1 && !playerState.hasJammed) || playerState.isFlameActive;
-    const winner0 = document.getElementById("winner0");
-    const winner1 = document.getElementById("winner1");
     winner0.disabled = disabled;
     winner1.disabled = disabled;
     winner0.classList.toggle("disabled", disabled);

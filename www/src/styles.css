@@ -1,3 +1,5 @@
+/* styles.css */
+
 /* CSS Reset to normalize browser defaults */
 * {
     margin: 0;
@@ -282,6 +284,7 @@ body {
     border-radius: 3px; 
 }
 
+/* jAM and Winner Buttons */
 #jamButton {
     width: 160px;
     height: 119px;
@@ -317,10 +320,71 @@ body {
 
 #jam-controls {
     display: flex;
-    justify-content: center;
+    justify-content: space-around;
+    align-items: center;
     margin-bottom: 5px;
     margin-top: 15px;
+    width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    /* Ensure flexbox doesn't reserve space for hidden elements */
+    & > [style*="visibility: hidden"] {
+        flex: 0 0 0;
+        width: 0;
+        margin: 0;
+    }
 }
+
+.bitmap-button {
+    width: 92px;
+    height: 144px;
+    cursor: pointer;
+    transition: filter 0.3s ease, opacity 0.3s ease;
+    visibility: visible; /* Initial state */
+}
+
+.bitmap-button.disabled {
+    filter: grayscale(100%) brightness(0.8) opacity(0.5);
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.bitmap-button.disabled * {
+    filter: inherit;
+    opacity: inherit;
+    pointer-events: none;
+}
+
+.bitmap-button:hover:not(.disabled) {
+    filter: brightness(1.2);
+}
+
+.bitmap-button.disabled:hover {
+    filter: grayscale(100%) brightness(0.8) opacity(0.5);
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* REMOVED: The following rules are no longer needed since #winner-controls is removed
+#winner-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: -12px;
+    margin-bottom: -20px;
+    width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#winner0 {
+    margin-left: 180px;
+}
+
+#winner1 {
+    margin-right: 180px;
+}
+*/
 
 /* Mute and VU Meter */
 #voice-controls-container {
@@ -1059,54 +1123,6 @@ body {
     border-color: #999;
 }
 
-#winner-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: -12px;
-    margin-bottom: -20px;
-    width: 600px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.bitmap-button {
-    width: 92px;
-    height: 144px;
-    cursor: pointer;
-    transition: filter 0.3s ease, opacity 0.3s ease;
-}
-
-.bitmap-button.disabled {
-    filter: grayscale(100%) brightness(0.8) opacity(0.5);
-    cursor: not-allowed;
-    pointer-events: none;
-}
-
-.bitmap-button.disabled * {
-    filter: inherit;
-    opacity: inherit;
-    pointer-events: none;
-}
-
-.bitmap-button:hover:not(.disabled) {
-    filter: brightness(1.2);
-}
-
-.bitmap-button.disabled:hover {
-    filter: grayscale(100%) brightness(0.8) opacity(0.5);
-    cursor: not-allowed;
-    pointer-events: none;
-}
-
-#winner0 {
-    margin-left: 180px;
-}
-
-#winner1 {
-    margin-right: 180px;
-}
-
 /* Waveform Visualizations */
 #voice-visualizations {
     position: absolute;
@@ -1254,5 +1270,22 @@ body {
 
     #track-details p {
         white-space: normal;
+    }
+
+    /* ADDED: Responsive adjustments for jAM and Winner buttons */
+    #jam-controls {
+        width: 100%;
+        max-width: 400px; /* Match player-info width on smaller screens */
+        justify-content: space-between; /* Tighter spacing on small screens */
+    }
+
+    #jamButton {
+        width: 120px; /* Scale down: 160px * 0.75 */
+        height: 89px; /* Scale down: 119px * 0.75 */
+    }
+
+    .bitmap-button {
+        width: 69px; /* Scale down: 92px * 0.75 */
+        height: 108px; /* Scale down: 144px * 0.75 */
     }
 }
