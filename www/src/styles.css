@@ -528,13 +528,13 @@ body {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    top: -70px; /* Kept as per your last adjustment */
+    top: -70px;
 }
 
 #flame-controls {
     display: flex;
     justify-content: center;
-    margin-top: 1px; /* Aligns with Winner buttons */
+    margin-top: 1px;
 }
 
 #flame-controls.hidden {
@@ -546,9 +546,10 @@ body {
     width: 80px;
     height: 80px;
     position: absolute;
-    left: 100%;
-    margin-left: 20px;
-    top: -95px; /* Aligned with #flameButton (95px height) */
+    left: 0; /* Changed from 100% to overlap with #flameButton */
+    margin-left: 0; /* Removed 20px offset */
+    top: 0; /* Align top with #flameButton */
+    z-index: 2; /* Ensure #reviveButton appears above #flameButton */
 }
 
 @keyframes throb {
@@ -1270,7 +1271,7 @@ body {
     #jam-controls {
         width: 100%;
         max-width: 400px;
-        justify-content: center; /* Changed from space-between to pull Winner buttons closer */
+        justify-content: center;
         height: 162px;
     }
 
@@ -1284,12 +1285,12 @@ body {
         width: 69px;
         height: 108px;
         margin-top: 54px;
-        margin-left: 5px; /* Added for consistent spacing */
-        margin-right: 5px; /* Added for consistent spacing */
+        margin-left: 5px;
+        margin-right: 5px;
     }
 
     #flame-wrapper {
-        top: -52px; /* Scaled from -70px: -70 * (162/216) ≈ -52.5, rounded to -52 */
+        top: -52px;
     }
 
     #flame-controls {
@@ -1304,7 +1305,9 @@ body {
     #reviveButton {
         width: 64px;
         height: 64px;
-        margin-left: 16px;
-        top: -76px;
+        left: 0; /* Changed from 100% to overlap with #flameButton */
+        margin-left: 0; /* Removed 16px offset */
+        top: 0; /* Align top with #flameButton */
+        z-index: 2; /* Ensure #reviveButton appears above #flameButton */
     }
 }
