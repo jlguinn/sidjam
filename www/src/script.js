@@ -1,3 +1,4 @@
+// script.js
 window.sidJamData = {
     sidFiles: [],
     cachedResults: {},
@@ -11,8 +12,7 @@ import { baseColorSchemes } from './themes.js';
 import * as player from './player.js';
 import { renderSpriteAnimation } from './spriteAnimator.js';
 
-
-function debug(message) { console.log(`[DEBUG] ${message}`); }
+function debug(message) { window.logmsg(`[DEBUG] ${message}`, 2); }
 
 window.logmsg("Default logMsg");
 window.logmsg("Verbose logMsg", 1);
@@ -27,7 +27,7 @@ async function savePlayerState() {
         nowPlayingSong: state.nowPlayingSong,
         theme: ui.getCurrentThemeIndex(),
         isWaveformActive: state.isWaveformActive,
-        isVUActive: state.isVUActive // Add this line
+        isVUActive: state.isVUActive
     };
 
     try {
@@ -38,12 +38,10 @@ async function savePlayerState() {
         });
         const result = await response.json();
         if (!result.success) {
-            console.error('Failed to save state:', result.message);
-        } else {
-            // console.log('[DEBUG] Player state saved:', JSON.stringify(player_state));
+            window.logmsg(`Failed to save state: ${result.message}`, 0);
         }
     } catch (error) {
-        console.error('Error saving state:', error);
+        window.logmsg(`Error saving state: ${error}`, 0);
     }
 }
 
@@ -53,7 +51,7 @@ function checkSong2Clipping() {
     const preferencesLink = document.getElementById('preferences-link');
 
     if (!song2) {
-        console.error('song2 element not found');
+        window.logmsg('song2 element not found', 0);
         return;
     }
 
@@ -68,14 +66,10 @@ function checkSong2Clipping() {
     const intrinsicWidth = tempElement.offsetWidth;
     document.body.removeChild(tempElement);
 
-    const clippingThreshold = 187;  // was 190
-    if (intrinsicWidth > clippingThreshold) {
-        if (authLink) authLink.style.display = 'none';
-        if (preferencesLink) preferencesLink.style.display = 'none';
-    } else {
-        if (authLink) authLink.style.display = 'block';
-        if (preferencesLink) preferencesLink.style.display = 'block';
-    }
+    const clippingThreshold = 187;
+    const displayValue = intrinsicWidth > clippingThreshold ? 'none' : 'block';
+    if (authLink) authLink.style.display = displayValue;
+    if (preferencesLink) preferencesLink.style.display = displayValue;
 }
 
 const updateTimerBound = () => player.updateTimer();
@@ -87,7 +81,7 @@ const loadSongBound = (filename, trackNumber, autoPlay = true) => player.loadSon
     player.resetVoiceStates,
     () => ui.updateNavigationButtons(player.sidPlayer),
     updateVsMatchupBound,
-    updateJamButtonBound, // Add updateJamButton
+    updateJamButtonBound,
     autoPlay
 );
 
@@ -97,10 +91,8 @@ const updateWinnerButtonsBound = () => ui.updateWinnerButtons(brackets.getPlayer
 const updateFlameButtonBound = () => ui.updateFlameButton(brackets.getPlayerState(), player.sidPlayer);
 const updateJamButtonBound = (isPlaying) => ui.updateJamButton(isPlaying, brackets.getPlayerState(), player.sidPlayer);
 
-
-
 window.toggleWaveform = () => {
-    window.logmsg("[Waveform]", 1); // Log waveform toggle button click
+    window.logmsg("[Waveform]", 1);
     const newState = !brackets.getPlayerState().isWaveformActive;
     brackets.updatePlayerState({ isWaveformActive: newState });
     ui.updateWaveformVisibility(newState);
@@ -108,7 +100,7 @@ window.toggleWaveform = () => {
 };
 
 window.toggleVUMeters = () => {
-    window.logmsg("[VUMeters]", 1); // Log VU meter toggle button click
+    window.logmsg("[VUMeters]", 1);
     const newState = !brackets.getPlayerState().isVUActive;
     brackets.updatePlayerState({ isVUActive: newState });
     ui.updateVUMeterVisibility(newState);
@@ -137,14 +129,17 @@ window.togglePlayPause = async () => {
     } else if (!player.isPlaying && wasPlaying) {
         window.logmsg("[||]", 1);
     }
-    document.getElementById("ellipsis-button").disabled = false;
-    updateVsMatchupBound(); // Ensure matchup UI updates to reflect active song highlight
+    const ellipsisButton = document.getElementById("ellipsis-button");
+    if (ellipsisButton) {
+        ellipsisButton.disabled = false;
+    } else {
+        window.logmsg('Ellipsis button not found in the DOM', 0);
+    }
+    updateVsMatchupBound();
 };
 
-
-
 window.jamToggle = () => {
-    window.logmsg("[jAM]", 1); // Log jAM button click
+    window.logmsg("[jAM]", 1);
     brackets.jamToggle(
         player.sidPlayer,
         loadSongBound,
@@ -158,7 +153,7 @@ window.jamToggle = () => {
 };
 
 window.setWinner = (index) => {
-    window.logmsg(index === 0 ? "[ < Winner]" : "[Winner >]", 1); // Log Winner button click
+    window.logmsg(index === 0 ? "[ < Winner]" : "[Winner >]", 1);
     brackets.updateWinner(
         index,
         updateRoundInfoBound,
@@ -168,7 +163,7 @@ window.setWinner = (index) => {
 };
 
 window.toggleFlame = () => {
-    window.logmsg("[Flame]", 1); // Log Flame button click
+    window.logmsg("[Flame]", 1);
     brackets.toggleFlame(
         updateFlameButtonBound,
         updateVsMatchupBound,
@@ -185,7 +180,7 @@ window.toggleRevive = () => {
 };
 
 window.nextTrack = () => {
-    window.logmsg("[>|]", 1); // Log next track button click
+    window.logmsg("[>|]", 1);
     player.nextTrack(
         brackets.getPlayerState,
         loadSongBound
@@ -193,7 +188,7 @@ window.nextTrack = () => {
 };
 
 window.prevTrack = () => {
-    window.logmsg("[|<]", 1); // Log previous track button click
+    window.logmsg("[|<]", 1);
     player.prevTrack(
         brackets.getPlayerState,
         loadSongBound
@@ -201,8 +196,13 @@ window.prevTrack = () => {
 };
 
 window.changeBracket = () => {
-    const newBracket = document.getElementById("bracket-select").value.replace('-', ' - ');
-    window.logmsg(`[Bracket: ${newBracket}]`, 1); // Log bracket change
+    const bracketSelect = document.getElementById("bracket-select");
+    if (!bracketSelect) {
+        window.logmsg('Bracket select element not found in the DOM', 0);
+        return;
+    }
+    const newBracket = bracketSelect.value.replace('-', ' - ');
+    window.logmsg(`[Bracket: ${newBracket}]`, 1);
     brackets.changeBracket(
         updateFlameButtonBound,
         loadSongBound,
@@ -214,7 +214,7 @@ window.changeBracket = () => {
 };
 
 window.toggleColorScheme = () => {
-    window.logmsg("[Theme]", 1); // Log Theme button click
+    window.logmsg("[Theme]", 1);
     ui.toggleColorScheme(brackets.getPlayerState().currentMode);
     savePlayerState();
 };
@@ -225,59 +225,56 @@ function toggleSongList() {
     const overlay = document.getElementById("songListOverlay");
     const filterInput = document.getElementById("filterInput");
     const songListWrapper = document.getElementById("songListWrapper");
+    const songList = document.getElementById("songList");
+
+    if (!overlay || !filterInput || !songListWrapper || !songList) {
+        window.logmsg('Song list elements not found in the DOM', 0);
+        return;
+    }
 
     if (overlay.style.display === "block") {
         const state = brackets.getPlayerState();
 
-        // If a song was played in Peek Mode, stop it and resume the previous song
         if (state.peekPlayingSong) {
             if (player.sidPlayer) {
                 player.sidPlayer.pause();
                 player.setIsPlaying(false);
                 player.stopTimer();
-                console.log("[DEBUG] Stopped peeked song");
+                debug("Stopped peeked song");
             }
 
-            // Determine the song to resume based on the current mode
             let songToLoad = null;
             let shouldAutoPlay = true;
             if (state.currentMode === "bout" && state.contenders.length > 0) {
                 songToLoad = state.contenders[state.activeContender];
-                shouldAutoPlay = state.hasPlayed; // Only auto-play if the song was previously played
+                shouldAutoPlay = state.hasPlayed;
             } else if (state.currentMode === "nowPlaying" && state.nowPlayingSong) {
                 songToLoad = state.nowPlayingSong;
-                shouldAutoPlay = true; // Always auto-play in Now Playing Mode
+                shouldAutoPlay = true;
             }
 
-            // Update player state to clear Peek Mode specifics
             brackets.updatePlayerState({
                 peekPlayingSong: null,
-                // nowPlayingSongBracket: null // Reset since we're leaving Peek Mode
             });
 
-            // Load and potentially play the appropriate song
             if (songToLoad) {
                 loadSongBound(songToLoad, -1, shouldAutoPlay);
             }
         } else {
-            // No song was played in Peek Mode, just update the state without interrupting the player
             brackets.updatePlayerState({
                 peekPlayingSong: null,
-                // nowPlayingSongBracket: null 
             });
         }
 
-        // Hide the overlay and clean up
         overlay.style.display = "none";
         currentOffset = 0;
         currentFilter = "";
         hasMoreSongs = true;
-        document.getElementById("songList").innerHTML = '';
+        songList.innerHTML = '';
         songListWrapper.dataset.observerSet = "";
         document.removeEventListener('keydown', handleEscapeKey);
         filterInput.removeEventListener('input', handleFilterInput);
 
-        // Update UI to reflect the resumed mode
         ui.applyTheme(state.currentMode);
         updateVsMatchupBound();
         updateRoundInfoBound();
@@ -289,9 +286,9 @@ function toggleSongList() {
         currentOffset = 0;
         currentFilter = "";
         hasMoreSongs = true;
-        document.getElementById("songList").innerHTML = '';
+        songList.innerHTML = '';
         songListWrapper.dataset.observerSet = "";
-        songListWrapper.scrollTop = 0; // Always reset scroll
+        songListWrapper.scrollTop = 0;
         populateSongList("");
         document.addEventListener('keydown', handleEscapeKey);
         filterInput.addEventListener('input', handleFilterInput);
@@ -299,7 +296,12 @@ function toggleSongList() {
 }
 
 function handleFilterInput() {
-    const filterText = document.getElementById("filterInput").value;
+    const filterInput = document.getElementById("filterInput");
+    if (!filterInput) {
+        window.logmsg('Filter input not found in the DOM', 0);
+        return;
+    }
+    const filterText = filterInput.value;
     populateSongList(filterText);
 }
 
@@ -323,6 +325,11 @@ function populateSongList(filter) {
     const songList = document.getElementById("songList");
     const songListWrapper = document.getElementById("songListWrapper");
     const state = brackets.getPlayerState();
+
+    if (!songList || !songListWrapper) {
+        window.logmsg('Song list or wrapper not found in the DOM', 0);
+        return;
+    }
 
     if (filter !== currentFilter) {
         currentOffset = 0;
@@ -370,7 +377,7 @@ function populateSongList(filter) {
                         li.classList.add("playing");
                     }
                     li.onclick = () => {
-                        window.logmsg(`(>)\n ${file.replace('/sid/C64Music', '')}`, 1); // Log song click
+                        window.logmsg(`(>)\n ${file.replace('/sid/C64Music', '')}`, 1);
                         playSongOnDemand(file);
                     };
                     songList.appendChild(li);
@@ -401,13 +408,17 @@ function populateSongList(filter) {
             isLoading = false;
         })
         .catch(error => {
-            console.error('Error fetching songs:', error);
+            window.logmsg(`Error fetching songs: ${error}`, 0);
             isLoading = false;
         });
 }
 
 function updatePlayingIndicator() {
     const songList = document.getElementById("songList");
+    if (!songList) {
+        window.logmsg('Song list not found in the DOM', 0);
+        return;
+    }
     songList.querySelectorAll("li").forEach(li => {
         const state = brackets.getPlayerState();
         if (li.textContent === state.peekPlayingSong?.replace('/sid/C64Music', '')) {
@@ -424,10 +435,10 @@ function playSongOnDemand(filename) {
         enterNowPlayingMode(filename);
         return;
     }
-    const songBracket = brackets.getSongBracket(filename); // Calculate bracket
+    const songBracket = brackets.getSongBracket(filename);
     brackets.updatePlayerState({ 
         peekPlayingSong: filename,
-        nowPlayingSongBracket: songBracket // Update bracket
+        nowPlayingSongBracket: songBracket
     });
     if (player.sidPlayer && player.isPlaying) {
         player.sidPlayer.pause();
@@ -435,18 +446,18 @@ function playSongOnDemand(filename) {
         player.stopTimer();
     }
     loadSongBound(filename, -1, true);
-    populateSongList(document.getElementById("filterInput").value);
+    populateSongList(document.getElementById("filterInput")?.value || "");
     updatePlayingIndicator();
 }
 
 function enterNowPlayingMode(song) {
     const state = brackets.getPlayerState();
-    const songBracket = brackets.getSongBracket(song); // Calculate bracket
+    const songBracket = brackets.getSongBracket(song);
     brackets.updatePlayerState({
         currentMode: "nowPlaying",
         nowPlayingSong: song,
         peekPlayingSong: null,
-        nowPlayingSongBracket: songBracket // Update bracket
+        nowPlayingSongBracket: songBracket
     });
     if (player.sidPlayer && player.isPlaying) {
         player.sidPlayer.pause();
@@ -471,6 +482,10 @@ window.toggleAuthPopUp = (function() {
         setTimeout(() => { isToggling = false; }, 300);
 
         const overlay = document.getElementById('authOverlay');
+        if (!overlay) {
+            window.logmsg('Auth overlay not found in the DOM', 0);
+            return;
+        }
         if (overlay.style.display === 'block') {
             overlay.style.display = 'none';
             document.removeEventListener('keydown', handleAuthEscapeKey);
@@ -481,9 +496,12 @@ window.toggleAuthPopUp = (function() {
             document.getElementById('registerPassword').value = '';
             document.getElementById('registerConfirmPassword').value = '';
             document.getElementById('forgotPasswordEmail').value = '';
-            document.getElementById('signInError').textContent = '';
-            document.getElementById('registerError').textContent = '';
-            document.getElementById('forgotPasswordMessage').textContent = '';
+            const signInError = document.getElementById('signInError');
+            const registerError = document.getElementById('registerError');
+            const forgotPasswordMessage = document.getElementById('forgotPasswordMessage');
+            if (signInError) signInError.textContent = '';
+            if (registerError) registerError.textContent = '';
+            if (forgotPasswordMessage) forgotPasswordMessage.textContent = '';
         } else {
             overlay.style.display = 'block';
             window.showAuthTab('signIn');
@@ -505,33 +523,53 @@ window.showAuthTab = function(tab) {
         const formElement = document.getElementById(`${t}Form`);
         if (t === tab) {
             if (tabElement) tabElement.classList.add('active');
-            formElement.classList.add('active');
-            formElement.style.display = 'block';
+            if (formElement) {
+                formElement.classList.add('active');
+                formElement.style.display = 'block';
+            }
         } else {
             if (tabElement) tabElement.classList.remove('active');
-            formElement.classList.remove('active');
-            formElement.style.display = 'none';
+            if (formElement) {
+                formElement.classList.remove('active');
+                formElement.style.display = 'none';
+            }
         }
     });
 
-    document.getElementById('signInError').textContent = '';
-    document.getElementById('registerError').textContent = '';
-    document.getElementById('forgotPasswordMessage').textContent = '';
+    const signInError = document.getElementById('signInError');
+    const registerError = document.getElementById('registerError');
+    const forgotPasswordMessage = document.getElementById('forgotPasswordMessage');
+    if (signInError) signInError.textContent = '';
+    if (registerError) registerError.textContent = '';
+    if (forgotPasswordMessage) forgotPasswordMessage.textContent = '';
 
-    document.getElementById('signInEmail').value = '';
-    document.getElementById('signInPassword').value = '';
-    document.getElementById('registerUsername').value = '';
-    document.getElementById('registerEmail').value = '';
-    document.getElementById('registerPassword').value = '';
-    document.getElementById('registerConfirmPassword').value = '';
-    document.getElementById('forgotPasswordEmail').value = '';
+    const signInEmail = document.getElementById('signInEmail');
+    const signInPassword = document.getElementById('signInPassword');
+    const registerUsername = document.getElementById('registerUsername');
+    const registerEmail = document.getElementById('registerEmail');
+    const registerPassword = document.getElementById('registerPassword');
+    const registerConfirmPassword = document.getElementById('registerConfirmPassword');
+    const forgotPasswordEmail = document.getElementById('forgotPasswordEmail');
+    if (signInEmail) signInEmail.value = '';
+    if (signInPassword) signInPassword.value = '';
+    if (registerUsername) registerUsername.value = '';
+    if (registerEmail) registerEmail.value = '';
+    if (registerPassword) registerPassword.value = '';
+    if (registerConfirmPassword) registerConfirmPassword.value = '';
+    if (forgotPasswordEmail) forgotPasswordEmail.value = '';
 };
 
 window.handleSignIn = async function(event) {
     event.preventDefault();
-    const email = document.getElementById('signInEmail').value;
-    const password = document.getElementById('signInPassword').value;
+    const signInEmail = document.getElementById('signInEmail');
+    const signInPassword = document.getElementById('signInPassword');
     const errorElement = document.getElementById('signInError');
+    if (!signInEmail || !signInPassword || !errorElement) {
+        window.logmsg('Sign-in form elements not found in the DOM', 0);
+        return;
+    }
+    const email = signInEmail.value;
+    const password = signInPassword.value;
 
     try {
         const response = await fetch('dbcontrol/signin.php', {
@@ -546,18 +584,26 @@ window.handleSignIn = async function(event) {
             errorElement.textContent = result.message || 'Invalid email or password';
         }
     } catch (error) {
-        console.error('Error in handleSignIn:', error);
+        window.logmsg(`Error in handleSignIn: ${error}`, 0);
         errorElement.textContent = 'An error occurred. Please try again.';
     }
 };
 
 window.handleRegister = async function(event) {
     event.preventDefault();
-    const username = document.getElementById('registerUsername').value;
-    const email = document.getElementById('registerEmail').value;
-    const password = document.getElementById('registerPassword').value;
-    const confirmPassword = document.getElementById('registerConfirmPassword').value;
+    const registerUsername = document.getElementById('registerUsername');
+    const registerEmail = document.getElementById('registerEmail');
+    const registerPassword = document.getElementById('registerPassword');
+    const registerConfirmPassword = document.getElementById('registerConfirmPassword');
     const errorElement = document.getElementById('registerError');
+    if (!registerUsername || !registerEmail || !registerPassword || !registerConfirmPassword || !errorElement) {
+        window.logmsg('Register form elements not found in the DOM', 0);
+        return;
+    }
+    const username = registerUsername.value;
+    const email = registerEmail.value;
+    const password = registerPassword.value;
+    const confirmPassword = registerConfirmPassword.value;
 
     if (password.length < 8) {
         errorElement.textContent = 'Password must be at least 8 characters long';
@@ -582,15 +628,20 @@ window.handleRegister = async function(event) {
             errorElement.textContent = result.message || 'Registration failed';
         }
     } catch (error) {
-        console.error('Error in handleRegister:', error);
+        window.logmsg(`Error in handleRegister: ${error}`, 0);
         errorElement.textContent = 'An error occurred. Please try again.';
     }
 };
 
 window.handleForgotPassword = async function(event) {
     event.preventDefault();
-    const email = document.getElementById('forgotPasswordEmail').value;
+    const forgotPasswordEmail = document.getElementById('forgotPasswordEmail');
     const messageElement = document.getElementById('forgotPasswordMessage');
+    if (!forgotPasswordEmail || !messageElement) {
+        window.logmsg('Forgot password form elements not found in the DOM', 0);
+        return;
+    }
+    const email = forgotPasswordEmail.value;
 
     try {
         const response = await fetch('dbcontrol/send_reset_email.php', {
@@ -608,7 +659,7 @@ window.handleForgotPassword = async function(event) {
             messageElement.textContent = result.message || 'Failed to send reset email';
         }
     } catch (error) {
-        console.error('Error in handleForgotPassword:', error);
+        window.logmsg(`Error in handleForgotPassword: ${error}`, 0);
         messageElement.style.color = 'red';
         messageElement.textContent = 'An error occurred. Please try again.';
     }
@@ -616,10 +667,17 @@ window.handleForgotPassword = async function(event) {
 
 window.togglePreferencesPopUp = function() {
     const overlay = document.getElementById('preferencesOverlay');
+    if (!overlay) {
+        window.logmsg('Preferences overlay not found in the DOM', 0);
+        return;
+    }
     if (overlay.style.display === 'block') {
-        if (document.getElementById('updatePasswordSuccess').style.display === 'block' ||
-            document.getElementById('updateUsernameSuccess').style.display === 'block' ||
-            document.getElementById('updateEmailSuccess').style.display === 'block') {
+        const updatePasswordSuccess = document.getElementById('updatePasswordSuccess');
+        const updateUsernameSuccess = document.getElementById('updateUsernameSuccess');
+        const updateEmailSuccess = document.getElementById('updateEmailSuccess');
+        if (updatePasswordSuccess?.style.display === 'block' ||
+            updateUsernameSuccess?.style.display === 'block' ||
+            updateEmailSuccess?.style.display === 'block') {
             window.location.reload();
         }
         overlay.style.display = 'none';
@@ -648,35 +706,55 @@ window.showPreferencesTab = function(tab) {
         const tabElement = document.getElementById(`${t}Tab`);
         const formElement = document.getElementById(`${t}Form`);
         if (t === tab) {
-            tabElement.classList.add('active');
-            formElement.classList.add('active');
-            formElement.style.display = 'block';
+            if (tabElement) tabElement.classList.add('active');
+            if (formElement) {
+                formElement.classList.add('active');
+                formElement.style.display = 'block';
+            }
         } else {
-            tabElement.classList.remove('active');
-            formElement.classList.remove('active');
-            formElement.style.display = 'none';
+            if (tabElement) tabElement.classList.remove('active');
+            if (formElement) {
+                formElement.classList.remove('active');
+                formElement.style.display = 'none';
+            }
         }
     });
 
-    document.getElementById('updatePasswordError').textContent = '';
-    document.getElementById('updateUsernameError').textContent = '';
-    document.getElementById('updateEmailError').textContent = '';
-    document.getElementById('deleteAccountError').textContent = '';
+    const updatePasswordError = document.getElementById('updatePasswordError');
+    const updateUsernameError = document.getElementById('updateUsernameError');
+    const updateEmailError = document.getElementById('updateEmailError');
+    const deleteAccountError = document.getElementById('deleteAccountError');
+    if (updatePasswordError) updatePasswordError.textContent = '';
+    if (updateUsernameError) updateUsernameError.textContent = '';
+    if (updateEmailError) updateEmailError.textContent = '';
+    if (deleteAccountError) deleteAccountError.textContent = '';
 
-    document.getElementById('updatePasswordSection').style.display = 'block';
-    document.getElementById('updatePasswordSuccess').style.display = 'none';
-    document.getElementById('currentPassword').value = '';
-    document.getElementById('newPassword').value = '';
-    document.getElementById('confirmNewPassword').value = '';
+    const updatePasswordSection = document.getElementById('updatePasswordSection');
+    const updatePasswordSuccess = document.getElementById('updatePasswordSuccess');
+    const currentPassword = document.getElementById('currentPassword');
+    const newPassword = document.getElementById('newPassword');
+    const confirmNewPassword = document.getElementById('confirmNewPassword');
+    if (updatePasswordSection) updatePasswordSection.style.display = 'block';
+    if (updatePasswordSuccess) updatePasswordSuccess.style.display = 'none';
+    if (currentPassword) currentPassword.value = '';
+    if (newPassword) newPassword.value = '';
+    if (confirmNewPassword) confirmNewPassword.value = '';
 
-    document.getElementById('updateUsernameSection').style.display = 'block';
-    document.getElementById('updateUsernameSuccess').style.display = 'none';
-    document.getElementById('updateUsernameConfirmation').style.display = 'none';
-    document.getElementById('newUsername').value = '';
+    const updateUsernameSection = document.getElementById('updateUsernameSection');
+    const updateUsernameSuccess = document.getElementById('updateUsernameSuccess');
+    const updateUsernameConfirmation = document.getElementById('updateUsernameConfirmation');
+    const newUsername = document.getElementById('newUsername');
+    if (updateUsernameSection) updateUsernameSection.style.display = 'block';
+    if (updateUsernameSuccess) updateUsernameSuccess.style.display = 'none';
+    if (updateUsernameConfirmation) updateUsernameConfirmation.style.display = 'none';
+    if (newUsername) newUsername.value = '';
 
-    document.getElementById('updateEmailSection').style.display = 'block';
-    document.getElementById('updateEmailSuccess').style.display = 'none';
-    document.getElementById('newEmail').value = '';
+    const updateEmailSection = document.getElementById('updateEmailSection');
+    const updateEmailSuccess = document.getElementById('updateEmailSuccess');
+    const newEmail = document.getElementById('newEmail');
+    if (updateEmailSection) updateEmailSection.style.display = 'block';
+    if (updateEmailSuccess) updateEmailSuccess.style.display = 'none';
+    if (newEmail) newEmail.value = '';
     window.hideUpdateEmailConfirmation();
 
     window.hideDeleteAccountConfirmation();
@@ -684,12 +762,19 @@ window.showPreferencesTab = function(tab) {
 
 window.handleUpdatePassword = async function(event) {
     event.preventDefault();
-    const currentPassword = document.getElementById('currentPassword').value;
-    const newPassword = document.getElementById('newPassword').value;
-    const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+    const currentPassword = document.getElementById('currentPassword');
+    const newPassword = document.getElementById('newPassword');
+    const confirmNewPassword = document.getElementById('confirmNewPassword');
     const errorElement = document.getElementById('updatePasswordError');
+    if (!currentPassword || !newPassword || !confirmNewPassword || !errorElement) {
+        window.logmsg('Update password form elements not found in the DOM', 0);
+        return;
+    }
+    const currentPasswordValue = currentPassword.value;
+    const newPasswordValue = newPassword.value;
+    const confirmNewPasswordValue = confirmNewPassword.value;
 
-    if (newPassword !== confirmNewPassword) {
+    if (newPasswordValue !== confirmNewPasswordValue) {
         errorElement.textContent = 'New passwords do not match';
         return;
     }
@@ -698,7 +783,7 @@ window.handleUpdatePassword = async function(event) {
         const response = await fetch('dbcontrol/update_password.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ currentPassword, newPassword })
+            body: new URLSearchParams({ currentPassword: currentPasswordValue, newPassword: newPasswordValue })
         });
         const data = await response.json();
         if (data.success) {
@@ -708,41 +793,67 @@ window.handleUpdatePassword = async function(event) {
             errorElement.textContent = data.message;
         }
     } catch (error) {
-        console.error('Error in handleUpdatePassword:', error);
+        window.logmsg(`Error in handleUpdatePassword: ${error}`, 0);
         errorElement.textContent = 'An error occurred. Please try again.';
     }
 };
 
 window.handleUpdateUsername = async function(event) {
     event.preventDefault();
-    const newUsername = document.getElementById('newUsername').value;
+    const newUsername = document.getElementById('newUsername');
     const errorElement = document.getElementById('updateUsernameError');
+    if (!newUsername || !errorElement) {
+        window.logmsg('Update username form elements not found in the DOM', 0);
+        return;
+    }
+    const newUsernameValue = newUsername.value;
 
-    if (newUsername.length < 3) {
+    if (newUsernameValue.length < 3) {
         errorElement.textContent = 'Username must be at least 3 characters long';
         return;
     }
 
-    window.newUsernameToUpdate = newUsername;
+    window.newUsernameToUpdate = newUsernameValue;
     window.showUpdateUsernameConfirmation();
 };
 
 window.showUpdateUsernameConfirmation = function() {
-    document.getElementById('updateUsernameSection').style.display = 'none';
-    document.getElementById('updateUsernameConfirmation').style.display = 'block';
-    document.getElementById('confirmNewUsername').textContent = window.newUsernameToUpdate;
-    document.getElementById('confirmUsernameError').textContent = '';
+    const updateUsernameSection = document.getElementById('updateUsernameSection');
+    const updateUsernameConfirmation = document.getElementById('updateUsernameConfirmation');
+    const confirmNewUsername = document.getElementById('confirmNewUsername');
+    const confirmUsernameError = document.getElementById('confirmUsernameError');
+    if (!updateUsernameSection || !updateUsernameConfirmation || !confirmNewUsername || !confirmUsernameError) {
+        window.logmsg('Update username confirmation elements not found in the DOM', 0);
+        return;
+    }
+    updateUsernameSection.style.display = 'none';
+    updateUsernameConfirmation.style.display = 'block';
+    confirmNewUsername.textContent = window.newUsernameToUpdate;
+    confirmUsernameError.textContent = '';
 };
 
 window.hideUpdateUsernameConfirmation = function() {
-    document.getElementById('updateUsernameConfirmation').style.display = 'none';
-    document.getElementById('updateUsernameSection').style.display = 'block';
-    document.getElementById('updateUsernameError').textContent = '';
+    const updateUsernameConfirmation = document.getElementById('updateUsernameConfirmation');
+    const updateUsernameSection = document.getElementById('updateUsernameSection');
+    const updateUsernameError = document.getElementById('updateUsernameError');
+    if (!updateUsernameConfirmation || !updateUsernameSection || !updateUsernameError) {
+        window.logmsg('Update username confirmation elements not found in the DOM', 0);
+        return;
+    }
+    updateUsernameConfirmation.style.display = 'none';
+    updateUsernameSection.style.display = 'block';
+    updateUsernameError.textContent = '';
 };
 
 window.confirmUpdateUsername = async function() {
     const newUsername = window.newUsernameToUpdate;
     const errorElement = document.getElementById('confirmUsernameError');
+    const updateUsernameConfirmation = document.getElementById('updateUsernameConfirmation');
+    const updateUsernameSuccess = document.getElementById('updateUsernameSuccess');
+    if (!errorElement || !updateUsernameConfirmation || !updateUsernameSuccess) {
+        window.logmsg('Confirm username elements not found in the DOM', 0);
+        return;
+    }
 
     try {
         const response = await fetch('dbcontrol/update_username.php', {
@@ -752,68 +863,97 @@ window.confirmUpdateUsername = async function() {
         });
         const data = await response.json();
         if (data.success) {
-            document.getElementById('updateUsernameConfirmation').style.display = 'none';
-            document.getElementById('updateUsernameSuccess').style.display = 'block';
+            updateUsernameConfirmation.style.display = 'none';
+            updateUsernameSuccess.style.display = 'block';
         } else {
             errorElement.textContent = data.message;
         }
     } catch (error) {
-        console.error('Error in confirmUpdateUsername:', error);
+        window.logmsg(`Error in confirmUpdateUsername: ${error}`, 0);
         errorElement.textContent = 'An error occurred. Please try again.';
     }
 };
 
 window.handleUpdateEmail = async function(event) {
     event.preventDefault();
-    const newEmail = document.getElementById('newEmail').value;
+    const newEmail = document.getElementById('newEmail');
     const errorElement = document.getElementById('updateEmailError');
+    if (!newEmail || !errorElement) {
+        window.logmsg('Update email form elements not found in the DOM', 0);
+        return;
+    }
+    const newEmailValue = newEmail.value;
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(newEmail)) {
+    if (!emailRegex.test(newEmailValue)) {
         errorElement.textContent = 'Please enter a valid email address';
         return;
     }
 
-    window.newEmailToUpdate = newEmail;
+    window.newEmailToUpdate = newEmailValue;
     window.showUpdateEmailConfirmation();
 };
 
 window.showUpdateEmailConfirmation = function() {
-    document.getElementById('updateEmailSection').style.display = 'none';
-    document.getElementById('updateEmailConfirmation').style.display = 'block';
-    document.getElementById('confirmNewEmail').textContent = window.newEmailToUpdate;
-    document.getElementById('confirmPassword').value = '';
-    document.getElementById('confirmEmailError').textContent = '';
+    const updateEmailSection = document.getElementById('updateEmailSection');
+    const updateEmailConfirmation = document.getElementById('updateEmailConfirmation');
+    const confirmNewEmail = document.getElementById('confirmNewEmail');
+    const confirmPassword = document.getElementById('confirmPassword');
+    const confirmEmailError = document.getElementById('confirmEmailError');
+    if (!updateEmailSection || !updateEmailConfirmation || !confirmNewEmail || !confirmPassword || !confirmEmailError) {
+        window.logmsg('Update email confirmation elements not found in the DOM', 0);
+        return;
+    }
+    updateEmailSection.style.display = 'none';
+    updateEmailConfirmation.style.display = 'block';
+    confirmNewEmail.textContent = window.newEmailToUpdate;
+    confirmPassword.value = '';
+    confirmEmailError.textContent = '';
 };
 
 window.hideUpdateEmailConfirmation = function() {
-    document.getElementById('updateEmailConfirmation').style.display = 'none';
-    document.getElementById('updateEmailSection').style.display = 'block';
-    document.getElementById('updateEmailError').textContent = '';
+    const updateEmailConfirmation = document.getElementById('updateEmailConfirmation');
+    const updateEmailSection = document.getElementById('updateEmailSection');
+    const updateEmailError = document.getElementById('updateEmailError');
+    if (!updateEmailConfirmation || !updateEmailSection || !updateEmailError) {
+        window.logmsg('Update email confirmation elements not found in the DOM', 0);
+        return;
+    }
+    updateEmailConfirmation.style.display = 'none';
+    updateEmailSection.style.display = 'block';
+    updateEmailError.textContent = '';
 };
 
 window.confirmUpdateEmail = async function(event) {
     event.preventDefault();
-    const confirmPassword = document.getElementById('confirmPassword').value;
-    const newEmail = window.newEmailToUpdate;
+    const confirmPassword = document.getElementById('confirmPassword');
     const errorElement = document.getElementById('confirmEmailError');
+    const currentEmail = document.getElementById('currentEmail');
+    const updateEmailConfirmation = document.getElementById('updateEmailConfirmation');
+    const updateEmailSuccess = document.getElementById('updateEmailSuccess');
+    if (!confirmPassword || !errorElement || !currentEmail || !updateEmailConfirmation || !updateEmailSuccess) {
+        window.logmsg('Confirm email elements not found in the DOM', 0);
+        return;
+    }
+    const confirmPasswordValue = confirmPassword.value;
+    const newEmail = window.newEmailToUpdate;
 
     try {
         const response = await fetch('dbcontrol/update_email.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ newEmail, confirmPassword })
+            body: new URLSearchParams({ newEmail, confirmPassword: confirmPasswordValue })
         });
         const data = await response.json();
         if (data.success) {
-            document.getElementById('currentEmail').textContent = newEmail;
-            document.getElementById('updateEmailConfirmation').style.display = 'none';
-            document.getElementById('updateEmailSuccess').style.display = 'block';
+            currentEmail.textContent = newEmail;
+            updateEmailConfirmation.style.display = 'none';
+            updateEmailSuccess.style.display = 'block';
         } else {
             errorElement.textContent = data.message;
         }
     } catch (error) {
-        console.error('Error in confirmUpdateEmail:', error);
+        window.logmsg(`Error in confirmUpdateEmail: ${error}`, 0);
         errorElement.textContent = 'An error occurred. Please try again.';
     }
 };
@@ -823,10 +963,12 @@ window.stopPlayer = function() {
         window.sidPlayer.stop();
         window.sidPlayer = null;
     }
-    const playButton = document.getElementById('playButton');
+    const playButton = document.getElementById('playPauseButton');
     if (playButton) {
-        playButton.src = '/image/play.png';
-        playButton.alt = 'Play';
+        playButton.style.backgroundImage = "url('../image/play.png')";
+        playButton.setAttribute('aria-label', 'Play');
+    } else {
+        window.logmsg('Play/Pause button not found in the DOM', 0);
     }
 };
 
@@ -837,32 +979,28 @@ window.resetPlayer = function() {
     window.sidPlayer = null;
 
     const songInfo = document.getElementById('songInfo');
-    const flameButton = document.getElementById('flameButton');
     if (songInfo) {
         songInfo.textContent = 'Press Play';
-    }
-    if (flameButton) {
-        flameButton.src = '/image/flame-static.png';
-        flameButton.alt = 'Flame Inactive';
+    } else {
+        window.logmsg('Song info element not found in the DOM', 0);
     }
 
     brackets.updatePlayerState({ hasPlayed: false, isFlameActive: false });
+    ui.updateFlameButton(brackets.getPlayerState(), null);
 };
 
 window.updateUIForLogout = function() {
     const preferencesLink = document.getElementById('preferencesLink');
     const profileIcon = document.getElementById('profileIcon');
+    const authLink = document.getElementById('authLink');
+    const userGreeting = document.getElementById('userGreeting');
 
     if (preferencesLink) preferencesLink.style.display = 'none';
     if (profileIcon) profileIcon.style.display = 'none';
-
-    const authLink = document.getElementById('authLink');
     if (authLink) {
         authLink.style.display = 'inline';
         authLink.textContent = 'Sign In';
     }
-
-    const userGreeting = document.getElementById('userGreeting');
     if (userGreeting) userGreeting.textContent = '';
 };
 
@@ -884,26 +1022,44 @@ window.handleLogout = async function(event) {
             alert(data.message);
         }
     } catch (error) {
-        console.error('Error in handleLogout:', error);
+        window.logmsg(`Error in handleLogout: ${error}`, 0);
         alert('An error occurred. Please try again.');
     }
 };
 
 window.showDeleteAccountConfirmation = function() {
-    document.getElementById('deleteAccountSection').style.display = 'none';
-    document.getElementById('deleteAccountConfirmation').style.display = 'block';
+    const deleteAccountSection = document.getElementById('deleteAccountSection');
+    const deleteAccountConfirmation = document.getElementById('deleteAccountConfirmation');
+    if (!deleteAccountSection || !deleteAccountConfirmation) {
+        window.logmsg('Delete account confirmation elements not found in the DOM', 0);
+        return;
+    }
+    deleteAccountSection.style.display = 'none';
+    deleteAccountConfirmation.style.display = 'block';
 };
 
 window.hideDeleteAccountConfirmation = function() {
-    document.getElementById('deleteAccountSection').style.display = 'block';
-    document.getElementById('deleteAccountConfirmation').style.display = 'none';
-    document.getElementById('deleteAccountError').textContent = '';
+    const deleteAccountSection = document.getElementById('deleteAccountSection');
+    const deleteAccountConfirmation = document.getElementById('deleteAccountConfirmation');
+    const deleteAccountError = document.getElementById('deleteAccountError');
+    if (!deleteAccountSection || !deleteAccountConfirmation || !deleteAccountError) {
+        window.logmsg('Delete account confirmation elements not found in the DOM', 0);
+        return;
+    }
+    deleteAccountSection.style.display = 'block';
+    deleteAccountConfirmation.style.display = 'none';
+    deleteAccountError.textContent = '';
 };
 
 window.handleDeleteAccount = async function(event) {
     event.preventDefault();
-    const password = document.getElementById('deletePassword').value;
+    const deletePassword = document.getElementById('deletePassword');
     const errorElement = document.getElementById('deleteAccountError');
+    if (!deletePassword || !errorElement) {
+        window.logmsg('Delete account form elements not found in the DOM', 0);
+        return;
+    }
+    const password = deletePassword.value;
 
     window.stopPlayer();
 
@@ -920,7 +1076,7 @@ window.handleDeleteAccount = async function(event) {
             errorElement.textContent = result.message || 'Failed to delete account';
         }
     } catch (error) {
-        console.error('Error(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) in handleDeleteAccount:', error);
+        window.logmsg(`Error in handleDeleteAccount: ${error}`, 0);
         errorElement.textContent = 'An error occurred. Please try again.';
     }
 };
@@ -939,7 +1095,7 @@ function getComplementaryColor(hexColor) {
 window.flashProfileIcon = function() {
     const bitmapContainer = document.getElementById('profile-bitmap');
     if (!bitmapContainer) {
-        console.error('Profile bitmap container not found for flashing.');
+        window.logmsg('Profile bitmap container not found for flashing', 0);
         return;
     }
 
@@ -984,13 +1140,11 @@ async function loadPlayerState() {
         if (!response.ok) throw new Error(`Failed to load player_state: ${response.statusText}`);
         const data = await response.json();
         if (data.success && data.player_state) {
-            // console.log("Resuming player state:", JSON.stringify(data.player_state));
             return data.player_state;
         }
-//        console.log("No valid player_state found");
         return null;
     } catch (error) {
-        console.error("Error loading player_state:", error);
+        window.logmsg(`Error loading player_state: ${error}`, 0);
         return null;
     }
 }
@@ -1000,11 +1154,10 @@ async function initializeApp() {
     const preferencesLink = document.getElementById('preferences-link');
     const profileIcon = document.getElementById('profile-icon');
     const userInfo = document.getElementById('user-info');
-  
+
     window.hasShownPrompt = false;
     window.showPromptMessage = false;
-  
-    // Preload sprite sheet for flame animation
+
     window.logmsg('Preloading flame sprite sheet', 2);
 
     if (authLink) {
@@ -1040,20 +1193,22 @@ async function initializeApp() {
         });
     }
 
-    // Waveform toggle button listener
     const waveformToggleButton = document.getElementById('wave-toggle-button');
     if (waveformToggleButton) {
         waveformToggleButton.addEventListener('click', window.toggleWaveform);
+    } else {
+        window.logmsg('Waveform toggle button not found in the DOM', 0);
     }
 
-    // VU toggle button listener
     const vuToggleButton = document.getElementById('vu-toggle-button');
     if (vuToggleButton) {
         vuToggleButton.addEventListener('click', window.toggleVUMeters);
-    }    
+    } else {
+        window.logmsg('VU toggle button not found in the DOM', 0);
+    }
 
     if (!window.user || !window.user.id) {
-        console.error('window.user.id not defined on DOM load');
+        window.logmsg('window.user.id not defined on DOM load', 0);
         return;
     }
 
@@ -1065,13 +1220,13 @@ async function initializeApp() {
         if (!window.sidJamData.sidFiles || window.sidJamData.sidFiles.length === 0) throw new Error('No songs loaded from sidtunes');
         window.sidJamData.pathToId = {};
         tunesData.forEach(tune => {
-          window.sidJamData.pathToId[tune.fullpath] = tune.id;
+            window.sidJamData.pathToId[tune.fullpath] = tune.id;
         });
-    
+
         const resultsResponse = await fetch(`dbcontrol/get_results.php?user_id=${window.user.id}`);
         if (!resultsResponse.ok) throw new Error(`Failed to load results: ${resultsResponse.statusText}`);
         window.sidJamData.cachedResults = await resultsResponse.json();
-    
+
         const player_state = await loadPlayerState();
         if (player_state && player_state.contenders && player_state.currentMode === "bout" && player_state.contenders[0] && player_state.contenders[1]) {
             brackets.updatePlayerState({
@@ -1086,11 +1241,14 @@ async function initializeApp() {
                 bothContendersSelected: false,
                 isFlameActive: false,
                 isWaveformActive: player_state.isWaveformActive !== undefined ? player_state.isWaveformActive : true,
-                isVUActive: player_state.isVUActive !== undefined ? player_state.isVUActive : true // Add this line
+                isVUActive: player_state.isVUActive !== undefined ? player_state.isVUActive : true
             });
             ui.setCurrentThemeIndex(player_state.theme || 0);
             brackets.updateBracketDropdown();
-            document.getElementById("bracket-select").value = player_state.activeBracket.replace(" - ", "-");
+            const bracketSelect = document.getElementById("bracket-select");
+            if (bracketSelect) {
+                bracketSelect.value = player_state.activeBracket.replace(" - ", "-");
+            }
             updateVsMatchupBound();
             updateRoundInfoBound();
             updateWinnerButtonsBound();
@@ -1106,12 +1264,15 @@ async function initializeApp() {
                 nowPlayingSong: player_state.nowPlayingSong,
                 nowPlayingSongBracket: nowPlayingSongBracket,
                 isWaveformActive: player_state.isWaveformActive !== undefined ? player_state.isWaveformActive : true,
-                isVUActive: player_state.isVUActive !== undefined ? player_state.isVUActive : true // Add this line
+                isVUActive: player_state.isVUActive !== undefined ? player_state.isVUActive : true
             });
             ui.setCurrentThemeIndex(player_state.theme || 0);
             loadSongBound(player_state.nowPlayingSong, -1, false);
             brackets.updateBracketDropdown();
-            document.getElementById("bracket-select").value = player_state.peekBracket.replace(" - ", "-");
+            const bracketSelect = document.getElementById("bracket-select");
+            if (bracketSelect) {
+                bracketSelect.value = player_state.peekBracket.replace(" - ", "-");
+            }
             updateVsMatchupBound();
             updateRoundInfoBound();
             updateWinnerButtonsBound();
@@ -1134,7 +1295,7 @@ async function initializeApp() {
                 nowPlayingSong: null,
                 nowPlayingSongBracket: null,
                 isWaveformActive: true,
-                isVUActive: true // Add this line
+                isVUActive: true
             });
             ui.setCurrentThemeIndex(0);
             brackets.updateBracketDropdown();
@@ -1143,60 +1304,92 @@ async function initializeApp() {
             ui.updateVUMeterVisibility(true);
         }
     } catch (error) {
-        console.error('Error loading data:', error);
-        // ... handle error ...
+        window.logmsg(`Error loading data: ${error}`, 0);
         brackets.updatePlayerState({
             peekBracket: "0 - 0",
             activeBracket: "0 - 0",
             currentMode: "bout",
             isWaveformActive: true,
-            isVUActive: true // Add this line
+            isVUActive: true
         });
         ui.setCurrentThemeIndex(0);
         brackets.updateBracketDropdown();
         brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateFlameButtonBound);
         ui.updateWaveformVisibility(true);
     }
-      document.getElementById("playPauseButton").disabled = false;
-      for (let i = 1; i <= 3; i++) {
-        document.getElementById(`voice${i}`).addEventListener('click', () => player.toggleVoice(i));
+
+    const playPauseButton = document.getElementById("playPauseButton");
+    if (playPauseButton) {
+        playPauseButton.disabled = false;
+    } else {
+        window.logmsg('Play/Pause button not found in the DOM', 0);
     }
-    
-      // Apply initial theme and render winner button bitmaps
-      ui.applyTheme(brackets.getPlayerState().currentMode);
-      const theme = baseColorSchemes[ui.getCurrentThemeIndex()];
-      const playerState = brackets.getPlayerState();
-      renderWinnerButtonBitmap(0, playerState);
-      renderWinnerButtonBitmap(1, playerState);
-    
-      // Disable winner buttons initially
-      const winnerButton0 = document.getElementById('winner0');
-      const winnerButton1 = document.getElementById('winner1');
-      winnerButton0.disabled = true;
-      winnerButton1.disabled = true;
-    
-      const button = document.getElementById("colorButton");
-      const currentTheme = baseColorSchemes[ui.getCurrentThemeIndex()];
-      const nextIndex = (ui.getCurrentThemeIndex() + 1) % baseColorSchemes.length;
-      const nextTheme = baseColorSchemes[nextIndex];
-      button.style.backgroundColor = nextTheme.exterior;
-      button.querySelector('.inner-box').style.backgroundColor = nextTheme.interior;
-      button.title = `Switch Theme \n  From: ${currentTheme.name}\n  To: ${nextTheme.name}`;
-    
-      checkSong2Clipping();
+
+    for (let i = 1; i <= 3; i++) {
+        const voiceButton = document.getElementById(`voice${i}`);
+        if (voiceButton) {
+            voiceButton.addEventListener('click', () => player.toggleVoice(i));
+        } else {
+            window.logmsg(`Voice button ${i} not found in the DOM`, 0);
+        }
+    }
+
+    ui.applyTheme(brackets.getPlayerState().currentMode);
+    const theme = baseColorSchemes[ui.getCurrentThemeIndex()];
+    const playerState = brackets.getPlayerState();
+    renderWinnerButtonBitmap(0, playerState);
+    renderWinnerButtonBitmap(1, playerState);
+
+    const winnerButtonLeft = document.getElementById('winner-left');
+    const winnerButtonRight = document.getElementById('winner-right');
+    if (winnerButtonLeft && winnerButtonRight) {
+        winnerButtonLeft.disabled = true;
+        winnerButtonRight.disabled = true;
+    } else {
+        window.logmsg('Winner buttons not found in the DOM', 0);
+    }
+
+    const button = document.getElementById("colorButton");
+    if (button) {
+        const currentTheme = baseColorSchemes[ui.getCurrentThemeIndex()];
+        const nextIndex = (ui.getCurrentThemeIndex() + 1) % baseColorSchemes.length;
+        const nextTheme = baseColorSchemes[nextIndex];
+        button.style.backgroundColor = nextTheme.exterior;
+        const icon = button.querySelector('.color-toggle__icon');
+        if (icon) {
+            icon.style.backgroundColor = nextTheme.interior;
+        } else {
+            window.logmsg('Color toggle icon not found in #colorButton', 0);
+        }
+        button.title = `Switch Theme \n  From: ${currentTheme.name}\n  To: ${nextTheme.name}`;
+    } else {
+        window.logmsg('Color toggle button not found in the DOM', 0);
+    }
+
+    checkSong2Clipping();
 }
 
-document.getElementById('authOverlay').addEventListener('click', function(event) {
-    if (event.target === this) {
-        window.toggleAuthPopUp();
-    }
-});
+const authOverlay = document.getElementById('authOverlay');
+if (authOverlay) {
+    authOverlay.addEventListener('click', function(event) {
+        if (event.target === this) {
+            window.toggleAuthPopUp();
+        }
+    });
+} else {
+    window.logmsg('Auth overlay not found in the DOM', 0);
+}
 
-document.getElementById('preferencesOverlay').addEventListener('click', function(event) {
-    if (event.target === this) {
-        window.togglePreferencesPopUp();
-    }
-});
+const preferencesOverlay = document.getElementById('preferencesOverlay');
+if (preferencesOverlay) {
+    preferencesOverlay.addEventListener('click', function(event) {
+        if (event.target === this) {
+            window.togglePreferencesPopUp();
+        }
+    });
+} else {
+    window.logmsg('Preferences overlay not found in the DOM', 0);
+}
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
@@ -1206,7 +1399,11 @@ if (document.readyState === 'loading') {
     initializeApp();
 }
 
-document.getElementById('log-player-state').addEventListener('click', () => {
-    console.log('[DEBUG] Current playerState:', JSON.stringify(brackets.getPlayerState()));
-});
-
+const logPlayerStateButton = document.getElementById('log-player-state');
+if (logPlayerStateButton) {
+    logPlayerStateButton.addEventListener('click', () => {
+        debug(`Current playerState: ${JSON.stringify(brackets.getPlayerState())}`);
+    });
+} else {
+    window.logmsg('Log player state button not found in the DOM', 0);
+}

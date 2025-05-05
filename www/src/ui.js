@@ -1,10 +1,11 @@
+// ui.js
 import { baseColorSchemes, getInvertedTheme } from './themes.js';
 import * as brackets from './brackets.js';
 import { renderProfileBitmap, renderWinnerButtonBitmap } from './bitmap.js';
 import { renderSpriteAnimation } from './spriteAnimator.js'; 
 import * as player from './player.js';
 
-export let currentThemeIndex = 0;;
+export let currentThemeIndex = 0;
 
 export function setCurrentThemeIndex(index) {
     currentThemeIndex = index;
@@ -17,8 +18,6 @@ export function getCurrentThemeIndex() {
 function flipBitmapHorizontally(bitmap) {
     return bitmap.map(row => [...row].reverse());
 }
-
-// export function  debug(message) { console.log(`[DEBUG] ${message}`); }
 
 // Utility function to calculate luminance of a hex color
 function calculateLuminance(hexColor) {
@@ -39,15 +38,12 @@ function getContrastRatio(color1, color2) {
 // Adjust text color based on contrast with highlight
 function adjustTextColor(textColor, highlightColor, fallbackColor) {
     const contrastThreshold = 4.5; // WCAG AA standard
-    // Check primary text color
     if (getContrastRatio(textColor, highlightColor) >= contrastThreshold) {
         return textColor;
     }
-    // Check fallback color
     if (getContrastRatio(fallbackColor, highlightColor) >= contrastThreshold) {
         return fallbackColor;
     }
-    // Final fallback to black for readability
     return "#000000";
 }
 
@@ -56,13 +52,26 @@ export function applyTheme(currentMode) {
     const theme = currentMode === "nowPlaying" ? getInvertedTheme(baseTheme) : baseTheme;
 
     // Apply exterior styles
-    document.body.style.backgroundColor = theme.exterior;
-    document.getElementById("title").style.color = theme.exteriorTextColor;
-    document.getElementById("version").style.color = theme.exteriorTextColor;
-    document.getElementById("vs-matchup").style.color = theme.exteriorTextColor;
-    document.getElementById("round-info").style.color = theme.exteriorTextColor;
-    document.getElementById("bracket-label").style.color = theme.exteriorTextColor;
-    document.getElementById("user-info").style.color = theme.exteriorTextColor;
+    const body = document.body;
+    const title = document.getElementById("title");
+    const version = document.getElementById("version");
+    const vsMatchup = document.getElementById("vs-matchup");
+    const roundInfo = document.getElementById("round-info");
+    const bracketLabel = document.getElementById("bracket-label");
+    const userInfo = document.getElementById("user-info");
+
+    if (!body || !title || !version || !vsMatchup || !roundInfo || !bracketLabel || !userInfo) {
+        console.error('One or more exterior elements not found in the DOM');
+        return;
+    }
+
+    body.style.backgroundColor = theme.exterior;
+    title.style.color = theme.exteriorTextColor;
+    version.style.color = theme.exteriorTextColor;
+    vsMatchup.style.color = theme.exteriorTextColor;
+    roundInfo.style.color = theme.exteriorTextColor;
+    bracketLabel.style.color = theme.exteriorTextColor;
+    userInfo.style.color = theme.exteriorTextColor;
 
     const authLinkDiv = document.getElementById("auth-link");
     const authLink = authLinkDiv ? authLinkDiv.querySelector("a") : null;
@@ -94,13 +103,11 @@ export function applyTheme(currentMode) {
     const isLoggedIn = window.isLoggedIn || false;
     const activeLink = isLoggedIn ? preferencesLink : authLink;
     if (activeLink && profileIcon) {
-        // Remove existing listeners to prevent duplicates
         activeLink.removeEventListener('mouseover', syncHoverOn);
         activeLink.removeEventListener('mouseout', syncHoverOff);
         profileIcon.removeEventListener('mouseover', syncHoverOn);
         profileIcon.removeEventListener('mouseout', syncHoverOff);
 
-        // Add synchronized hover listeners
         const hoverHandler = (e) => {
             activeLink.classList.add('hover');
             profileIcon.classList.add('hover');
@@ -117,9 +124,18 @@ export function applyTheme(currentMode) {
     }
 
     // Apply interior styles
-    document.getElementById("player-info").style.backgroundColor = theme.interior;
-    document.getElementById("track-details").style.color = theme.interiorTextColor;
-    document.getElementById("song-title").style.color = theme.interiorTextColor;
+    const playerInfo = document.getElementById("player-info");
+    const trackDetails = document.getElementById("track-details");
+    const songTitle = document.getElementById("song-title");
+
+    if (!playerInfo || !trackDetails || !songTitle) {
+        console.error('One or more interior elements not found in the DOM');
+        return;
+    }
+
+    playerInfo.style.backgroundColor = theme.interior;
+    trackDetails.style.color = theme.interiorTextColor;
+    songTitle.style.color = theme.interiorTextColor;
 
     // Update profile bitmap based on login status
     renderProfileBitmap(isLoggedIn, theme.exteriorTextColor);
@@ -129,8 +145,17 @@ export function applyTheme(currentMode) {
     const nextBaseTheme = baseColorSchemes[nextIndex];
     const nextTheme = currentMode === "nowPlaying" ? getInvertedTheme(nextBaseTheme) : nextBaseTheme;
     const button = document.getElementById("colorButton");
+    if (!button) {
+        console.error('Color toggle button not found in the DOM');
+        return;
+    }
     button.style.backgroundColor = nextTheme.exterior;
-    button.querySelector('.inner-box').style.backgroundColor = nextTheme.interior;
+    const icon = button.querySelector('.color-toggle__icon');
+    if (icon) {
+        icon.style.backgroundColor = nextTheme.interior;
+    } else {
+        console.error('Color toggle icon not found in #colorButton');
+    }
     button.title = `Switch Theme \n  From: ${baseTheme.name}\n  To: ${nextBaseTheme.name}`;
 
     // Reapply waveform visibility
@@ -158,43 +183,40 @@ export function updateVsMatchup(playerState) {
     const song1 = document.getElementById("song1");
     const song2 = document.getElementById("song2");
     const vsText = document.getElementById("vs-text");
+    if (!vsMatchup || !song1 || !song2 || !vsText) {
+        console.error('VS matchup elements not found in the DOM');
+        return;
+    }
+
     const baseTheme = baseColorSchemes[currentThemeIndex];
     const theme = playerState.currentMode === "nowPlaying" ? getInvertedTheme(baseTheme) : baseTheme;
     const contenderHighlight = "#00FFFF";
     const flameHighlight = "#8B0000";
     const contenderTextColor = adjustTextColor(theme.exteriorTextColor, contenderHighlight, theme.interiorTextColor);
-    const flameTextColor =  "#FFFFFF";
+    const flameTextColor = "#FFFFFF";
 
-    // Clear existing highlight classes to prevent stale styles
+    vsMatchup.style.setProperty('--text-exterior', theme.exteriorTextColor);
+    vsMatchup.style.setProperty('--text-contender', contenderTextColor);
+    vsMatchup.style.setProperty('--text-flame', flameTextColor);
+
     song1.classList.remove("active-song", "flame-song");
     song2.classList.remove("active-song", "flame-song");
 
     if (playerState.currentMode === "nowPlaying") {
         vsMatchup.classList.add("now-playing");
-        song1.innerHTML = `<span style="color: ${theme.exteriorTextColor}">${playerState.nowPlayingSong ? playerState.nowPlayingSong.split('/').pop() : '-'}</span>`;
+        song1.innerHTML = `<span class="text--exterior">${playerState.nowPlayingSong ? playerState.nowPlayingSong.split('/').pop() : '-'}</span>`;
         vsText.textContent = "";
         song2.innerHTML = "";
     } else {
         vsMatchup.classList.remove("now-playing");
         const songName0 = playerState.contenders[0]?.split('/').pop() || "-";
         const songName1 = playerState.contenders[1]?.split('/').pop() || "-";
-        const activeClass0 = playerState.hasPlayed && playerState.activeContender === 0 ? 'active-song' : '';
-        const activeClass1 = playerState.hasPlayed && playerState.activeContender === 1 ? 'active-song' : '';
-        const flameClass0 = playerState.isFlameActive && playerState.activeContender === 0 ? 'flame-song' : activeClass0;
-        const flameClass1 = playerState.isFlameActive && playerState.activeContender === 1 ? 'flame-song' : activeClass1;
+        const song1Class = playerState.isFlameActive && playerState.activeContender === 0 ? 'flame-song text--flame' : (playerState.hasPlayed && playerState.activeContender === 0 ? 'active-song text--contender' : 'text--exterior');
+        const song2Class = playerState.isFlameActive && playerState.activeContender === 1 ? 'flame-song text--flame' : (playerState.hasPlayed && playerState.activeContender === 1 ? 'active-song text--contender' : 'text--exterior');
 
-        // Determine styles for song1
-        const song1Class = playerState.isFlameActive && playerState.activeContender === 0 ? 'flame-song' : (playerState.hasPlayed && playerState.activeContender === 0 ? 'active-song' : '');
-        const song1TextColor = playerState.isFlameActive && playerState.activeContender === 0 ? flameTextColor : (playerState.hasPlayed && playerState.activeContender === 0 ? contenderTextColor : theme.exteriorTextColor);
-
-        // Determine styles for song2
-        const song2Class = playerState.isFlameActive && playerState.activeContender === 1 ? 'flame-song' : (playerState.hasPlayed && playerState.activeContender === 1 ? 'active-song' : '');
-        const song2TextColor = playerState.isFlameActive && playerState.activeContender === 1 ? flameTextColor : (playerState.hasPlayed && playerState.activeContender === 1 ? contenderTextColor : theme.exteriorTextColor);
-
-        // Apply styles
-        song1.innerHTML = `<span class="${song1Class}" style="color: ${song1TextColor}" title="${playerState.contenders[0]?.replace('/sid/C64Music', '') || '-'}">${songName0}</span>`;
+        song1.innerHTML = `<span class="${song1Class}" title="${playerState.contenders[0]?.replace('/sid/C64Music', '') || '-'}">${songName0}</span>`;
         vsText.textContent = " - vs - ";
-        song2.innerHTML = `<span class="${song2Class}" style="color: ${song2TextColor}" title="${playerState.contenders[1]?.replace('/sid/C64Music', '') || '-'}">${songName1}</span>`;
+        song2.innerHTML = `<span class="${song2Class}" title="${playerState.contenders[1]?.replace('/sid/C64Music', '') || '-'}">${songName1}</span>`;
     }
 }
 
@@ -206,12 +228,15 @@ export function updateRoundInfo(playerState) {
         console.error("round-info element not found");
         return;
     }
+
     const baseTheme = baseColorSchemes[currentThemeIndex];
     const theme = playerState.currentMode === "nowPlaying" ? getInvertedTheme(baseTheme) : baseTheme;
     const winnerHighlight = "#90EE90";
     const winnerTextColor = adjustTextColor(theme.exteriorTextColor, winnerHighlight, "#000000");
 
-    // Clear any existing timeout to prevent stale updates
+    roundDiv.style.setProperty('--text-exterior', theme.exteriorTextColor);
+    roundDiv.style.setProperty('--text-winner', winnerTextColor);
+
     if (blinkMessageTimeout) {
         clearTimeout(blinkMessageTimeout);
         blinkMessageTimeout = null;
@@ -219,19 +244,14 @@ export function updateRoundInfo(playerState) {
 
     if (playerState.currentMode === "nowPlaying") {
         if (playerState.isReviveActive) {
-            // Step 1: Show "Revive Activated" with blinking effect
-            roundDiv.innerHTML = `<span class="revive-activated" style="color: ${theme.exteriorTextColor}">Revive Activated</span>`;
-
-            // Step 2: After 2 seconds, switch to the instructional marquee
+            roundDiv.innerHTML = `<span class="revive-activated text--exterior">Revive Activated</span>`;
             blinkMessageTimeout = setTimeout(() => {
-                // Only update if still in "nowPlaying" mode and isReviveActive is true
                 if (playerState.currentMode === "nowPlaying" && playerState.isReviveActive) {
                     roundDiv.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="3">Click jAM to revive this contender or click Revive again to cancel...</marquee>`;
                 }
                 blinkMessageTimeout = null;
-            }, 2000); // Matches the 2s duration of the blink animation
+            }, 2000);
         } else {
-            // Step 3: Default "Now Playing" marquee when Revive is not active
             roundDiv.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="3">Now Playing Mode... Click jAM to return to Bout Mode...</marquee>`;
         }
         return;
@@ -243,29 +263,25 @@ export function updateRoundInfo(playerState) {
     }
 
     if (playerState.isFlameActive && !playerState.bothContendersSelected && playerState.winner === null) {
-        // Step 1: Show "Flame Activated" with blinking effect
-        roundDiv.innerHTML = `<span class="flame-activated" style="color: ${theme.exteriorTextColor}">Flame Activated</span>`;
-
-        // Step 2: After 2 seconds, switch to the appropriate marquee
+        roundDiv.innerHTML = `<span class="flame-activated text--exterior">Flame Activated</span>`;
         blinkMessageTimeout = setTimeout(() => {
-            // Only update if still in "bout" mode, isFlameActive is true, and no winner is selected
             if (playerState.currentMode === "bout" && playerState.isFlameActive && !playerState.bothContendersSelected && playerState.winner === null) {
                 const marqueeMessage = playerState.isUnplayableSID
                     ? "Unplayable SID detected... Click jAM to eliminate or flame to cancel..."
                     : "Contender queued for elimination... Click jAM to confirm or flame to cancel...";
-                roundDiv.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="3" style="color: ${theme.exteriorTextColor}">${marqueeMessage}</marquee>`;
+                roundDiv.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="3" class="text--exterior">${marqueeMessage}</marquee>`;
             }
             blinkMessageTimeout = null;
-        }, 2000); // Matches the 2s duration of the blink animation
+        }, 2000);
         return;
     }
 
     if (!playerState.hasPlayed) {
         roundDiv.textContent = "Press Play";
     } else if (playerState.bothContendersSelected) {
-        roundDiv.innerHTML = `<span class="winner-highlight" style="color: ${winnerTextColor}">Winner: Both Contenders</span>`;
+        roundDiv.innerHTML = `<span class="winner-highlight text--winner">Winner: Both Contenders</span>`;
     } else if (playerState.winner !== null) {
-        roundDiv.innerHTML = `<span class="winner-highlight" style="color: ${winnerTextColor}">Winner: ${playerState.contenders[playerState.winner]?.split('/').pop() || '-'}</span>`;
+        roundDiv.innerHTML = `<span class="winner-highlight text--winner">Winner: ${playerState.contenders[playerState.winner]?.split('/').pop() || '-'}</span>`;
     } else {
         roundDiv.textContent = `Round ${playerState.roundCount}`;
     }
@@ -278,28 +294,45 @@ export function decodeHtmlEntities(str) {
 }
 
 export function updateSongInfo(sidPlayer) {
-    if (sidPlayer) {
-        const songInfo = sidPlayer.getSongInfo();
-        document.getElementById("song-title").textContent = decodeHtmlEntities(songInfo.songName);
-        document.getElementById("song-author").textContent = "Author: " + decodeHtmlEntities(songInfo.songAuthor.replace(/^Author:\s*/i, ''));
-        document.getElementById("song-released").textContent = "Released: " + decodeHtmlEntities(songInfo.songReleased);
-        document.getElementById("track-info").textContent = "Track: " + (songInfo.actualSubsong + 1) + "/" + songInfo.maxSubsong;
+    if (!sidPlayer) {
+        console.error('SID player not provided');
+        return;
     }
+
+    const songInfo = sidPlayer.getSongInfo();
+    const songTitle = document.getElementById("song-title");
+    const songAuthor = document.getElementById("song-author");
+    const songReleased = document.getElementById("song-released");
+    const trackInfo = document.getElementById("track-info");
+
+    if (!songTitle || !songAuthor || !songReleased || !trackInfo) {
+        console.error('Song info elements not found in the DOM');
+        return;
+    }
+
+    songTitle.textContent = decodeHtmlEntities(songInfo.songName);
+    songAuthor.textContent = "Author: " + decodeHtmlEntities(songInfo.songAuthor.replace(/^Author:\s*/i, ''));
+    songReleased.textContent = "Released: " + decodeHtmlEntities(songInfo.songReleased);
+    trackInfo.textContent = "Track: " + (songInfo.actualSubsong + 1) + "/" + songInfo.maxSubsong;
 }
 
 export function updateWaveformVisibility(isWaveformActive) {
     const waveformContainer = document.getElementById("voice-visualizations");
     const waveformToggleButton = document.getElementById("wave-toggle-button");
-    
+
     if (waveformContainer) {
         waveformContainer.style.display = isWaveformActive ? "flex" : "none";
+    } else {
+        console.error('Waveform container not found in the DOM');
     }
-    
+
     if (waveformToggleButton) {
-        waveformToggleButton.style.filter = isWaveformActive ? "none" : "brightness(70%)"; // Subtle dimming for off state
-        waveformToggleButton.classList.remove("inactive"); // Ensure no inactive class
-        waveformToggleButton.disabled = false; // Ensure button is not disabled
+        waveformToggleButton.style.filter = isWaveformActive ? "none" : "brightness(70%)";
+        waveformToggleButton.classList.remove("inactive");
+        waveformToggleButton.disabled = false;
         waveformToggleButton.title = isWaveformActive ? "Hide Waveforms" : "Show Waveforms";
+    } else {
+        console.error('Waveform toggle button not found in the DOM');
     }
 }
 
@@ -318,6 +351,8 @@ export function updateVUMeterVisibility(isVUActive) {
                 canvas.style.display = isVUActive ? "block" : "none";
             }
         });
+    } else {
+        console.error('VU container not found in the DOM');
     }
 
     if (vuToggleButton) {
@@ -325,46 +360,73 @@ export function updateVUMeterVisibility(isVUActive) {
         vuToggleButton.classList.remove("inactive");
         vuToggleButton.disabled = false;
         vuToggleButton.title = isVUActive ? "Hide VU Meters" : "Show VU Meters";
+    } else {
+        console.error('VU toggle button not found in the DOM');
     }
 }
 
-
 export function updateNavigationButtons(sidPlayer) {
-    if (sidPlayer) {
-        const songInfo = sidPlayer.getSongInfo();
-        document.getElementById("prevButton").disabled = false;
-        document.getElementById("nextButton").disabled = (songInfo.actualSubsong === songInfo.maxSubsong - 1);
+    if (!sidPlayer) {
+        console.error('SID player not provided');
+        return;
     }
+
+    const prevButton = document.getElementById("prevButton");
+    const nextButton = document.getElementById("nextButton");
+
+    if (!prevButton || !nextButton) {
+        console.error('Navigation buttons not found in the DOM');
+        return;
+    }
+
+    const songInfo = sidPlayer.getSongInfo();
+    prevButton.disabled = false;
+    nextButton.disabled = (songInfo.actualSubsong === songInfo.maxSubsong - 1);
 }
 
 export function updatePlayPauseButton(isPlaying) {
     const button = document.getElementById("playPauseButton");
-    button.style.backgroundImage = isPlaying ? "url('/image/pause.png')" : "url('/image/play.png')";
+    if (!button) {
+        console.error('Play/Pause button not found in the DOM');
+        return;
+    }
+    button.style.backgroundImage = isPlaying ? "url('../image/pause.png')" : "url('../image/play.png')";
 }
 
 export function updateWinnerButtons(playerState, sidPlayer) {
-    const winner0 = document.getElementById("winner0");
-    const winner1 = document.getElementById("winner1");
+    const winnerLeft = document.getElementById("winner-left");
+    const winnerRight = document.getElementById("winner-right");
+    const jamButton = document.getElementById("jamButton");
 
-    if (playerState.currentMode === "nowPlaying") {
-        winner0.classList.add("hidden");
-        winner1.classList.add("hidden");
-        document.getElementById("jamButton").disabled = !sidPlayer;
+    if (!winnerLeft || !winnerRight || !jamButton) {
+        console.error('Winner buttons or jam button not found in the DOM');
         return;
     }
 
-    winner0.classList.remove("hidden");
-    winner1.classList.remove("hidden");
+    if (playerState.currentMode === "nowPlaying") {
+        winnerLeft.classList.add("hidden");
+        winnerRight.classList.add("hidden");
+        jamButton.disabled = !sidPlayer;
+        return;
+    }
+
+    winnerLeft.classList.remove("hidden");
+    winnerRight.classList.remove("hidden");
     const disabled = !playerState.hasPlayed || (playerState.roundCount === 1 && !playerState.hasJammed) || playerState.isFlameActive;
-    winner0.disabled = disabled;
-    winner1.disabled = disabled;
-    winner0.classList.toggle("disabled", disabled);
-    winner1.classList.toggle("disabled", disabled);
-    document.getElementById("jamButton").disabled = !sidPlayer;
+    winnerLeft.disabled = disabled;
+    winnerRight.disabled = disabled;
+    winnerLeft.classList.toggle("disabled", disabled);
+    winnerRight.classList.toggle("disabled", disabled);
+    jamButton.disabled = !sidPlayer;
 }
 
 export function updateJamButton(isPlaying) {
     const jamButton = document.getElementById("jamButton");
+    if (!jamButton) {
+        console.error('Jam button not found in the DOM');
+        return;
+    }
+
     const playerState = brackets.getPlayerState();
     const sidPlayer = player.sidPlayer;
 
@@ -378,55 +440,59 @@ export function updateJamButton(isPlaying) {
     jamButton.setAttribute('title', isPlaying ? 'Pause and Switch Mode' : 'Play and Switch Mode');
 }
 
-
-
 export function updateFlameButton(playerState, sidPlayer) {
     const flameControls = document.getElementById("flame-controls");
     const flameButton = document.getElementById("flameButton");
     const reviveButton = document.getElementById("reviveButton");
-  
-    if (playerState.currentMode === "nowPlaying") {
-      if (playerState.nowPlayingSongBracket === "Eliminated" && playerState.nowPlayingSong) {
-        flameControls.classList.remove("hidden");
-        flameButton.style.display = "none";
-        reviveButton.style.display = "block";
-        updateReviveButton(playerState.isReviveActive);
+
+    if (!flameControls || !flameButton || !reviveButton) {
+        console.error('Flame controls elements not found in the DOM');
         return;
-      }
-      flameControls.classList.add("hidden");
-      flameButton.style.display = "none";
-      reviveButton.style.display = "none";
-      return;
     }
-  
+
+    if (playerState.currentMode === "nowPlaying") {
+        if (playerState.nowPlayingSongBracket === "Eliminated" && playerState.nowPlayingSong) {
+            flameControls.classList.remove("hidden");
+            flameButton.style.display = "none";
+            reviveButton.style.display = "block";
+            updateReviveButton(playerState.isReviveActive);
+            return;
+        }
+        flameControls.classList.add("hidden");
+        flameButton.style.display = "none";
+        reviveButton.style.display = "none";
+        return;
+    }
+
     if (playerState.peekBracket === "0 - 0") {
-      flameControls.classList.remove("hidden");
-      flameButton.style.display = "block";
-      reviveButton.style.display = "none";
+        flameControls.classList.remove("hidden");
+        flameButton.style.display = "block";
+        reviveButton.style.display = "none";
     } else {
-      flameControls.classList.add("hidden");
-      flameButton.style.display = "none";
-      reviveButton.style.display = "none";
-      return;
+        flameControls.classList.add("hidden");
+        flameButton.style.display = "none";
+        reviveButton.style.display = "none";
+        return;
     }
-  
+
     if (playerState.winner !== null || playerState.bothContendersSelected) {
-      flameButton.disabled = true;
+        flameButton.disabled = true;
     } else {
-      const availableSongs = window.sidJamData.sidFiles.filter(song => !playerState.contenders.includes(song));
-      flameButton.disabled = !playerState.hasPlayed || availableSongs.length === 0;
+        const availableSongs = window.sidJamData.sidFiles.filter(song => !playerState.contenders.includes(song));
+        flameButton.disabled = !playerState.hasPlayed || availableSongs.length === 0;
     }
-  
-    // Render sprite animation or static image
+
     renderSpriteAnimation(flameButton, "flame", playerState.isFlameActive);
-  
-    // Add accessibility title
     flameButton.setAttribute('title', playerState.isFlameActive ? 'Cancel Flame' : 'Flame Contender');
 }
 
 export function updateReviveButton(isReviveActive) {
     const reviveButton = document.getElementById("reviveButton");
-    // reviveButton.style.backgroundColor = isReviveActive ? "#90ee90" : "";
+    if (!reviveButton) {
+        console.error('Revive button not found in the DOM');
+        return;
+    }
+
     if (isReviveActive) {
         reviveButton.classList.add("active");
     } else {
@@ -436,14 +502,19 @@ export function updateReviveButton(isReviveActive) {
 
 export function updateSongTitleHighlight(mode, isReviveActive) {
     const songTitle = document.getElementById("song-title");
+    if (!songTitle) {
+        console.error('Song title element not found in the DOM');
+        return;
+    }
+
     const baseTheme = baseColorSchemes[currentThemeIndex];
     const theme = mode === "nowPlaying" ? getInvertedTheme(baseTheme) : baseTheme;
 
     songTitle.style.color = theme.exteriorTextColor;
     if (isReviveActive) {
-        songTitle.classList.add("reviveHighlight");
+        songTitle.classList.add("revive-highlight");
     } else {
-        songTitle.classList.remove("reviveHighlight");
+        songTitle.classList.remove("revive-highlight");
     }
 
     updateRoundInfo(brackets.getPlayerState());
@@ -451,17 +522,25 @@ export function updateSongTitleHighlight(mode, isReviveActive) {
 
 export function toggleColorScheme(currentMode) {
     setCurrentThemeIndex((currentThemeIndex + 1) % baseColorSchemes.length);
-    const currentBaseTheme = baseColorSchemes[currentThemeIndex]; // Use the updated index
+    const currentBaseTheme = baseColorSchemes[currentThemeIndex];
     applyTheme(currentMode);
 
     const nextIndex = (getCurrentThemeIndex() + 1) % baseColorSchemes.length;
     const nextBaseTheme = baseColorSchemes[nextIndex];
     const nextTheme = currentMode === "nowPlaying" ? getInvertedTheme(nextBaseTheme) : nextBaseTheme;
     const button = document.getElementById("colorButton");
+    if (!button) {
+        console.error('Color toggle button not found in the DOM');
+        return;
+    }
     button.style.backgroundColor = nextTheme.exterior;
-    button.querySelector('.inner-box').style.backgroundColor = nextTheme.interior;
-    button.title = `Switch Theme \n  From: ${currentBaseTheme.name}\n  To: ${nextBaseTheme.name}`; // Use currentBaseTheme
-    // debug(`Theme switched to ${currentBaseTheme.name} (index ${getCurrentThemeIndex()}).`);
+    const icon = button.querySelector('.color-toggle__icon');
+    if (icon) {
+        icon.style.backgroundColor = nextTheme.interior;
+    } else {
+        console.error('Color toggle icon not found in #colorButton during toggleColorScheme');
+    }
+    button.title = `Switch Theme \n  From: ${currentBaseTheme.name}\n  To: ${nextBaseTheme.name}`;
 
     const playerState = brackets.getPlayerState();
     updateVsMatchup(playerState);

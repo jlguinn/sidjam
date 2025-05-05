@@ -155,10 +155,11 @@ export function renderProfileBitmap(isLoggedIn, color, pixelSize = 4, domElement
 
 // Winner button rendering
 export function renderWinnerButtonBitmap(contenderIndex, playerState) {
-
-    const winnerButton = document.getElementById(`winner${contenderIndex}`);
+    
+    const winnerButtonId = contenderIndex === 0 ? 'winner-left' : 'winner-right';
+    const winnerButton = document.getElementById(winnerButtonId);
     if (!winnerButton) {
-        console.error(`Winner button for contender ${contenderIndex} not found.`);
+        window.logmsg(`Winner button for contender ${contenderIndex} (ID: ${winnerButtonId}) not found`, 0);
         return;
     }
 

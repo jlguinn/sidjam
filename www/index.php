@@ -9,6 +9,26 @@ session_start();
 require_once "dbcontrol/sidcon.php";
 $cxn = mysqli_connect($host, $user, $pass, $database) or die("Connection failed: " . mysqli_connect_error());
 
+// Helper function to clear session
+function clearSession() {
+    session_destroy();
+    unset($_SESSION['user_id']);
+    unset($_SESSION['session_id']);
+    setcookie('session_id', '', time() - 3600, "/");
+}
+
+// Helper function to update LastAccessDate
+function updateLastAccess($cxn, $user_id) {
+    $stmt = $cxn->prepare("UPDATE siduser SET LastAccessDate = CURDATE() WHERE user_id = ?");
+    if ($stmt) {
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $stmt->close();
+    } else {
+        error_log("Failed to prepare UPDATE LastAccessDate: " . $cxn->error);
+    }
+}
+
 // Initialize variables
 $user_id = null;
 $username = "Guest User";
@@ -44,23 +64,11 @@ if (isset($_SESSION['user_id'])) {
                     setcookie('session_id', $session_id, time() + (30 * 24 * 60 * 60), "/");
                 } catch (Exception $e) {
                     error_log("Error syncing session_id for user_id $user_id: " . $e->getMessage());
-                    // Clear session and proceed to guest creation
-                    session_destroy();
-                    unset($_SESSION['user_id']);
-                    unset($_SESSION['session_id']);
-                    setcookie('session_id', '', time() - 3600, "/");
+                    clearSession();
                     $user_id = null;
                 }
             }
-            // Update LastAccessDate
-            $stmt = $cxn->prepare("UPDATE siduser SET LastAccessDate = CURDATE() WHERE user_id = ?");
-            if ($stmt) {
-                $stmt->bind_param("i", $user_id);
-                $stmt->execute();
-            } else {
-                error_log("Failed to prepare UPDATE LastAccessDate: " . $cxn->error);
-            }
-            // Set user data
+            updateLastAccess($cxn, $user_id);
             $username = $row['UserName'] ?: "Guest User";
             $_SESSION['email'] = $row['email'] ?: '';
             $is_logged_in = !empty($row['email']);
@@ -73,11 +81,7 @@ if (isset($_SESSION['user_id'])) {
         $stmt->close();
     } catch (Exception $e) {
         error_log("Error validating user session for user_id $user_id: " . $e->getMessage());
-        // Clear session and proceed to guest creation
-        session_destroy();
-        unset($_SESSION['user_id']);
-        unset($_SESSION['session_id']);
-        setcookie('session_id', '', time() - 3600, "/");
+        clearSession();
         $user_id = null;
     }
 }
@@ -103,14 +107,7 @@ if (!$user_id) {
                 $_SESSION['email'] = $row['email'] ?: '';
                 $username = $row['UserName'] ?: "Guest User";
                 $is_logged_in = !empty($row['email']);
-                // Update LastAccessDate
-                $stmt = $cxn->prepare("UPDATE siduser SET LastAccessDate = CURDATE() WHERE user_id = ?");
-                if ($stmt) {
-                    $stmt->bind_param("i", $user_id);
-                    $stmt->execute();
-                } else {
-                    error_log("Failed to prepare UPDATE LastAccessDate: " . $cxn->error);
-                }
+                updateLastAccess($cxn, $user_id);
             } else {
                 error_log("No user found for session_id: $session_id");
                 unset($_SESSION['session_id']);
@@ -161,8 +158,7 @@ if (!$user_id) {
         error_log("Index: Created new guest user_id $user_id with session_id $new_session_id");
     } catch (Exception $e) {
         error_log("Failed to create guest user: " . $e->getMessage());
-        session_destroy();
-        setcookie('session_id', '', time() - 3600, "/");
+        clearSession();
         header('Location: /');
         exit;
     }
@@ -170,14 +166,13 @@ if (!$user_id) {
 }
 
 $cxn->close();
-
-
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>sID JAm</title>
-    <meta charset="utf-8" />
     <link rel="stylesheet" href="src/styles.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tektur:wght@400;700&display=swap">
     <script>window.WASM_SEARCH_PATH = 'src/websid/htdocs/';</script>
@@ -187,7 +182,7 @@ $cxn->close();
         window.user = <?php echo json_encode(['id' => $user_id, 'session_id' => $_SESSION['session_id']]); ?>;
         window.isLoggedIn = <?php echo json_encode($is_logged_in); ?>;
         window.DEBUG_ENABLED = <?php echo json_encode($debug_enabled); ?>;
-        window.LOG_LEVEL = <?php echo json_encode($log_level); ?> 
+        window.LOG_LEVEL = <?php echo json_encode($log_level); ?>;
         window.logmsg = function(msg, msgLogLevel = 0) {
             const PLAYER_LOG_LEVEL = typeof window.LOG_LEVEL === 'number' ? window.LOG_LEVEL : 0;
             if (PLAYER_LOG_LEVEL >= msgLogLevel) console.log(msg);
@@ -200,20 +195,19 @@ $cxn->close();
     <script type="module" src="src/viz.js"></script>
 </head>
 <body>
-    <div id="header">
-        <?php if ($debug_enabled): ?> <!-- Conditionally render "P" button -->
-        <button id="log-player-state" title="Log Player State">P</button>
+    <header id="header">
+        <?php if ($debug_enabled): ?>
+            <button id="log-player-state" title="Log Player State" aria-label="Log Player State">P</button>
         <?php endif; ?>
-        <div id="title-wrapper">
-            <h1 id="title">sID JAm</h1>
-        </div>
-    </div>
+        <h1 id="title">sID JAm</h1>
+    </header>
+
     <div id="profile-package">
         <div id="user-info">
             <span id="greeting"><?php echo htmlspecialchars($username); ?></span>
         </div>
         <div id="profile-icon">
-            <div id="profile-bitmap" style="display: grid; grid-template-columns: repeat(15, 4px); grid-template-rows: repeat(18, 4px); width: 60px; height: 72px; cursor: pointer;"></div>
+            <div id="profile-bitmap"></div>
         </div>
         <?php if ($is_logged_in): ?>
             <div id="preferences-link"><a href="#" onclick="window.togglePreferencesPopUp(); return false;">My Preferences</a></div>
@@ -221,16 +215,18 @@ $cxn->close();
             <div id="auth-link"><a href="#" onclick="window.toggleAuthPopUp(); return false;">Sign in / Register</a></div>
         <?php endif; ?>
     </div>
+
     <div id="version">Version (ALPHA) 2025.03.19a</div>
+
     <div id="vs-matchup">
         <span id="song1">-</span>
         <span id="vs-text"> - vs - </span>
         <span id="song2">-</span>
     </div>
-    <div id="round-info">
-        Press Play
-    </div>
-    <div id="player-section">
+
+    <div id="round-info">Press Play</div>
+
+    <section id="player-section">
         <div id="player-info">
             <div id="song-title">-</div>
             <div id="track-details">
@@ -239,81 +235,98 @@ $cxn->close();
                 <div id="track-timer-controls-row">
                     <p id="track-info">Track: -</p>
                     <div id="player-controls">
-                        <button id="prevButton" class="control-button image-button" style="background-image: url('image/prev.png')" onclick="window.prevTrack()" disabled></button>
-                        <button id="playPauseButton" class="control-button image-button" style="background-image: url('image/play.png')" onclick="window.togglePlayPause()" disabled></button>
-                        <button id="nextButton" class="control-button image-button" style="background-image: url('image/next.png')" onclick="window.nextTrack()" disabled></button>
+                        <button id="prevButton" class="control-button image-button image-button--prev" aria-label="Previous Track" onclick="window.prevTrack()" disabled></button>
+                        <button id="playPauseButton" class="control-button image-button image-button--play" aria-label="Play or Pause Track" onclick="window.togglePlayPause()" disabled></button>
+                        <button id="nextButton" class="control-button image-button image-button--next" aria-label="Next Track" onclick="window.nextTrack()" disabled></button>
                     </div>
                     <p id="timer">Time: 00:00</p>
                 </div>
             </div>
             <div id="color-toggle">
-                <button id="colorButton" onclick="window.toggleColorScheme()"><span class="inner-box"></span></button>
+                <button id="colorButton" aria-label="Toggle Color Scheme" onclick="window.toggleColorScheme()">
+                    <span class="color-toggle__icon"></span>
+                </button>
             </div>
         </div>
 
         <div id="vu-controls">
-            <button id="vu-toggle-button" class="viz-toggle-button" style="background-image: url('image/vu_button.png')" title="Toggle VU Meters"></button>
+            <button id="vu-toggle-button" class="viz-toggle-button viz-toggle-button--vu" title="Toggle VU Meters" aria-label="Toggle VU Meters"></button>
         </div>
         <div id="voice-controls-container">
             <div class="voice-control-row" data-voice="1">
-            <button id="voice1" class="voice-button" data-state="on" title="Toggle Voice 1 Mute"></button>
-                <canvas id="vu1-canvas" width="120" height="70" title="Voice 1 VU Meter" data-state="on"></canvas>
+                <button id="voice1" class="voice-button" data-state="on" title="Toggle Voice 1 Mute" aria-label="Toggle Voice 1 Mute"></button>
+                <canvas id="vu1-canvas" width="120" height="70" title="Voice 1 VU Meter" data-state="on" aria-label="Voice 1 VU Meter">
+                    Voice 1 VU Meter (visualization not supported)
+                </canvas>
             </div>
             <div class="voice-control-row" data-voice="2">
-                <button id="voice2" class="voice-button" data-state="on" title="Toggle Voice 2 Mute"></button>
-                <canvas id="vu2-canvas" width="120" height="70" title="Voice 2 VU Meter" data-state="on"></canvas>
+                <button id="voice2" class="voice-button" data-state="on" title="Toggle Voice 2 Mute" aria-label="Toggle Voice 2 Mute"></button>
+                <canvas id="vu2-canvas" width="120" height="70" title="Voice 2 VU Meter" data-state="on" aria-label="Voice 2 VU Meter">
+                    Voice 2 VU Meter (visualization not supported)
+                </canvas>
             </div>
             <div class="voice-control-row" data-voice="3">
-                <button id="voice3" class="voice-button" data-state="on" title="Toggle Voice 3 Mute"></button>
-                <canvas id="vu3-canvas" width="120" height="70" title="Voice 3 VU Meter" data-state="on"></canvas>
+                <button id="voice3" class="voice-button" data-state="on" title="Toggle Voice 3 Mute" aria-label="Toggle Voice 3 Mute"></button>
+                <canvas id="vu3-canvas" width="120" height="70" title="Voice 3 VU Meter" data-state="on" aria-label="Voice 3 VU Meter">
+                    Voice 3 VU Meter (visualization not supported)
+                </canvas>
             </div>
         </div>
 
         <div id="waveform-controls">
-            <button id="wave-toggle-button" class="viz-toggle-button" style="background-image: url('image/wave_button.png')" title="Toggle Waveforms"></button>
+            <button id="wave-toggle-button" class="viz-toggle-button viz-toggle-button--wave" title="Toggle Waveforms" aria-label="Toggle Waveforms"></button>
         </div>
         <div id="voice-visualizations">
-            <canvas id="voice1-canvas" width="250" height="100"></canvas>
-            <canvas id="voice2-canvas" width="250" height="100"></canvas>
-            <canvas id="voice3-canvas" width="250" height="100"></canvas>
+            <canvas id="voice1-canvas" width="250" height="100" aria-label="Voice 1 Waveform">
+                Voice 1 Waveform (visualization not supported)
+            </canvas>
+            <canvas id="voice2-canvas" width="250" height="100" aria-label="Voice 2 Waveform">
+                Voice 2 Waveform (visualization not supported)
+            </canvas>
+            <canvas id="voice3-canvas" width="250" height="100" aria-label="Voice 3 Waveform">
+                Voice 3 Waveform (visualization not supported)
+            </canvas>
         </div>
-    </div>
+    </section>
+
     <div id="jam-controls">
-        <div id="winner0" class="bitmap-button" onclick="window.setWinner(0)"></div>
-        <button id="jamButton" class="control-button" onclick="window.jamToggle()" disabled></button>
-        <div id="winner1" class="bitmap-button" onclick="window.setWinner(1)"></div>
+        <div id="winner-left" class="bitmap-button" onclick="window.setWinner(0)" aria-label="Select Left Winner"></div>
+        <button id="jamButton" class="control-button" onclick="window.jamToggle()" disabled aria-label="Toggle Jam"></button>
+        <div id="winner-right" class="bitmap-button" onclick="window.setWinner(1)" aria-label="Select Right Winner"></div>
     </div>
 
     <div id="bracket-flame-row">
         <div id="bracket-controls">
             <span id="bracket-label">Bracket</span>
             <div class="bracket-row">
-                <select id="bracket-select" onchange="window.changeBracket()"></select>
-                <button id="ellipsis-button" onclick="(() => { window.logmsg('[...]', 1); toggleSongList(); })()" disabled>...</button>
+                <select id="bracket-select" onchange="window.changeBracket()" aria-label="Select Bracket"></select>
+                <button id="ellipsis-button" onclick="(() => { window.logmsg('[...]', 1); toggleSongList(); })()" disabled aria-label="Toggle Song List">...</button>
             </div>
         </div>
         <div id="flame-wrapper">
             <div id="flame-controls">
-                <button id="flameButton" onclick="window.toggleFlame()" disabled></button>
-                <img src="/image/revive.png" id="reviveButton" class="disabled" onclick="window.toggleRevive()"
+                <button id="flameButton" onclick="window.toggleFlame()" disabled aria-label="Toggle Flame"></button>
+                <img src="/image/revive.png" id="reviveButton" class="disabled" loading="lazy" onclick="window.toggleRevive()" alt="Revive Button">
             </div>
         </div>
     </div>
-    <div id="songListOverlay">
-    <div id="songListContainer">
-        <button id="closeSongList" onclick="(() => { window.logmsg('(x)', 1); window.toggleSongList(); })()">×</button>
-        <input type="text" id="filterInput" placeholder="Filter songs...">
-        <div id="songListWrapper">
-            <ul id="songList"></ul>
+
+    <div id="songListOverlay" class="overlay hidden">
+        <div id="songListContainer">
+            <button id="closeSongList" class="close-button" onclick="(() => { window.logmsg('(x)', 1); window.toggleSongList(); })()" aria-label="Close Song List">×</button>
+            <input type="text" id="filterInput" placeholder="Filter songs..." aria-label="Filter Songs">
+            <div id="songListWrapper">
+                <ul id="songList"></ul>
+            </div>
         </div>
     </div>
-</div>
-    <div id="authOverlay" style="display: none;">
+
+    <div id="authOverlay" class="overlay hidden">
         <div id="authContainer">
-            <button id="closeAuth" onclick="window.toggleAuthPopUp()">×</button>
+            <button id="closeAuth" class="close-button" onclick="window.toggleAuthPopUp()" aria-label="Close Authentication Overlay">×</button>
             <div id="authTabs">
-                <button id="signInTab" class="auth-tab active" onclick="window.showAuthTab('signIn')">Sign In</button>
-                <button id="registerTab" class="auth-tab" onclick="window.showAuthTab('register')">Register</button>
+                <button id="signInTab" class="tab-button auth-tab active" onclick="window.showAuthTab('signIn')" aria-label="Sign In Tab">Sign In</button>
+                <button id="registerTab" class="tab-button auth-tab" onclick="window.showAuthTab('register')" aria-label="Register Tab">Register</button>
             </div>
             <div id="authForms">
                 <div id="signInForm" class="auth-form active">
@@ -321,46 +334,46 @@ $cxn->close();
                     <form id="signInFormElement" onsubmit="window.handleSignIn(event)">
                         <div class="form-group">
                             <label for="signInEmail">Email:</label>
-                            <input type="email" id="signInEmail" name="email" required>
+                            <input type="email" id="signInEmail" name="email" required aria-required="true">
                         </div>
                         <div class="form-group">
                             <label for="signInPassword">Password:</label>
-                            <input type="password" id="signInPassword" name="password" required>
+                            <input type="password" id="signInPassword" name="password" required aria-required="true">
                         </div>
                         <button type="submit">Sign In</button>
                         <p><a href="#" onclick="event.preventDefault(); event.stopPropagation(); window.showAuthTab('forgotPassword')">Forgot Password?</a></p>
                         <p id="signInError" class="error-message"></p>
                     </form>
                 </div>
-                <div id="registerForm" class="auth-form" style="display: none;">
+                <div id="registerForm" class="auth-form hidden">
                     <h2>Register</h2>
                     <form id="registerFormElement" onsubmit="window.handleRegister(event)">
                         <div class="form-group">
                             <label for="registerEmail">Email:</label>
-                            <input type="email" id="registerEmail" name="email" required>
+                            <input type="email" id="registerEmail" name="email" required aria-required="true">
                         </div>
                         <div class="form-group">
                             <label for="registerUsername">Username:</label>
-                            <input type="text" id="registerUsername" name="username" required>
+                            <input type="text" id="registerUsername" name="username" required aria-required="true">
                         </div>                    
                         <div class="form-group">
                             <label for="registerPassword">Password:</label>
-                            <input type="password" id="registerPassword" name="password" required>
+                            <input type="password" id="registerPassword" name="password" required aria-required="true">
                         </div>
                         <div class="form-group">
                             <label for="registerConfirmPassword">Confirm Password:</label>
-                            <input type="password" id="registerConfirmPassword" name="confirmPassword" required>
+                            <input type="password" id="registerConfirmPassword" name="confirmPassword" required aria-required="true">
                         </div>
                         <button type="submit">Register</button>
                         <p id="registerError" class="error-message"></p>
                     </form>
                 </div>
-                <div id="forgotPasswordForm" class="auth-form" style="display: none;">
+                <div id="forgotPasswordForm" class="auth-form hidden">
                     <h2>Forgot Password</h2>
                     <form id="forgotPasswordFormElement" onsubmit="window.handleForgotPassword(event)">
                         <div class="form-group">
                             <label for="forgotPasswordEmail">Email:</label>
-                            <input type="email" id="forgotPasswordEmail" name="email" required>
+                            <input type="email" id="forgotPasswordEmail" name="email" required aria-required="true">
                         </div>
                         <button type="submit">Send Reset Link</button>
                         <p><a href="#" onclick="window.showAuthTab('signIn')">Back to Sign In</a></p>
@@ -370,14 +383,15 @@ $cxn->close();
             </div>
         </div>
     </div>
-    <div id="preferencesOverlay" style="display: none;">
+
+    <div id="preferencesOverlay" class="overlay hidden">
         <div id="preferencesContainer">
-            <button id="closePreferences" onclick="window.togglePreferencesPopUp()">×</button>
+            <button id="closePreferences" class="close-button" onclick="window.togglePreferencesPopUp()" aria-label="Close Preferences Overlay">×</button>
             <div id="preferencesTabs">
-                <button id="passwordTab" class="preferences-tab active" onclick="window.showPreferencesTab('password')">Password</button>
-                <button id="usernameTab" class="preferences-tab" onclick="window.showPreferencesTab('username')">Username</button>
-                <button id="emailTab" class="preferences-tab" onclick="window.showPreferencesTab('email')">Email</button>
-                <button id="advancedTab" class="preferences-tab" onclick="window.showPreferencesTab('advanced')">Advanced</button>
+                <button id="passwordTab" class="tab-button preferences-tab active" onclick="window.showPreferencesTab('password')" aria-label="Password Tab">Password</button>
+                <button id="usernameTab" class="tab-button preferences-tab" onclick="window.showPreferencesTab('username')" aria-label="Username Tab">Username</button>
+                <button id="emailTab" class="tab-button preferences-tab" onclick="window.showPreferencesTab('email')" aria-label="Email Tab">Email</button>
+                <button id="advancedTab" class="tab-button preferences-tab" onclick="window.showPreferencesTab('advanced')" aria-label="Advanced Tab">Advanced</button>
             </div>
             <div id="preferencesForms">
                 <div id="passwordForm" class="preferences-form active">
@@ -386,21 +400,21 @@ $cxn->close();
                         <form id="updatePasswordForm" onsubmit="window.handleUpdatePassword(event)">
                             <div class="form-group">
                                 <label for="currentPassword">Current Password:</label>
-                                <input type="password" id="currentPassword" name="currentPassword" required>
+                                <input type="password" id="currentPassword" name="currentPassword" required aria-required="true">
                             </div>
                             <div class="form-group">
                                 <label for="newPassword">New Password:</label>
-                                <input type="password" id="newPassword" name="newPassword" required>
+                                <input type="password" id="newPassword" name="newPassword" required aria-required="true">
                             </div>
                             <div class="form-group">
                                 <label for="confirmNewPassword">Confirm New Password:</label>
-                                <input type="password" id="confirmNewPassword" name="confirmNewPassword" required>
+                                <input type="password" id="confirmNewPassword" name="confirmNewPassword" required aria-required="true">
                             </div>
                             <button type="submit" id="updatePasswordButton">Update Password</button>
                             <p id="updatePasswordError" class="error-message"></p>
                         </form>
                     </div>
-                    <div id="updatePasswordSuccess" style="display: none;">
+                    <div id="updatePasswordSuccess" class="hidden">
                         <p class="success-message">Password Changed Successfully</p>
                         <button id="closePasswordPrompt" onclick="window.closePreferencesAndReload()">Close Prompt</button>
                     </div>
@@ -408,27 +422,27 @@ $cxn->close();
                         <a href="#" onclick="window.handleLogout(event)">Logout</a>
                     </div>
                 </div>
-                <div id="usernameForm" class="preferences-form">
+                <div id="usernameForm" class="preferences-form hidden">
                     <h2>Update Username</h2>
                     <div id="updateUsernameSection">
                         <form id="updateUsernameForm" onsubmit="window.handleUpdateUsername(event)">
                             <div class="form-group">
                                 <label for="newUsername">New Username:</label>
-                                <input type="text" id="newUsername" name="newUsername" required>
+                                <input type="text" id="newUsername" name="newUsername" required aria-required="true">
                             </div>
                             <button type="submit" id="updateUsernameButton">Update Username</button>
                             <p id="updateUsernameError" class="error-message"></p>
                         </form>
                     </div>
-                    <div id="updateUsernameConfirmation" style="display: none;">
+                    <div id="updateUsernameConfirmation" class="hidden">
                         <p>Confirm Username Change to <span id="confirmNewUsername"></span></p>
-                        <div style="display: flex; flex-direction: column; gap: 8px;">
-                            <button type="button" id="confirmUsernameButton" onclick="window.confirmUpdateUsername()" style="width: 100%; box-sizing: border-box;">Confirm</button>
-                            <button type="button" id="cancelUsernameButton" onclick="window.hideUpdateUsernameConfirmation()" style="width: 100%; box-sizing: border-box;">Cancel</button>
+                        <div class="button-diffusion">
+                            <button type="button" id="confirmUsernameButton" onclick="window.confirmUpdateUsername()">Confirm</button>
+                            <button type="button" id="cancelUsernameButton" onclick="window.hideUpdateUsernameConfirmation()">Cancel</button>
                         </div>
                         <p id="confirmUsernameError" class="error-message"></p>
                     </div>
-                    <div id="updateUsernameSuccess" style="display: none;">
+                    <div id="updateUsernameSuccess" class="hidden">
                         <p class="success-message">Username Changed Successfully</p>
                         <button id="closeUsernamePrompt" onclick="window.closePreferencesAndReload()">Close Prompt</button>
                     </div>
@@ -436,35 +450,35 @@ $cxn->close();
                         <a href="#" onclick="window.handleLogout(event)">Logout</a>
                     </div>
                 </div>
-                <div id="emailForm" class="preferences-form">
+                <div id="emailForm" class="preferences-form hidden">
                     <h2>Update Email</h2>
                     <div id="updateEmailSection">
                         <p>Current Email: <span id="currentEmail"><?php echo htmlspecialchars($_SESSION['email'] ?? 'Not set'); ?></span></p>
                         <form id="updateEmailForm" onsubmit="window.handleUpdateEmail(event)">
                             <div class="form-group">
                                 <label for="newEmail">New Email:</label>
-                                <input type="email" id="newEmail" name="newEmail" required>
+                                <input type="email" id="newEmail" name="newEmail" required aria-required="true">
                             </div>
                             <button type="submit" id="updateEmailButton">Update Email</button>
                             <p id="updateEmailError" class="error-message"></p>
                         </form>
                     </div>
-                    <div id="updateEmailConfirmation" style="display: none;">
+                    <div id="updateEmailConfirmation" class="hidden">
                         <p>Confirm Email Change to <span id="confirmNewEmail"></span></p>
                         <p>Please enter your current password to verify your identity before changing your email.</p>
                         <form id="confirmEmailForm" onsubmit="window.confirmUpdateEmail(event)">
                             <div class="form-group">
                                 <label for="confirmPassword">Current Password:</label>
-                                <input type="password" id="confirmPassword" name="confirmPassword" required>
+                                <input type="password" id="confirmPassword" name="confirmPassword" required aria-required="true">
                             </div>
-                            <div style="display: flex; flex-direction: column; gap: 8px;">
-                                <button type="submit" id="confirmEmailButton" style="width: 100%; box-sizing: border-box;">Confirm</button>
-                                <button type="button" id="cancelEmailButton" onclick="window.hideUpdateEmailConfirmation()" style="width: 100%; box-sizing: border-box;">Cancel</button>
+                            <div class="button-diffusion">
+                                <button type="submit" id="confirmEmailButton">Confirm</button>
+                                <button type="button" id="cancelEmailButton" onclick="window.hideUpdateEmailConfirmation()">Cancel</button>
                             </div>
                             <p id="confirmEmailError" class="error-message"></p>
                         </form>
                     </div>
-                    <div id="updateEmailSuccess" style="display: none;">
+                    <div id="updateEmailSuccess" class="hidden">
                         <p class="success-message">Email Changed Successfully</p>
                         <button id="closeEmailPrompt" onclick="window.closePreferencesAndReload()">Close Prompt</button>
                     </div>
@@ -472,22 +486,22 @@ $cxn->close();
                         <a href="#" onclick="window.handleLogout(event)">Logout</a>
                     </div>
                 </div>
-                <div id="advancedForm" class="preferences-form">
+                <div id="advancedForm" class="preferences-form hidden">
                     <h2>Advanced Settings</h2>
                     <div id="deleteAccountSection">
                         <p>Delete your account permanently. This action cannot be undone.</p>
                         <button type="button" onclick="window.showDeleteAccountConfirmation()">Delete Account</button>
                     </div>
-                    <div id="deleteAccountConfirmation" style="display: none;">
+                    <div id="deleteAccountConfirmation" class="hidden">
                         <p>Confirm Account Deletion</p>
                         <p>Enter your password to confirm:</p>
                         <form id="deleteAccountForm" onsubmit="window.handleDeleteAccount(event)">
                             <div class="form-group">
-                                <input type="password" id="deletePassword" name="deletePassword" required>
+                                <input type="password" id="deletePassword" name="deletePassword" required aria-required="true">
                             </div>
-                            <div style="display: flex; flex-direction: column; gap: 8px;">
-                                <button type="submit" id="deleteAccountButton" style="width: 100%; box-sizing: border-box;">Delete Account</button>
-                                <button type="button" id="cancelDeleteButton" onclick="window.hideDeleteAccountConfirmation()" style="width: 100%; box-sizing: border-box;">Cancel</button>
+                            <div class="button-diffusion">
+                                <button type="submit" id="deleteAccountButton">Delete Account</button>
+                                <button type="button" id="cancelDeleteButton" onclick="window.hideDeleteAccountConfirmation()">Cancel</button>
                             </div>
                             <p id="deleteAccountError" class="error-message"></p>
                         </form>

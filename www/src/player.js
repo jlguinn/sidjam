@@ -1,3 +1,4 @@
+// player.js
 import * as brackets from './brackets.js';
 import * as ui from './ui.js';
 
@@ -5,7 +6,9 @@ export let sidPlayer = null;
 export let isPlaying = false;
 let timerInterval;
 
-export function debug(message) { console.log(`[DEBUG] ${message}`); }
+export function debug(message) {
+    window.logmsg(`[DEBUG] ${message}`, 2);
+}
 
 export function setIsPlaying(value) {
     isPlaying = value;
@@ -13,7 +16,8 @@ export function setIsPlaying(value) {
 
 export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseButton, resetVoiceStates, updateNavigationButtons, updateVsMatchup, updateJamButton, autoPlay = true) {
     if (!filename) return Promise.resolve();
-    let onFail = () => console.error("Failed to load song");
+
+    let onFail = () => window.logmsg("Failed to load song", 0);
     let onProgress = (total, loaded) => {};
     let options = { track: trackNumber, timeout: -1, traceSID: true };
 
@@ -34,7 +38,7 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
 
     return ScriptNodePlayer.loadMusicFromURL(filename, options, onFail, onProgress).then(() => {
         if (window.backend.getRAM && window.backend.getRAM(0x0801) !== 0) {
-            console.log(`[sID JAm] Detected unplayable BASIC SID file: ${filename}`);
+            window.logmsg(`Detected unplayable BASIC SID file: ${filename}`, 0);
             const state = brackets.getPlayerState();
             if (state.currentMode === "bout" && state.activeBracket === "0 - 0" && state.roundCount === 1) {
                 state.isUnplayableSID = true;
@@ -43,8 +47,14 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
                     isUnplayableSID: true,
                     isFlameActive: true
                 });
-                document.getElementById("winner0").disabled = true;
-                document.getElementById("winner1").disabled = true;
+                const winnerLeft = document.getElementById("winner-left");
+                const winnerRight = document.getElementById("winner-right");
+                if (winnerLeft && winnerRight) {
+                    winnerLeft.disabled = true;
+                    winnerRight.disabled = true;
+                } else {
+                    window.logmsg('Winner buttons not found in the DOM', 0);
+                }
             }
         }
 
@@ -61,7 +71,7 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
         ui.updateFlameButton(brackets.getPlayerState(), sidPlayer);
         ui.updateRoundInfo(brackets.getPlayerState());
     }).catch(error => {
-        console.error(`Error loading song ${filename}:`, error);
+        window.logmsg(`Error loading song ${filename}: ${error}`, 0);
         onFail();
     }).finally(() => {
         if (!autoPlay) {
@@ -86,7 +96,7 @@ export async function initPlayer(getPlayerState, updateWinnerButtons, updateFlam
     if (window.startVisualizations) {
         window.startVisualizations();
     } else {
-        console.error('startVisualizations function not found on window object');
+        window.logmsg('startVisualizations function not found on window object', 0);
     }
 
     if (state.contenders.length > 0 && state.currentMode === "bout") {
@@ -121,15 +131,36 @@ export async function togglePlayPause(updateRoundInfo, updatePlayPauseButton, up
         setIsPlaying(true);
         startTimer(updateTimer, updateJamButton);
     }
+
     updatePlayerState({ hasPlayed: true });
     updateRoundInfo();
     updatePlayPauseButton();
     updateWinnerButtons();
-    document.getElementById("jamButton").disabled = false;
-    document.getElementById("flameButton").disabled = false;
-    document.getElementById("reviveButton").classList.remove("disabled");
+
+    const jamButton = document.getElementById("jamButton");
+    const flameButton = document.getElementById("flameButton");
+    const reviveButton = document.getElementById("reviveButton");
+
+    if (jamButton) {
+        jamButton.disabled = false;
+    } else {
+        window.logmsg('Jam button not found in the DOM', 0);
+    }
+
+    if (flameButton) {
+        flameButton.disabled = false;
+    } else {
+        window.logmsg('Flame button not found in the DOM', 0);
+    }
+
+    if (reviveButton) {
+        reviveButton.classList.remove("disabled");
+    } else {
+        window.logmsg('Revive button not found in the DOM', 0);
+    }
+
     updateFlameButton();
-    ui.updateNavigationButtons(sidPlayer); // Update navigation buttons based on song info
+    ui.updateNavigationButtons(sidPlayer);
 }
 
 export function nextTrack(getPlayerState, loadSongFn) {
@@ -157,7 +188,7 @@ export function prevTrack(getPlayerState, loadSongFn) {
 }
 
 export function startTimer(updateTimer, updateJamButton) {
-    console.log("startTimer: Starting timer and animation");
+    window.logmsg("startTimer: Starting timer and animation", 2);
     updateTimer();
     timerInterval = setInterval(updateTimer, 1000);
     if (updateJamButton) {
@@ -166,7 +197,7 @@ export function startTimer(updateTimer, updateJamButton) {
 }
 
 export function stopTimer(updateJamButton) {
-    console.log("stopTimer: Stopping timer and animation");
+    window.logmsg("stopTimer: Stopping timer and animation", 2);
     clearInterval(timerInterval);
     timerInterval = null;
     if (updateJamButton) {
@@ -179,8 +210,13 @@ export function updateTimer() {
         const currentTime = Math.floor(window.backend.getCurrentPlaytime());
         const minutes = Math.floor(currentTime / 60);
         const seconds = currentTime % 60;
-        document.getElementById("timer").textContent = "Time: " +
-            (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+        const timerElement = document.getElementById("timer");
+        if (timerElement) {
+            timerElement.textContent = "Time: " +
+                (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+        } else {
+            window.logmsg('Timer element not found in the DOM', 0);
+        }
     }
 }
 
@@ -188,6 +224,10 @@ export function toggleVoice(voiceNum) {
     if (window.backend) {
         const button = document.getElementById(`voice${voiceNum}`);
         const canvas = document.getElementById(`vu${voiceNum}-canvas`);
+        if (!button || !canvas) {
+            window.logmsg(`Voice ${voiceNum} button or canvas not found in the DOM`, 0);
+            return;
+        }
         const isOn = button.getAttribute('data-state') === 'on';
         const newState = !isOn;
         const stateAttr = newState ? 'on' : 'off';
@@ -202,6 +242,10 @@ export function resetVoiceStates() {
         for (let i = 1; i <= 3; i++) {
             const button = document.getElementById(`voice${i}`);
             const canvas = document.getElementById(`vu${i}-canvas`);
+            if (!button || !canvas) {
+                window.logmsg(`Voice ${i} button or canvas not found in the DOM`, 0);
+                continue;
+            }
             button.setAttribute('data-state', 'on');
             canvas.setAttribute('data-state', 'on');
             window.backend.enableVoice(0, i - 1, true);
