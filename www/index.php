@@ -1,6 +1,6 @@
 <?php
 // Define debug toggle (hardcoded for now)
-$debug_enabled = true; // Change to false to disable debugging
+$debug_enabled = isset($_GET['debug']) && $_GET['debug'] === 'true'; // Set to true if ?debug=true is in the URL
 $log_level = 2; // 0 terse (default); 1 verbose; 2 debugging; -1 silent
 
 // Set session cookie lifetime to 30 days
