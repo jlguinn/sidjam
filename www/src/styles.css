@@ -74,16 +74,20 @@ body {
 #profile-package {
     position: absolute;
     top: 30px;
-    right: var(--spacing-md);
+    left: 50%;
+    transform: translateX(calc(-50% + 270px));
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
 #user-info {
-    font-size: 0.9em;
-    margin-bottom: var(--spacing-xs);
-    transition: color 0.3s;
+    position: absolute;
+    top: 0px;
+    right: 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
 #greeting {
@@ -91,6 +95,7 @@ body {
 }
 
 #profile-icon {
+    margin-top: 25px; /* Add space above the bitmap to nudge it down */
     margin-bottom: var(--spacing-xs);
     transition: filter 0.3s ease;
     cursor: pointer;
@@ -1084,146 +1089,4 @@ body {
 #log-player-state:hover {
     background-color: #555;
     border-color: #999;
-}
-
-/* Responsive Adjustments */
-@media (max-width: 700px) {
-    #player-section {
-        max-width: 100%;
-    }
-
-    #player-info {
-        width: 100%;
-        max-width: 400px;
-    }
-
-    #voice-controls-container {
-        position: relative;
-        left: 50%;
-        transform: translateX(-50%);
-        top: auto;
-        margin-top: 45px;
-    }
-
-    #vu-controls {
-        position: relative;
-        left: 50%;
-        transform: translateX(-50%);
-        top: auto;
-        margin-top: var(--spacing-md);
-        width: 120px;
-    }
-
-    #voice-visualizations {
-        position: relative;
-        left: 50%;
-        transform: translateX(-50%);
-        top: auto;
-        margin-top: 45px;
-    }
-
-    #waveform-controls {
-        position: relative;
-        left: 50%;
-        transform: translateX(-50%);
-        top: auto;
-        margin-top: var(--spacing-md);
-        width: 250px;
-    }
-
-    .viz-toggle-button {
-        top: 0;
-        right: 0;
-        width: 18px;
-        height: 18px;
-    }
-
-    .voice-control-row canvas {
-        width: 90px;
-        height: 53px;
-    }
-
-    #voice-controls-container {
-        left: 65%;
-    }
-
-    .voice-control-row canvas {
-        width: 75px;
-        height: 44px;
-    }
-
-    #track-timer-controls-row {
-        flex-direction: column;
-        align-items: center;
-    }
-
-    #track-info,
-    #player-controls,
-    #timer {
-        margin-bottom: var(--spacing-sm);
-        flex: 0 0 auto;
-    }
-
-    #player-controls {
-        position: relative;
-        left: auto;
-        top: auto;
-        transform: none;
-        justify-content: center;
-    }
-
-    #track-details {
-        text-align: center;
-    }
-
-    #track-details p {
-        white-space: normal;
-    }
-
-    #jam-controls {
-        width: 100%;
-        max-width: 400px;
-        justify-content: center;
-        height: 162px;
-    }
-
-    #jamButton {
-        width: 120px;
-        height: 89px;
-        margin-top: 15px;
-    }
-
-    .bitmap-button {
-        width: 69px;
-        height: 108px;
-        margin-top: 54px;
-        margin-left: var(--spacing-xs);
-        margin-right: var(--spacing-xs);
-    }
-
-    #flame-wrapper {
-        top: -52px;
-    }
-
-    #flame-controls {
-        margin-top: 1px;
-    }
-
-    #flameButton {
-        width: 60px;
-        height: 76px;
-    }
-
-    #reviveButton {
-        width: 64px;
-        height: 64px;
-        left: 0;
-        margin-left: 0;
-        top: 0;
-        z-index: 2;
-    }
-
-    #profile-package {
-        right: var(--spacing-sm);
-    }
 }

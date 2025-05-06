@@ -1,13 +1,15 @@
+// brackets.js
+
 import { sidPlayer, isPlaying, stopTimer, setIsPlaying } from './player.js';
-import { applyTheme, updateRoundInfo, getCurrentThemeIndex } from './ui.js'; // Added getCurrentThemeIndex
-import { baseColorSchemes } from './themes.js'; // Added for theme access
-import { renderWinnerButtonBitmap } from './bitmap.js'; // Added for bitmap rendering
+import { applyTheme, updateRoundInfo, getCurrentThemeIndex, updateSongTitleHighlight } from './ui.js'; // Added updateSongTitleHighlight
+import { baseColorSchemes } from './themes.js';
+import { renderWinnerButtonBitmap } from './bitmap.js';
 
 const USE_DETERMINISTIC_RANDOM = false;
 if (USE_DETERMINISTIC_RANDOM) {
-    window.logmsg("Using deterministic draws...");
+    window.logmsg("Using deterministic draws...", 1);
 } else {
-    window.logmsg("Using random draws...");
+    window.logmsg("Using random draws...", 1);
 }
 
 class SeededRandom {
@@ -66,7 +68,9 @@ export let playerState = {
     isVUActive: true
 };
 
-export function debug(message) { console.log(`[DEBUG] ${message}`); }
+export function debug(message) {
+    window.logmsg(`[DEBUG] ${message}`, 2);
+}
 
 export function getPlayerState() {
     return playerState;
@@ -74,12 +78,12 @@ export function getPlayerState() {
 
 export function updatePlayerState(updates) {
     playerState = { ...playerState, ...updates };
-    // window.logmsg(`Updated playerState: ${JSON.stringify(playerState)}`);
+    // window.logmsg(`Updated playerState: ${JSON.stringify(playerState)}`, 2);
 }
 
 export function isSpecialBracket(bracket) {
     const specialBrackets = ["All", "Eliminated"];
-    return specialBrackets.includes(bracket) || getContenderCount(bracket) < 2 || playerState.currentMode != "bout";
+    return specialBrackets.includes(bracket) || getContenderCount(bracket) < 2 || playerState.currentMode !== "bout";
 }
 
 export function getContenderCount(bracket) {
@@ -113,16 +117,15 @@ export function findEligibleBracket() {
 
     let eligibleBrackets = Object.keys(brackets).filter(key => getContenderCount(key) >= 2);
     if (eligibleBrackets.length === 0) {
-        window.logmsg("No eligible brackets found");
+        window.logmsg("No eligible brackets found", 0);
         return null;
     }
 
     eligibleBrackets.sort((a, b) => getContenderCount(b) - getContenderCount(a));
     let selectedBracket = eligibleBrackets[0];
-    window.logmsg(`Selected bracket: ${selectedBracket} with ${getContenderCount(selectedBracket)} contenders`);
+    window.logmsg(`Selected bracket: ${selectedBracket} with ${getContenderCount(selectedBracket)} contenders`, 1);
     return selectedBracket;
 }
-
 
 export function findFallbackBracket() {
     let brackets = {};
@@ -137,7 +140,7 @@ export function findFallbackBracket() {
     let nonEmptyBrackets = Object.keys(brackets).filter(key => brackets[key] >= 1 && key !== "0 - 0");
 
     if (nonEmptyBrackets.length === 0) {
-        window.logmsg("No non-empty brackets found for fallback");
+        window.logmsg("No non-empty brackets found for fallback", 0);
         return null;
     }
 
@@ -149,7 +152,7 @@ export function findFallbackBracket() {
     });
 
     const selectedBracket = nonEmptyBrackets[0];
-    window.logmsg(`Fallback bracket: ${selectedBracket} with ${brackets[selectedBracket]} contenders`);
+    window.logmsg(`Fallback bracket: ${selectedBracket} with ${brackets[selectedBracket]} contenders`, 1);
     return selectedBracket;
 }
 
@@ -162,7 +165,7 @@ export function replaceContenderFromBracket(bracket, excludeSongs = []) {
     });
 
     if (filteredSongs.length === 0) {
-        window.logmsg(`No contenders available in bracket ${bracket}`);
+        window.logmsg(`No contenders available in bracket ${bracket}`, 0);
         return null;
     }
 
@@ -208,7 +211,7 @@ export function pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerBut
     }
 
     if (filteredFiles.length < 2) {
-        updatePlayerState({ peekBracket: playerState.activeBracket});
+        updatePlayerState({ peekBracket: playerState.activeBracket });
         updateBracketDropdown();
         return false;
     }
@@ -220,14 +223,14 @@ export function pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerBut
         hasJammed: false,
         bothContendersSelected: false,
         isFlameActive: false,
-        isUnplayableSID: false, // Reset on new contenders
+        isUnplayableSID: false,
         activeContender: 0
     });
 
-    console.log(`Bracket: ${playerState.peekBracket} (${filteredFiles.length} contenders)`);
-    console.log(`${window.sidJamData.pathToId[playerState.contenders[0]]} ${playerState.contenders[0]}`);
-    console.log("- vs -");
-    console.log(`${window.sidJamData.pathToId[playerState.contenders[1]]} ${playerState.contenders[1]}`);
+    window.logmsg(`Bracket: ${playerState.peekBracket} (${filteredFiles.length} contenders)`, 1);
+    window.logmsg(`${window.sidJamData.pathToId[playerState.contenders[0]]} ${playerState.contenders[0]}`, 1);
+    window.logmsg("- vs -", 1);
+    window.logmsg(`${window.sidJamData.pathToId[playerState.contenders[1]]} ${playerState.contenders[1]}`, 1);
 
     updateRoundInfo(playerState);
     updateVsMatchup(playerState);
@@ -236,7 +239,6 @@ export function pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerBut
     return true;
 }
 
-
 export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup, updateRoundInfo, updateWinnerButtons, updateFlameButton, updateBracketDropdown) {
     if (!sidPlayer) return;
 
@@ -244,16 +246,12 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
     let newBracket = null;
     let voteProcessed = false;
 
-    // Get theme for bitmap rendering
-    const theme = baseColorSchemes[getCurrentThemeIndex()]; // Added
-
     if (!window.isLoggedIn && window.showPromptMessage && !window.hasShownPrompt) {
         window.hasShownPrompt = true;
     }
 
     if (playerState.currentMode === "nowPlaying") {
         if (playerState.isReviveActive) {
-            // Reset the song's win-loss record to 0-0
             const sidId = window.sidJamData.pathToId[playerState.nowPlayingSong];
             try {
                 const reviveResponse = await fetch(`dbcontrol/revive_song.php?user_id=${window.user.id}&sid_id=${sidId}`);
@@ -275,12 +273,12 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 if (!newContender) {
                     newBracket = findFallbackBracket();
                     if (!newBracket) {
-                        console.error("No fallback bracket found for Revive. Cannot continue.");
+                        window.logmsg("No fallback bracket found for Revive. Cannot continue.", 0);
                         return;
                     }
                     newContender = replaceContenderFromBracket(newBracket, [playerState.nowPlayingSong]);
                     if (!newContender) {
-                        console.error(`No contenders available in fallback bracket ${newBracket}. Cannot continue.`);
+                        window.logmsg(`No contenders available in fallback bracket ${newBracket}. Cannot continue.`, 0);
                         return;
                     }
                 }
@@ -309,16 +307,21 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 updateRoundInfo(playerState);
                 updateWinnerButtons(playerState, sidPlayer);
                 updateFlameButton(playerState, sidPlayer);
+                updateSongTitleHighlight(playerState.currentMode, playerState.isReviveActive);
                 updateBracketDropdown();
-                document.getElementById("bracket-select").value = newBracket.replace(' - ', '-');
-                renderWinnerButtonBitmap(0, '#000000', '#FFDAB9'); // Added
-                renderWinnerButtonBitmap(1, '#000000', '#FFDAB9'); // Added
+                const bracketSelect = document.getElementById("bracket-select");
+                if (bracketSelect) {
+                    bracketSelect.value = newBracket.replace(' - ', '-');
+                } else {
+                    window.logmsg("jamToggle: bracket-select element not found", 0);
+                }
+                renderWinnerButtonBitmap(0, playerState);
+                renderWinnerButtonBitmap(1, playerState);
                 voteProcessed = true;
             } catch (error) {
-                console.error('Error reviving song:', error);
+                window.logmsg(`jamToggle: Error reviving song: ${error.message}`, 0);
             }
         } else {
-            // Ensure peekBracket is set to activeBracket when returning to Bout Mode
             updatePlayerState({
                 currentMode: "bout",
                 nowPlayingSong: null,
@@ -347,7 +350,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                         shouldUpdateBracketDropdown = true;
                         pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
                     } else {
-                        window.logmsg("No eligible brackets, stopping");
+                        window.logmsg("No eligible brackets, stopping", 0);
                         return;
                     }
                 }
@@ -357,13 +360,18 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
             updateRoundInfo(playerState);
             updateWinnerButtons(playerState, sidPlayer);
             updateFlameButton(playerState, sidPlayer);
-            renderWinnerButtonBitmap(0, '#000000', '#FFDAB9'); // Added
-            renderWinnerButtonBitmap(1, '#000000', '#FFDAB9'); // Added
+            renderWinnerButtonBitmap(0, playerState);
+            renderWinnerButtonBitmap(1, playerState);
             shouldUpdateBracketDropdown = true;
         }
         if (shouldUpdateBracketDropdown) {
             updateBracketDropdown();
-            document.getElementById("bracket-select").value = playerState.peekBracket.replace(' - ', '-');
+            const bracketSelect = document.getElementById("bracket-select");
+            if (bracketSelect) {
+                bracketSelect.value = playerState.peekBracket.replace(' - ', '-');
+            } else {
+                window.logmsg("jamToggle: bracket-select element not found", 0);
+            }
         }
         return;
     }
@@ -376,8 +384,8 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
         let flamedIndex = playerState.activeContender;
         let flamedFile = playerState.contenders[flamedIndex];
 
-        window.logmsg(`Flamed!: ${window.sidJamData.pathToId[flamedFile]}`);
-        window.logmsg(`${flamedFile}`);
+        window.logmsg(`Flamed!: ${window.sidJamData.pathToId[flamedFile]}`, 1);
+        window.logmsg(`${flamedFile}`, 1);
 
         let votes = [{ id: window.sidJamData.pathToId[flamedFile], increment: -2 }];
         try {
@@ -400,21 +408,26 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
             if (!newContender) {
                 newBracket = findFallbackBracket();
                 if (!newBracket) {
-                    console.error("No fallback bracket found for Flame. Cannot continue.");
+                    window.logmsg("No fallback bracket found for Flame. Cannot continue.", 0);
                     return;
                 }
                 newContender = replaceContenderFromBracket(newBracket, playerState.contenders);
                 if (!newContender) {
-                    console.error(`No contenders available in fallback bracket ${newBracket}. Cannot continue.`);
+                    window.logmsg(`No contenders available in fallback bracket ${newBracket}. Cannot continue.`, 0);
                     return;
                 }
                 updatePlayerState({ activeBracket: newBracket, peekBracket: newBracket });
                 updateBracketDropdown();
-                document.getElementById("bracket-select").value = newBracket.replace(' - ', '-');
+                const bracketSelect = document.getElementById("bracket-select");
+                if (bracketSelect) {
+                    bracketSelect.value = newBracket.replace(' - ', '-');
+                } else {
+                    window.logmsg("jamToggle: bracket-select element not found", 0);
+                }
             }
 
-            console.log(`New contender: ${window.sidJamData.pathToId[newContender]}`);
-            console.log(`${newContender}`);
+            window.logmsg(`New contender: ${window.sidJamData.pathToId[newContender]}`, 1);
+            window.logmsg(`${newContender}`, 1);
 
             updatePlayerState({
                 contenders: playerState.contenders.map((c, i) => i === flamedIndex ? newContender : c),
@@ -427,11 +440,11 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
             updateRoundInfo(playerState);
             updateWinnerButtons(playerState, sidPlayer);
             updateFlameButton(playerState, sidPlayer);
-            renderWinnerButtonBitmap(0, '#000000', '#FFDAB9'); // Added
-            renderWinnerButtonBitmap(1, '#000000', '#FFDAB9'); // Added
+            renderWinnerButtonBitmap(0, playerState);
+            renderWinnerButtonBitmap(1, playerState);
             voteProcessed = true;
         } catch (error) {
-            console.error('Error flaming song:', error);
+            window.logmsg(`jamToggle: Error flaming song: ${error.message}`, 0);
         }
     } else if (playerState.winner !== null || playerState.bothContendersSelected) {
         try {
@@ -451,7 +464,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                     shouldUpdateBracketDropdown = true;
                     pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
                 } else {
-                    window.logmsg("No eligible brackets, stopping");
+                    window.logmsg("No eligible brackets, stopping", 0);
                     return;
                 }
             }
@@ -461,10 +474,10 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
             updateRoundInfo(playerState);
             updateWinnerButtons(playerState, sidPlayer);
             updateFlameButton(playerState, sidPlayer);
-            renderWinnerButtonBitmap(0, '#000000', '#FFDAB9'); // Added
-            renderWinnerButtonBitmap(1, '#000000', '#FFDAB9'); // Added
+            renderWinnerButtonBitmap(0, playerState);
+            renderWinnerButtonBitmap(1, playerState);
         } catch (error) {
-            console.error('Error in jamToggle after logResult:', error);
+            window.logmsg(`jamToggle: Error after logResult: ${error.message}`, 0);
         }
     } else {
         let oldContender = playerState.activeContender;
@@ -480,16 +493,21 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
         updateRoundInfo(playerState);
         updateWinnerButtons(playerState, sidPlayer);
         updateFlameButton(playerState, sidPlayer);
-        renderWinnerButtonBitmap(0, '#000000', '#FFDAB9'); // Added
-        renderWinnerButtonBitmap(1, '#000000', '#FFDAB9'); // Added
+        renderWinnerButtonBitmap(0, playerState);
+        renderWinnerButtonBitmap(1, playerState);
     }
 
     if (shouldUpdateBracketDropdown || voteProcessed) {
         updateBracketDropdown();
-        if (newBracket) {
-            document.getElementById("bracket-select").value = newBracket.replace(' - ', '-');
+        const bracketSelect = document.getElementById("bracket-select");
+        if (bracketSelect) {
+            if (newBracket) {
+                bracketSelect.value = newBracket.replace(' - ', '-');
+            } else {
+                bracketSelect.value = playerState.peekBracket.replace(' - ', '-');
+            }
         } else {
-            document.getElementById("bracket-select").value = playerState.peekBracket.replace(' - ', '-');
+            window.logmsg("jamToggle: bracket-select element not found", 0);
         }
     }
 }
@@ -505,23 +523,21 @@ export function updateWinner(contenderIndex, updateRoundInfo, updateWinnerButton
     } else {
         updatePlayerState({ winner: null });
     }
-    const theme = baseColorSchemes[getCurrentThemeIndex()];
     updateRoundInfo(playerState);
     updateWinnerButtons(playerState, sidPlayer);
     updateFlameButton(playerState, sidPlayer);
-    renderWinnerButtonBitmap(0, playerState); // Fixed signature
-    renderWinnerButtonBitmap(1, playerState); // Fixed signature
+    renderWinnerButtonBitmap(0, playerState);
+    renderWinnerButtonBitmap(1, playerState);
 }
 
 export function toggleFlame(updateFlameButton, updateVsMatchup, updateWinnerButtons) {
     updatePlayerState({ isFlameActive: !playerState.isFlameActive, isUnplayableSID: false });
-    const theme = baseColorSchemes[getCurrentThemeIndex()]; // Added
     updateFlameButton(playerState, sidPlayer);
     updateVsMatchup(playerState);
     updateWinnerButtons(playerState, sidPlayer);
     updateRoundInfo(playerState);
-    renderWinnerButtonBitmap(0, '#000000', '#FFDAB9'); // Added
-    renderWinnerButtonBitmap(1, '#000000', '#FFDAB9'); // Added
+    renderWinnerButtonBitmap(0, playerState);
+    renderWinnerButtonBitmap(1, playerState);
 }
 
 export function toggleRevive(updateReviveButton, updateSongTitleHighlight) {
@@ -531,7 +547,12 @@ export function toggleRevive(updateReviveButton, updateSongTitleHighlight) {
 }
 
 export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, updateVsMatchup, updateWinnerButtons) {
-    let newBracket = document.getElementById("bracket-select").value.replace('-', ' - ');
+    const bracketSelect = document.getElementById("bracket-select");
+    if (!bracketSelect) {
+        window.logmsg("changeBracket: bracket-select element not found", 0);
+        return;
+    }
+    let newBracket = bracketSelect.value.replace('-', ' - ');
     if (newBracket === playerState.peekBracket) return;
 
     if (!isSpecialBracket(playerState.peekBracket)) {
@@ -540,7 +561,7 @@ export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, upda
     updatePlayerState({ peekBracket: newBracket });
 
     if (playerState.currentMode === "nowPlaying") {
-        window.logmsg(`Staying in Now Playing mode, updating to ${newBracket}`);
+        window.logmsg(`Staying in Now Playing mode, updating to ${newBracket}`, 1);
         updateFlameButton(playerState, sidPlayer);
         return;
     }
@@ -552,7 +573,7 @@ export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, upda
     }
 
     if (contenderCount < 1) {
-        window.logmsg(`No contenders in ${newBracket}, reverting to ${playerState.activeBracket}`);
+        window.logmsg(`No contenders in ${newBracket}, reverting to ${playerState.activeBracket}`, 0);
         updatePlayerState({ peekBracket: playerState.activeBracket });
         updateBracketDropdown();
         return;
@@ -566,7 +587,7 @@ export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, upda
     });
     let success = pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
     if (!success) {
-        window.logmsg(`Failed to pick contenders for ${newBracket}, reverting`);
+        window.logmsg(`Failed to pick contenders for ${newBracket}, reverting`, 0);
         updatePlayerState({ peekBracket: playerState.activeBracket });
         updateBracketDropdown();
         return;
@@ -574,13 +595,11 @@ export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, upda
     
     updatePlayerState({ activeBracket: newBracket });
     
-    const theme = baseColorSchemes[getCurrentThemeIndex()]; // Added
     updateFlameButton(playerState, sidPlayer);
     if (loadSong) loadSong(playerState.contenders[playerState.activeContender], -1);
-    renderWinnerButtonBitmap(0, '#000000', '#FFDAB9'); // Added
-    renderWinnerButtonBitmap(1, '#000000', '#FFDAB9'); // Added
+    renderWinnerButtonBitmap(0, playerState);
+    renderWinnerButtonBitmap(1, playerState);
 }
-
 
 export async function logResult() {
     let votes = [];
@@ -593,17 +612,17 @@ export async function logResult() {
     }
     
     if (playerState.bothContendersSelected) {
-        console.log("Both contenders selected as winners:");
-        console.log(`${window.sidJamData.pathToId[playerState.contenders[0]]} ${playerState.contenders[0]}`);
-        console.log(`${window.sidJamData.pathToId[playerState.contenders[1]]} ${playerState.contenders[1]}`);
+        window.logmsg("Both contenders selected as winners:", 1);
+        window.logmsg(`${window.sidJamData.pathToId[playerState.contenders[0]]} ${playerState.contenders[0]}`, 1);
+        window.logmsg(`${window.sidJamData.pathToId[playerState.contenders[1]]} ${playerState.contenders[1]}`, 1);
     } else if (playerState.winner !== null) {
         let winnerPath = playerState.contenders[playerState.winner];
         let loserPath = playerState.contenders[1 - playerState.winner];
         let winnerId = window.sidJamData.pathToId[winnerPath];
         let loserId = window.sidJamData.pathToId[loserPath];
-        console.log("Bout decided:");
-        console.log(`Winner: ${winnerId} ${winnerPath}`);
-        console.log(`Loser: ${loserId} ${loserPath}`);
+        window.logmsg("Bout decided:", 1);
+        window.logmsg(`Winner: ${winnerId} ${winnerPath}`, 1);
+        window.logmsg(`Loser: ${loserId} ${loserPath}`, 1);
     }
     
     if (votes.length && votes.every(vote => vote.id !== 0)) {
@@ -613,12 +632,12 @@ export async function logResult() {
             body: JSON.stringify({ user_id: window.user.id, votes })
         })
         .then(response => {
-            window.logmsg(`log_result.php response status: ${response.status}`);
+            window.logmsg(`log_result.php response status: ${response.status}`, 2);
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
             return response.json();
         })
         .then(data => {
-            window.logmsg(`log_result.php response data: ${JSON.stringify(data)}`);
+            window.logmsg(`log_result.php response data: ${JSON.stringify(data)}`, 2);
             if (data.success) return fetch(`dbcontrol/get_results.php?user_id=${window.user.id}`);
             throw new Error('Failed to log result');
         })
@@ -629,18 +648,24 @@ export async function logResult() {
         .then(data => {
             window.sidJamData.cachedResults = data;
 
-            let voteCount = parseInt(sessionStorage.getItem('voteCount') || '0', 10);
-            voteCount += 1;
-            sessionStorage.setItem('voteCount', voteCount.toString());
+            let voteCount = 0;
+            try {
+                voteCount = parseInt(sessionStorage.getItem('voteCount') || '0', 10);
+                voteCount += 1;
+                sessionStorage.setItem('voteCount', voteCount.toString());
+            } catch (error) {
+                window.logmsg(`logResult: Error accessing sessionStorage: ${error.message}`, 0);
+                voteCount += 1; // Fallback to in-memory counter
+            }
 
             if (voteCount === 3 && !window.isLoggedIn) {
                 window.showPromptMessage = true;
                 window.flashProfileIcon();
-                window.logmsg("Prompt triggered: flashing icon and enabling scrolling message");
+                window.logmsg("Prompt triggered: flashing icon and enabling scrolling message", 1);
             }
         })
         .catch(error => {
-            console.error('Error logging result:', error);
+            window.logmsg(`logResult: Error logging result: ${error.message}`, 0);
             throw error;
         });
     }
@@ -648,6 +673,11 @@ export async function logResult() {
 }
 
 export function updateBracketDropdown() {
+    const select = document.getElementById("bracket-select");
+    if (!select) {
+        window.logmsg("updateBracketDropdown: bracket-select element not found", 0);
+        return;
+    }
     let brackets = {};
     let eliminatedCount = 0;
     if (!window.sidJamData.cachedResults || Object.keys(window.sidJamData.cachedResults).length === 0) {
@@ -666,7 +696,6 @@ export function updateBracketDropdown() {
     brackets["All"] = window.sidJamData.sidFiles.length;
     brackets["Eliminated"] = eliminatedCount;
 
-    let select = document.getElementById("bracket-select");
     let currentValue = select.value;
 
     select.innerHTML = "";
@@ -698,7 +727,10 @@ export function updateBracketDropdown() {
     }
 
     let newValue = playerState.peekBracket.replace(" - ", "-");
-    if (!(newValue in Object.fromEntries(sortedKeys.map(key => [key.replace(" - ", "-"), key]).concat([["All", "All"], ["Eliminated", "Eliminated"]]))) || !brackets[playerState.peekBracket]) {
+    const bracketOptions = Object.fromEntries(
+        sortedKeys.map(key => [key.replace(" - ", "-"), key]).concat([["All", "All"], ["Eliminated", "Eliminated"]])
+    );
+    if (!(newValue in bracketOptions) || !brackets[playerState.peekBracket]) {
         newValue = sortedKeys[0]?.replace(" - ", "-") || "All";
         updatePlayerState({ peekBracket: sortedKeys[0] || "All" });
     }

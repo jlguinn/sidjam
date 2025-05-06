@@ -501,8 +501,8 @@ export function updateReviveButton(isReviveActive) {
 }
 
 export function updateSongTitleHighlight(mode, isReviveActive) {
-    const songTitle = document.getElementById("song-title");
-    if (!songTitle) {
+    const songFileName = document.getElementById("song1");
+    if (!songFileName) {
         console.error('Song title element not found in the DOM');
         return;
     }
@@ -510,11 +510,11 @@ export function updateSongTitleHighlight(mode, isReviveActive) {
     const baseTheme = baseColorSchemes[currentThemeIndex];
     const theme = mode === "nowPlaying" ? getInvertedTheme(baseTheme) : baseTheme;
 
-    songTitle.style.color = theme.exteriorTextColor;
+    songFileName.style.color = theme.exteriorTextColor;
     if (isReviveActive) {
-        songTitle.classList.add("revive-highlight");
+        songFileName.classList.add("revive-highlight");
     } else {
-        songTitle.classList.remove("revive-highlight");
+        songFileName.classList.remove("revive-highlight");
     }
 
     updateRoundInfo(brackets.getPlayerState());
