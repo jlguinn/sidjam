@@ -57,10 +57,9 @@ export function applyTheme(currentMode) {
     const version = document.getElementById("version");
     const vsMatchup = document.getElementById("vs-matchup");
     const roundInfo = document.getElementById("round-info");
-    const bracketLabel = document.getElementById("bracket-label");
     const userInfo = document.getElementById("user-info");
 
-    if (!body || !title || !version || !vsMatchup || !roundInfo || !bracketLabel || !userInfo) {
+    if (!body || !title || !version || !vsMatchup || !roundInfo || !userInfo) {
         console.error('One or more exterior elements not found in the DOM');
         return;
     }
@@ -70,7 +69,6 @@ export function applyTheme(currentMode) {
     version.style.color = theme.exteriorTextColor;
     vsMatchup.style.color = theme.exteriorTextColor;
     roundInfo.style.color = theme.exteriorTextColor;
-    bracketLabel.style.color = theme.exteriorTextColor;
     userInfo.style.color = theme.exteriorTextColor;
 
     const authLinkDiv = document.getElementById("auth-link");

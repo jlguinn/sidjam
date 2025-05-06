@@ -33,7 +33,7 @@ let isFrameImageLoaded = false;
 
 vuLabelImage.onload = () => {
     isLabelImageLoaded = true;
-    window.logmsg('VU label image loaded successfully', 1);
+    // window.logmsg('VU label image loaded successfully', 1);
     renderStaticVUMeters();
 };
 vuLabelImage.onerror = () => {
@@ -41,7 +41,7 @@ vuLabelImage.onerror = () => {
 };
 vuFrameImage.onload = () => {
     isFrameImageLoaded = true;
-    window.logmsg('VU frame image loaded successfully', 1);
+    // window.logmsg('VU frame image loaded successfully', 1);
     renderStaticVUMeters();
 };
 vuFrameImage.onerror = () => {
@@ -64,7 +64,7 @@ let isVisualizationActive = false; // Flag to control animation loop
 function drawStaticWaveform(canvasId) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) {
-        window.logmsg(`drawStaticWaveform: Canvas with ID ${canvasId} not found`, 0);
+        // window.logmsg(`drawStaticWaveform: Canvas with ID ${canvasId} not found`, 0);
         return;
     }
     const ctx = canvas.getContext('2d');
@@ -324,7 +324,7 @@ function updateNeedlePhysics() {
             for (let i = 0; i < VU_METER_COUNT; i++) {
                 const db = vuLevels[i] > 0 ? 20 * Math.log10(vuLevels[i]) : -100;
                 const targetAngle = ANGLE_RANGE[0] + (db + 100) / 100 * (ANGLE_RANGE[1] - ANGLE_RANGE[0]);
-                window.logmsg(`Voice ${i + 1}: Angle=${needleAngles[i].toFixed(1)}°, Magnitude=${vuLevels[i].toFixed(3)}, TargetAngle=${targetAngle.toFixed(1)}°`, 2);
+                // window.logmsg(`Voice ${i + 1}: Angle=${needleAngles[i].toFixed(1)}°, Magnitude=${vuLevels[i].toFixed(3)}, TargetAngle=${targetAngle.toFixed(1)}°`, 2);
             }
         }
 
@@ -377,7 +377,7 @@ function initTraceStreams() {
             for (let i = 0; i < numStreams && i < 3; i++) {
                 traceStreams.push(streamsArray[i] >> 1);
             }
-            window.logmsg(`Initialized ${traceStreams.length} trace streams`, 1);
+            // window.logmsg(`Initialized ${traceStreams.length} trace streams`, 1);
             return true;
         } else {
             window.logmsg(`Insufficient trace streams: ${numStreams}`, 0);
@@ -425,7 +425,7 @@ function updateViz() {
 
 // Start dynamic visualizations (called from player.js)
 function startVisualizations() {
-    window.logmsg('Starting real-time oscilloscope and VU meter visualizations', 1);
+    // window.logmsg('Starting real-time oscilloscope and VU meter visualizations', 1);
     if (!window.player) {
         window.logmsg('startVisualizations: window.player not defined, retrying initialization', 0);
         let retryCount = 0;
@@ -457,7 +457,7 @@ function startVisualizations() {
 
     function attemptTraceStreamInit() {
         if (initTraceStreams()) {
-            window.logmsg(`External ticker enabled: ${!!window.player._externalTicker}`, 1);
+            // window.logmsg(`External ticker enabled: ${!!window.player._externalTicker}`, 1);
             voiceBuffers.forEach(buffer => buffer.fill(0));
             vuLevels.fill(0);
             needleAngles.fill(ANGLE_RANGE[0]);
@@ -484,7 +484,7 @@ window.startVisualizations = startVisualizations;
 
 // Initialize static visualizations on page load
 function initStaticVisualizations() {
-    window.logmsg('Initializing static oscilloscope and VU meter visualizations', 1);
+    // window.logmsg('Initializing static oscilloscope and VU meter visualizations', 1);
     renderStaticVisualizations();
 }
 

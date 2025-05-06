@@ -66,7 +66,7 @@ function checkSong2Clipping() {
     const intrinsicWidth = tempElement.offsetWidth;
     document.body.removeChild(tempElement);
 
-    const clippingThreshold = 187;
+    const clippingThreshold = 194;
     const displayValue = intrinsicWidth > clippingThreshold ? 'none' : 'block';
     if (authLink) authLink.style.display = displayValue;
     if (preferencesLink) preferencesLink.style.display = displayValue;
@@ -85,7 +85,10 @@ const loadSongBound = (filename, trackNumber, autoPlay = true) => player.loadSon
     autoPlay
 );
 
-const updateVsMatchupBound = () => ui.updateVsMatchup(brackets.getPlayerState());
+const updateVsMatchupBound = () => {
+    ui.updateVsMatchup(brackets.getPlayerState());
+    checkSong2Clipping(); 
+};
 const updateRoundInfoBound = () => ui.updateRoundInfo(brackets.getPlayerState());
 const updateWinnerButtonsBound = () => ui.updateWinnerButtons(brackets.getPlayerState(), player.sidPlayer);
 const updateFlameButtonBound = () => ui.updateFlameButton(brackets.getPlayerState(), player.sidPlayer);
