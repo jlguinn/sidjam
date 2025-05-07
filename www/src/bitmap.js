@@ -170,36 +170,61 @@ export function renderWinnerButtonBitmap(contenderIndex, playerState) {
         return;
     }
 
-    // Determine the contender's state
+    // Determine new bitmap state
     let bitmap;
     const isWinner = playerState.winner === contenderIndex;
     const isBothSelected = playerState.bothContendersSelected;
     const isOtherWinner = playerState.winner !== null && playerState.winner !== contenderIndex;
+    let newState;
 
-    // Select bitmap based on state
     if (isWinner || (isBothSelected && playerState.activeBracket === "0 - 0")) {
-        // Winning contender: Thumb Up
         bitmap = contenderIndex === 0 ? leftThumbUpBitmap : rightThumbupBitmap;
+        newState = 'up';
     } else if (isOtherWinner) {
-        // Losing contender: Thumb Down
         bitmap = contenderIndex === 0 ? leftThumbDownBitmap : rightThumDownBitmap;
+        newState = 'down';
     } else {
-        // Undecided contender: Thumb In
         bitmap = contenderIndex === 0 ? leftThumbInBitmap : rightThumInBitmap;
+        newState = 'in';
     }
 
-    // Apply transformations based on contender index (orientation adjustments)
-    if (contenderIndex === 0) {
-        // Left thumb: Already oriented correctly for left hand
-        // No additional transformation needed
-    } else {
-        // Right thumb: Ensure correct orientation (handled by bitmap selection)
+    // Get current bitmap state from data attribute
+    const currentState = winnerButton.dataset.bitmapState || 'in'; // Default to 'in' if unset
+
+    // Determine rotation class based on button, current state, and new state
+    let rotationClass = null;
+    if (currentState !== newState) {
+        if (contenderIndex === 0) { // winner-left
+            if (currentState === 'in' && newState === 'up') rotationClass = 'rotate-plus-90';
+            else if (currentState === 'in' && newState === 'down') rotationClass = 'rotate-minus-90';
+            else if (currentState === 'up' && newState === 'down') rotationClass = 'rotate-minus-180';
+            else if (currentState === 'down' && newState === 'up') rotationClass = 'rotate-plus-180';
+            else if (currentState === 'up' && newState === 'in') rotationClass = 'rotate-minus-90';
+            else if (currentState === 'down' && newState === 'in') rotationClass = 'rotate-plus-90';
+        } else { // winner-right
+            if (currentState === 'in' && newState === 'up') rotationClass = 'rotate-minus-90';
+            else if (currentState === 'in' && newState === 'down') rotationClass = 'rotate-plus-90';
+            else if (currentState === 'up' && newState === 'down') rotationClass = 'rotate-plus-180';
+            else if (currentState === 'down' && newState === 'up') rotationClass = 'rotate-minus-180';
+            else if (currentState === 'up' && newState === 'in') rotationClass = 'rotate-plus-90';
+            else if (currentState === 'down' && newState === 'in') rotationClass = 'rotate-minus-90';
+        }
     }
 
-    // Define colors (unchanged from original)
-    const primaryColor = '#000000'; // Gray outline when disabled
-    const secondaryColor =  '#FFDAB9'; // Muted flesh when disabled
+    // Apply rotation animation if needed
+    if (rotationClass) {
+        winnerButton.classList.add(rotationClass);
+        setTimeout(() => {
+            winnerButton.classList.remove(rotationClass);
+        }, 500); // Matches 0.5s animation duration
+    }
 
-    const pixelSize = 2; // Pixel size for bitmap rendering
+    // Update bitmap state
+    winnerButton.dataset.bitmapState = newState;
+
+    const primaryColor = '#000000';
+    const secondaryColor = '#FFDAB9';
+
+    const pixelSize = 2;
     renderBitmap(bitmap, winnerButton, pixelSize, primaryColor, secondaryColor);
 }
