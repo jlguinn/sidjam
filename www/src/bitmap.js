@@ -194,20 +194,20 @@ export function renderWinnerButtonBitmap(contenderIndex, playerState) {
     // Determine rotation class based on button, current state, and new state
     let rotationClass = null;
     if (currentState !== newState) {
-        if (contenderIndex === 0) { // winner-left: down=clockwise, up=counterclockwise
-            if (currentState === 'in' && newState === 'up') rotationClass = 'rotate-plus-90';
-            else if (currentState === 'in' && newState === 'down') rotationClass = 'rotate-minus-90';
-            else if (currentState === 'up' && newState === 'down') rotationClass = 'rotate-minus-180';
-            else if (currentState === 'down' && newState === 'up') rotationClass = 'rotate-plus-180';
-            else if (currentState === 'up' && newState === 'in') rotationClass = 'rotate-minus-90';
-            else if (currentState === 'down' && newState === 'in') rotationClass = 'rotate-plus-90';
-        } else { // winner-right: down=counterclockwise, up=clockwise
+        if (contenderIndex === 0) { // winner-left: down=clockwise, up=clockwise
             if (currentState === 'in' && newState === 'up') rotationClass = 'rotate-minus-90';
             else if (currentState === 'in' && newState === 'down') rotationClass = 'rotate-plus-90';
             else if (currentState === 'up' && newState === 'down') rotationClass = 'rotate-plus-180';
             else if (currentState === 'down' && newState === 'up') rotationClass = 'rotate-minus-180';
             else if (currentState === 'up' && newState === 'in') rotationClass = 'rotate-plus-90';
             else if (currentState === 'down' && newState === 'in') rotationClass = 'rotate-minus-90';
+        } else { // winner-right: down=clockwise, up=counterclockwise
+            if (currentState === 'in' && newState === 'up') rotationClass = 'rotate-plus-90';
+            else if (currentState === 'in' && newState === 'down') rotationClass = 'rotate-minus-90';
+            else if (currentState === 'up' && newState === 'down') rotationClass = 'rotate-minus-180';
+            else if (currentState === 'down' && newState === 'up') rotationClass = 'rotate-plus-180';
+            else if (currentState === 'up' && newState === 'in') rotationClass = 'rotate-minus-90';
+            else if (currentState === 'down' && newState === 'in') rotationClass = 'rotate-plus-90';
         }
     }
 
