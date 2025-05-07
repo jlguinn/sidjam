@@ -513,7 +513,6 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
 }
 
 export function updateWinner(contenderIndex, updateRoundInfo, updateWinnerButtons, updateFlameButton) {
-    const winnerButton = document.getElementById(`winner${contenderIndex}`);
     const isZeroZeroBracket = playerState.activeBracket === "0 - 0";
 
     if (playerState.winner === null && !playerState.bothContendersSelected) {
