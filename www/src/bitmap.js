@@ -194,14 +194,14 @@ export function renderWinnerButtonBitmap(contenderIndex, playerState) {
     // Determine rotation class based on button, current state, and new state
     let rotationClass = null;
     if (currentState !== newState) {
-        if (contenderIndex === 0) { // winner-left
+        if (contenderIndex === 0) { // winner-left: down=clockwise, up=counterclockwise
             if (currentState === 'in' && newState === 'up') rotationClass = 'rotate-plus-90';
             else if (currentState === 'in' && newState === 'down') rotationClass = 'rotate-minus-90';
             else if (currentState === 'up' && newState === 'down') rotationClass = 'rotate-minus-180';
             else if (currentState === 'down' && newState === 'up') rotationClass = 'rotate-plus-180';
             else if (currentState === 'up' && newState === 'in') rotationClass = 'rotate-minus-90';
             else if (currentState === 'down' && newState === 'in') rotationClass = 'rotate-plus-90';
-        } else { // winner-right
+        } else { // winner-right: down=counterclockwise, up=clockwise
             if (currentState === 'in' && newState === 'up') rotationClass = 'rotate-minus-90';
             else if (currentState === 'in' && newState === 'down') rotationClass = 'rotate-plus-90';
             else if (currentState === 'up' && newState === 'down') rotationClass = 'rotate-plus-180';
@@ -211,20 +211,28 @@ export function renderWinnerButtonBitmap(contenderIndex, playerState) {
         }
     }
 
-    // Apply rotation animation if needed
+    // Apply rotation animation and delay bitmap redraw
     if (rotationClass) {
         winnerButton.classList.add(rotationClass);
         setTimeout(() => {
+            // Redraw bitmap after animation
+            const primaryColor = '#000000';
+            const secondaryColor = '#FFDAB9';
+            const pixelSize = 2;
+            renderBitmap(bitmap, winnerButton, pixelSize, primaryColor, secondaryColor);
+            // Update bitmap state
+            winnerButton.dataset.bitmapState = newState;
+            // Reset transform and remove rotation class
+            winnerButton.style.transform = 'none';
             winnerButton.classList.remove(rotationClass);
         }, 500); // Matches 0.5s animation duration
+    } else {
+        // No animation needed, redraw immediately
+        const primaryColor = '#000000';
+        const secondaryColor = '#FFDAB9';
+        const pixelSize = 2;
+        renderBitmap(bitmap, winnerButton, pixelSize, primaryColor, secondaryColor);
+        winnerButton.dataset.bitmapState = newState;
+        winnerButton.style.transform = 'none';
     }
-
-    // Update bitmap state
-    winnerButton.dataset.bitmapState = newState;
-
-    const primaryColor = '#000000';
-    const secondaryColor = '#FFDAB9';
-
-    const pixelSize = 2;
-    renderBitmap(bitmap, winnerButton, pixelSize, primaryColor, secondaryColor);
 }

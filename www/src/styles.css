@@ -415,7 +415,7 @@ body {
     margin-top: 72px;
 }
 
-/* New styles for thumb rotation animations */
+/* Keyframes for thumb rotation animations */
 @keyframes rotate-plus-90 {
     from { transform: rotate(0deg); }
     to { transform: rotate(90deg); }
@@ -437,22 +437,22 @@ body {
 }
 
 .bitmap-button.rotate-plus-90 {
-    animation: rotate-plus-90 0.5s ease-in-out forwards;
+    animation: rotate-plus-90 0.5s ease-in-out;
 }
 
 .bitmap-button.rotate-minus-90 {
-    animation: rotate-minus-90 0.5s ease-in-out forwards;
+    animation: rotate-minus-90 0.5s ease-in-out;
 }
 
 .bitmap-button.rotate-plus-180 {
-    animation: rotate-plus-180 0.5s ease-in-out forwards;
+    animation: rotate-plus-180 0.5s ease-in-out;
 }
 
 .bitmap-button.rotate-minus-180 {
-    animation: rotate-minus-180 0.5s ease-in-out forwards;
+    animation: rotate-minus-180 0.5s ease-in-out;
 }
 
-/* Update .bitmap-button to support transforms */
+/* Updated .bitmap-button to support transforms */
 .bitmap-button {
     width: 92px;
     height: 144px;
@@ -461,13 +461,13 @@ body {
     visibility: visible;
     transform-origin: center center; /* Center rotation */
     position: relative; /* Contain pixel divs */
+    will-change: transform; /* Optimize rotation performance */
 }
 
 /* Prevent pixel divs from rotating */
 .bitmap-button > div {
     transform: none !important; /* Ensure pixel divs stay unrotated */
 }
-
 
 /* Mute and VU Meter */
 #voice-controls-container {
