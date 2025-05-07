@@ -39,6 +39,8 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
     return ScriptNodePlayer.loadMusicFromURL(filename, options, onFail, onProgress).then(() => {
         if (window.backend.getRAM && window.backend.getRAM(0x0801) !== 0) {
             window.logmsg(`Detected unplayable BASIC SID file: ${filename}`, 0);
+            window.logmsg(`RAM[0x0801]=${window.backend.getRAM(0x0801)}`, 0);
+
             const state = brackets.getPlayerState();
             if (state.currentMode === "bout" && state.activeBracket === "0 - 0" && state.roundCount === 1) {
                 state.isUnplayableSID = true;
