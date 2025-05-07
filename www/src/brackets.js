@@ -514,15 +514,28 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
 
 export function updateWinner(contenderIndex, updateRoundInfo, updateWinnerButtons, updateFlameButton) {
     const winnerButton = document.getElementById(`winner${contenderIndex}`);
+    const isZeroZeroBracket = playerState.activeBracket === "0 - 0";
+
     if (playerState.winner === null && !playerState.bothContendersSelected) {
+        // First winner selection
         updatePlayerState({ winner: contenderIndex });
     } else if (playerState.winner !== null && playerState.winner !== contenderIndex) {
-        updatePlayerState({ bothContendersSelected: true, winner: null });
-    } else if (playerState.bothContendersSelected) {
-        updatePlayerState({ winner: contenderIndex === 0 ? 1 : 0, bothContendersSelected: false });
+        if (isZeroZeroBracket) {
+            // Allow both contenders to be selected in 0-0 bracket
+            updatePlayerState({ bothContendersSelected: true, winner: null });
+        } else {
+            // In non-0-0 brackets, switch to the new winner
+            updatePlayerState({ winner: contenderIndex });
+            window.logmsg(`Switched winner to contender ${contenderIndex} in ${playerState.activeBracket} bracket`, 1);
+        }
+    } else if (playerState.bothContendersSelected && isZeroZeroBracket) {
+        // Toggle back to single winner in 0-0 bracket
+        updatePlayerState({ winner: contenderIndex, bothContendersSelected: false });
     } else {
+        // Deselect the current winner
         updatePlayerState({ winner: null });
     }
+
     updateRoundInfo(playerState);
     updateWinnerButtons(playerState, sidPlayer);
     updateFlameButton(playerState, sidPlayer);
