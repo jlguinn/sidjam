@@ -494,3 +494,23 @@ if (document.readyState === 'loading') {
 } else {
     initStaticVisualizations();
 }
+
+
+export function isAudioActive() {
+    if (!traceStreams || !window.player || !window.player._isSongReady) {
+        return false; // No audio if player or streams aren't ready
+    }
+    for (let voiceIdx = 0; voiceIdx < 3; voiceIdx++) {
+        const buffer = voiceBuffers[voiceIdx];
+        for (let i = 0; i < BUFFER_SIZE; i++) {
+            if (buffer[i] !== 0) {
+                return true; // Non-zero sample indicates audio
+            }
+        }
+    }
+    return false; // No audio detected
+}
+
+// Make isAudioActive globally accessible
+window.viz = window.viz || {};
+window.viz.isAudioActive = isAudioActive;
