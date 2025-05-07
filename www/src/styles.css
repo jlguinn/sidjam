@@ -366,12 +366,13 @@ body {
     align-items: flex-start;
     margin-bottom: var(--spacing-xs);
     margin-top: var(--spacing-xs);
-    width: 450px;
+    width: 380px; /* Fits 72 + 160 + 72 + margins */
     margin-left: auto;
     margin-right: auto;
     height: 216px;
 }
 
+/* Unmodified style (before changes) */
 #jam-controls > .hidden {
     visibility: hidden;
     flex: 0 0 0;
@@ -379,12 +380,15 @@ body {
     margin: 0;
 }
 
+/* Updated .bitmap-button (square, 36x36 pixels at 2px per pixel) */
 .bitmap-button {
-    width: 92px;
-    height: 144px;
+    width: 72px; /* 36 pixels x 2 */
+    height: 72px;
     cursor: pointer;
-    transition: filter 0.3s ease, opacity 0.3s ease;
+    transition: filter 0.3s ease, opacity 0.2s ease; /* Smooth opacity changes */
     visibility: visible;
+    transform-origin: center center; /* Center rotation */
+    will-change: transform; /* Optimize rotation performance */
 }
 
 .bitmap-button.disabled {
@@ -409,10 +413,11 @@ body {
     pointer-events: none;
 }
 
+/* Adjusted margins to re-center */
 #winner-left,
 #winner-right {
-    margin: 0 30px;
-    margin-top: 72px;
+    margin: 0 20px; /* Space between buttons */
+    margin-top: 72px; /* Center vertically in #jam-controls */
 }
 
 /* Keyframes for thumb rotation animations */
@@ -450,18 +455,6 @@ body {
 
 .bitmap-button.rotate-minus-180 {
     animation: rotate-minus-180 0.5s ease-in-out;
-}
-
-/* Updated .bitmap-button to support transforms */
-.bitmap-button {
-    width: 92px;
-    height: 144px;
-    cursor: pointer;
-    transition: filter 0.3s ease, opacity 0.3s ease;
-    visibility: visible;
-    transform-origin: center center; /* Center rotation */
-    position: relative; /* Contain pixel divs */
-    will-change: transform; /* Optimize rotation performance */
 }
 
 /* Prevent pixel divs from rotating */

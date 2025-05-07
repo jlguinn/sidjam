@@ -41,7 +41,46 @@ const profileBitmap = [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ];
 
+const leftThumbUpBitmap = [
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,2,2,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,2,2,2,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,2,2,2,2,1,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,2,2,2,2,2,1,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,2,2,2,2,1,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,2,2,2,2,1,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,2,2,2,2,1,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,2,2,2,2,1,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,2,2,2,2,2,1,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,2,2,2,2,2,1,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,2,2,2,2,2,1,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,2,2,2,2,2,1,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,2,2,2,2,2,2,1,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,2,2,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,2,2,2,2,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,1,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,1,2,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,1,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,1,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,1,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,1,1,2,2,2,2,2,2,2,2,2,2,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,1,2,2,2,2,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+]
 
+/*
 const leftThumbUpBitmap = [
     [0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0],
     [0,0,0,0,0,0,0,0,0,1,2,2,2,1,0,0,0,0,0,0,0,0,0],
@@ -80,12 +119,13 @@ const leftThumbUpBitmap = [
     [0,0,0,0,1,2,2,2,2,1,1,1,1,1,0,0,0,0,0,0,0,0,0],
     [0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 ]
+*/
 
 const leftThumbInBitmap = rotateBitmap(leftThumbUpBitmap, 90);
 const leftThumbDownBitmap = rotateBitmap(leftThumbUpBitmap, 180);
 
 const rightThumbupBitmap = flipBitmapHorizontally(leftThumbUpBitmap);
-const rightThumInBitmap = rotateBitmap(rightThumbupBitmap, -90);
+const rightThumbInBitmap = rotateBitmap(rightThumbupBitmap, -90);
 const rightThumDownBitmap = rotateBitmap(rightThumbupBitmap, -180);
 
 
@@ -184,7 +224,7 @@ export function renderWinnerButtonBitmap(contenderIndex, playerState) {
         bitmap = contenderIndex === 0 ? leftThumbDownBitmap : rightThumDownBitmap;
         newState = 'down';
     } else {
-        bitmap = contenderIndex === 0 ? leftThumbInBitmap : rightThumInBitmap;
+        bitmap = contenderIndex === 0 ? leftThumbInBitmap : rightThumbInBitmap;
         newState = 'in';
     }
 
@@ -194,7 +234,7 @@ export function renderWinnerButtonBitmap(contenderIndex, playerState) {
     // Determine rotation class based on button, current state, and new state
     let rotationClass = null;
     if (currentState !== newState) {
-        if (contenderIndex === 0) { // winner-left: down=clockwise, up=clockwise
+        if (contenderIndex === 0) { // winner-left: down=counterclockwise, up=clockwise
             if (currentState === 'in' && newState === 'up') rotationClass = 'rotate-minus-90';
             else if (currentState === 'in' && newState === 'down') rotationClass = 'rotate-plus-90';
             else if (currentState === 'up' && newState === 'down') rotationClass = 'rotate-plus-180';
@@ -214,6 +254,7 @@ export function renderWinnerButtonBitmap(contenderIndex, playerState) {
     // Apply rotation animation and delay bitmap redraw
     if (rotationClass) {
         winnerButton.classList.add(rotationClass);
+        winnerButton.style.opacity = '0.7'; // Fade during rotation
         setTimeout(() => {
             // Redraw bitmap after animation
             const primaryColor = '#000000';
@@ -222,8 +263,9 @@ export function renderWinnerButtonBitmap(contenderIndex, playerState) {
             renderBitmap(bitmap, winnerButton, pixelSize, primaryColor, secondaryColor);
             // Update bitmap state
             winnerButton.dataset.bitmapState = newState;
-            // Reset transform and remove rotation class
+            // Reset transform, opacity, and remove rotation class
             winnerButton.style.transform = 'none';
+            winnerButton.style.opacity = '1';
             winnerButton.classList.remove(rotationClass);
         }, 500); // Matches 0.5s animation duration
     } else {
@@ -234,5 +276,6 @@ export function renderWinnerButtonBitmap(contenderIndex, playerState) {
         renderBitmap(bitmap, winnerButton, pixelSize, primaryColor, secondaryColor);
         winnerButton.dataset.bitmapState = newState;
         winnerButton.style.transform = 'none';
+        winnerButton.style.opacity = '1';
     }
 }
