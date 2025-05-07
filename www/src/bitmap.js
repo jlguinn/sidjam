@@ -81,6 +81,14 @@ const leftThumbUpBitmap = [
     [0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 ]
 
+const leftThumbInBitmap = rotateBitmap(leftThumbUpBitmap, 90);
+const leftThumbDownBitmap = rotateBitmap(leftThumbUpBitmap, 180);
+
+const rightThumbupBitmap = flipBitmapHorizontally(leftThumbUpBitmap);
+const rightThumInBitmap = rotateBitmap(rightThumbupBitmap, -90);
+const rightThumDownBitmap = rotateBitmap(rightThumbupBitmap, -180);
+
+
 // Transformation utilities
 export function flipBitmapHorizontally(bitmap) {
     return bitmap.map(row => [...row].reverse());
