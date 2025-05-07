@@ -155,7 +155,6 @@ export function renderProfileBitmap(isLoggedIn, color, pixelSize = 4, domElement
 
 // Winner button rendering
 export function renderWinnerButtonBitmap(contenderIndex, playerState) {
-    
     const winnerButtonId = contenderIndex === 0 ? 'winner-left' : 'winner-right';
     const winnerButton = document.getElementById(winnerButtonId);
     if (!winnerButton) {
@@ -174,7 +173,17 @@ export function renderWinnerButtonBitmap(contenderIndex, playerState) {
 
     const isWinner = playerState.winner === contenderIndex;
     const isContenderSelected = playerState.selectedContender === contenderIndex;
-    const bitmap = leftThumbUpBitmap;
+    let bitmap = leftThumbUpBitmap;
+
+    // Apply transformations based on contender index
+    if (contenderIndex === 0) {
+        // Left thumb: Rotate 90 degrees clockwise
+        bitmap = rotateBitmap(leftThumbUpBitmap, 90);
+    } else {
+        // Right thumb: Flip horizontally, then rotate -90 degrees (counterclockwise)
+        const flippedBitmap = flipBitmapHorizontally(leftThumbUpBitmap);
+        bitmap = rotateBitmap(flippedBitmap, -90);
+    }
 
     const pixelSize = 2; // Pixel size for bitmap rendering
     renderBitmap(bitmap, winnerButton, pixelSize, primaryColor, secondaryColor); 
