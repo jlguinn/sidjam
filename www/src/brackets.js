@@ -529,8 +529,10 @@ export function updateWinner(contenderIndex, updateRoundInfo, updateWinnerButton
             window.logmsg(`Switched winner to contender ${contenderIndex} in ${playerState.activeBracket} bracket`, 1);
         }
     } else if (playerState.bothContendersSelected && isZeroZeroBracket) {
-        // Toggle back to single winner in 0-0 bracket
-        updatePlayerState({ winner: contenderIndex, bothContendersSelected: false });
+        // In 0-0 bracket, toggle off the clicked contender, make the other the winner
+        const otherContender = contenderIndex === 0 ? 1 : 0;
+        updatePlayerState({ winner: otherContender, bothContendersSelected: false });
+        window.logmsg(`Toggled off contender ${contenderIndex}, set contender ${otherContender} as winner in 0-0 bracket`, 1);
     } else {
         // Deselect the current winner
         updatePlayerState({ winner: null });
