@@ -170,29 +170,36 @@ export function renderWinnerButtonBitmap(contenderIndex, playerState) {
         return;
     }
 
-    // Check disabled state for color adjustment
-    const isDisabled = winnerButton.disabled;
-
-    const primaryColor = '#000000'; 
-    const secondaryColor = '#FFDAB9';
-
-    // const primaryColor = isDisabled ? '#666666' : '#000000'; // Gray outline when disabled
-    // const secondaryColor = isDisabled ? '#CCAA99' : '#FFDAB9'; // Muted flesh when disabled
-
+    // Determine the contender's state
+    let bitmap;
     const isWinner = playerState.winner === contenderIndex;
-    const isContenderSelected = playerState.selectedContender === contenderIndex;
-    let bitmap = leftThumbUpBitmap;
+    const isBothSelected = playerState.bothContendersSelected;
+    const isOtherWinner = playerState.winner !== null && playerState.winner !== contenderIndex;
 
-    // Apply transformations based on contender index
-    if (contenderIndex === 0) {
-        // Left thumb: Rotate 90 degrees clockwise
-        bitmap = rotateBitmap(leftThumbUpBitmap, 90);
+    // Select bitmap based on state
+    if (isWinner || (isBothSelected && playerState.activeBracket === "0 - 0")) {
+        // Winning contender: Thumb Up
+        bitmap = contenderIndex === 0 ? leftThumbUpBitmap : rightThumbupBitmap;
+    } else if (isOtherWinner) {
+        // Losing contender: Thumb Down
+        bitmap = contenderIndex === 0 ? leftThumbDownBitmap : rightThumDownBitmap;
     } else {
-        // Right thumb: Flip horizontally, then rotate -90 degrees (counterclockwise)
-        const flippedBitmap = flipBitmapHorizontally(leftThumbUpBitmap);
-        bitmap = rotateBitmap(flippedBitmap, -90);
+        // Undecided contender: Thumb In
+        bitmap = contenderIndex === 0 ? leftThumbInBitmap : rightThumInBitmap;
     }
 
+    // Apply transformations based on contender index (orientation adjustments)
+    if (contenderIndex === 0) {
+        // Left thumb: Already oriented correctly for left hand
+        // No additional transformation needed
+    } else {
+        // Right thumb: Ensure correct orientation (handled by bitmap selection)
+    }
+
+    // Define colors (unchanged from original)
+    const primaryColor = '#000000'; // Gray outline when disabled
+    const secondaryColor =  '#FFDAB9'; // Muted flesh when disabled
+
     const pixelSize = 2; // Pixel size for bitmap rendering
-    renderBitmap(bitmap, winnerButton, pixelSize, primaryColor, secondaryColor); 
+    renderBitmap(bitmap, winnerButton, pixelSize, primaryColor, secondaryColor);
 }
