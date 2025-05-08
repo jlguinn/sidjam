@@ -7,6 +7,11 @@ import { getPlayerState } from './brackets.js';
 const BUFFER_SIZE = 150; // ~0.34ms at 44100 Hz, shows ~2.5 cycles at 1 kHz
 const TARGET_FPS = 60; // Adjusted to match rendering loop (previously 172)
 const TIME_LIMIT = 1000 / TARGET_FPS; // Time per frame in ms (~16.67ms at 60 FPS)
+let waveformZoomFactor = 1.0; // Default zoom level (1.0 = no zoom)
+const minZoomFactor = 0.5; // Zoomed out (wider wave, more samples)
+const maxZoomFactor = 5.0; // Zoomed in (narrower wave, fewer samples)
+const zoomStep = 1.2; // Zoom increment/decrement factor
+
 
 // VU meter configuration
 const VU_METER_COUNT = 3; // One per voice
@@ -60,7 +65,7 @@ const needleVelocities = new Float32Array(VU_METER_COUNT); // Physics velocity
 let traceStreams = null;
 let isVisualizationActive = false; // Flag to control animation loop
 
-// Draw static oscilloscope waveform (flatline)
+//  static oscilloscope waveform (flatline)
 function drawStaticWaveform(canvasId) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) {
@@ -162,11 +167,19 @@ function drawVoiceWaveform(canvasId, voiceIdx) {
     ctx.fillRect(0, 0, width, height);
 
     const player = window.player;
-    if (!player || !player._isSongReady) {
+    const isWaveformActive = getPlayerState().isWaveformActive;
+    if (!player || !player._isSongReady || !isWaveformActive) {
         voiceBuffers.forEach(buffer => buffer.fill(0));
         vuLevels.fill(0);
         needleAngles.fill(ANGLE_RANGE[0]);
         needleVelocities.fill(0);
+        // Draw static waveform
+        ctx.beginPath();
+        ctx.strokeStyle = '#00FF00';
+        ctx.lineWidth = 2;
+        ctx.moveTo(0, midY);
+        ctx.lineTo(width, midY);
+        ctx.stroke();
         return;
     }
 
@@ -181,9 +194,13 @@ function drawVoiceWaveform(canvasId, voiceIdx) {
     }
     const scale = maxAmplitude > 0 ? (0.8 * height / 2) / maxAmplitude : 1;
 
+    // Apply zoom factor to sample window
+    const zoomedSampleWindow = Math.max(16, Math.floor(BUFFER_SIZE / waveformZoomFactor));
+    const sampleStep = zoomedSampleWindow / (width - 1); // Samples per pixel
+
     for (let x = 0; x < width; x++) {
         const t = x / (width - 1);
-        const sampleIdx = t * (BUFFER_SIZE - 1);
+        const sampleIdx = t * (zoomedSampleWindow - 1);
         const i0 = Math.floor(sampleIdx);
         const i1 = Math.min(i0 + 1, BUFFER_SIZE - 1);
         const frac = sampleIdx - i0;
@@ -196,6 +213,37 @@ function drawVoiceWaveform(canvasId, voiceIdx) {
         }
     }
     ctx.stroke();
+}
+
+export function zoomWaveformIn() {
+    if (waveformZoomFactor < maxZoomFactor) {
+        waveformZoomFactor = Math.min(maxZoomFactor, waveformZoomFactor * zoomStep);
+        window.logmsg(`Zoomed in to ${waveformZoomFactor.toFixed(2)}`, 1);
+        updateZoomButtonStates();
+    }
+}
+
+export function zoomWaveformOut() {
+    if (waveformZoomFactor > minZoomFactor) {
+        waveformZoomFactor = Math.max(minZoomFactor, waveformZoomFactor / zoomStep);
+        window.logmsg(`Zoomed out to ${waveformZoomFactor.toFixed(2)}`, 1);
+        updateZoomButtonStates();
+    }
+}
+
+function updateZoomButtonStates() {
+    const zoomOutButton = document.getElementById('zoom-out-button');
+    const zoomInButton = document.getElementById('zoom-in-button');
+    if (zoomOutButton) {
+        zoomOutButton.disabled = waveformZoomFactor <= minZoomFactor;
+    } else {
+        window.logmsg('Zoom out button not found in updateZoomButtonStates', 0);
+    }
+    if (zoomInButton) {
+        zoomInButton.disabled = waveformZoomFactor >= maxZoomFactor;
+    } else {
+        window.logmsg('Zoom in button not found in updateZoomButtonStates', 0);
+    }
 }
 
 // Draw dynamic VU meter for a given voice

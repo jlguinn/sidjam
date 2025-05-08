@@ -11,6 +11,7 @@ import * as brackets from './brackets.js';
 import { baseColorSchemes } from './themes.js';
 import * as player from './player.js';
 import { renderSpriteAnimation } from './spriteAnimator.js';
+import { zoomWaveformIn, zoomWaveformOut } from './viz.js';
 
 function debug(message) { window.logmsg(`[DEBUG] ${message}`, 2); }
 
@@ -1218,6 +1219,7 @@ async function initializeApp() {
         window.logmsg('Adding zoom out listener', 2);
         zoomOutButton.addEventListener('click', () => {
             window.logmsg('[-]', 1);
+            zoomWaveformOut();
         });
         zoomOutButton.disabled = true; // Disable initially
     } else {
@@ -1227,6 +1229,7 @@ async function initializeApp() {
         window.logmsg('Adding zoom in listener', 2);
         zoomInButton.addEventListener('click', () => {
             window.logmsg('[+]', 1);
+            zoomWaveformIn();
         });
         zoomInButton.disabled = true; // Disable initially
     } else {
