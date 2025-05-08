@@ -417,9 +417,29 @@ export function updateWinnerButtons(playerState, sidPlayer) {
     winnerRight.classList.toggle("disabled", disabled);
     jamButton.disabled = !sidPlayer;
 
-    // Render bitmaps for both buttons
-    renderWinnerButtonBitmap(0, playerState);
-    renderWinnerButtonBitmap(1, playerState);
+    // Render bitmaps only if state has changed
+    const buttons = [
+        { id: 'winner-left', index: 0, element: winnerLeft },
+        { id: 'winner-right', index: 1, element: winnerRight }
+    ];
+
+    buttons.forEach(({ id, index, element }) => {
+        const isWinner = playerState.winner === index;
+        const isBothSelected = playerState.bothContendersSelected;
+        const isOtherWinner = playerState.winner !== null && playerState.winner !== index;
+        let expectedState = 'in';
+        if (isWinner || (isBothSelected && playerState.activeBracket === "0 - 0")) {
+            expectedState = 'up';
+        } else if (isOtherWinner) {
+            expectedState = 'down';
+        }
+        const currentState = element.dataset.bitmapState || 'in';
+        if (currentState !== expectedState) {
+            renderWinnerButtonBitmap(index, playerState);
+        } else {
+            window.logmsg(`Skipping render for ${id}: state already ${currentState}`, 2);
+        }
+    });
 }
 
 export function updateJamButton(isPlaying) {

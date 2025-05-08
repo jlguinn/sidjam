@@ -201,6 +201,7 @@ export function renderProfileBitmap(isLoggedIn, color, pixelSize = 4, domElement
     renderBitmap(bitmap, domElement, pixelSize, color);
 }
 
+// Global lock to prevent concurrent animations per button
 const animationLocks = {
     'winner-left': false,
     'winner-right': false
@@ -246,7 +247,7 @@ export function renderWinnerButtonBitmap(contenderIndex, playerState) {
     if (currentState !== newState) {
         if (contenderIndex === 0) {
             if (currentState === 'in' && newState === 'up') rotationClass = 'rotate-minus-90';
-            else if (currentState === 'in' && newState === 'down') rotationClass = 'rotate-plus-90';
+            else if (currentState === 'in' && newState == 'down') rotationClass = 'rotate-plus-90';
             else if (currentState === 'up' && newState === 'down') rotationClass = 'rotate-plus-180';
             else if (currentState === 'down' && newState === 'up') rotationClass = 'rotate-minus-180';
             else if (currentState === 'up' && newState === 'in') rotationClass = 'rotate-plus-90';
@@ -267,18 +268,32 @@ export function renderWinnerButtonBitmap(contenderIndex, playerState) {
         winnerButton.dataset.bitmapState = newState; // Update state immediately
         winnerButton.classList.add(rotationClass);
         winnerButton.style.opacity = '0.7';
-        setTimeout(() => {
-            // Redraw bitmap
-            const primaryColor = '#000000';
-            const secondaryColor = '#FFDAB9';
-            const pixelSize = 2;
-            renderBitmap(bitmap, winnerButton, pixelSize, primaryColor, secondaryColor);
-            // Reset styles and unlock
-            winnerButton.style.transform = 'none';
-            winnerButton.style.opacity = '1';
-            winnerButton.classList.remove(rotationClass);
-            animationLocks[winnerButtonId] = false;
-        }, 500);
+
+        // Use requestAnimationFrame to wait for 500ms
+        const startTime = performance.now();
+        const animationDuration = 500; // 500ms
+
+        const animate = (currentTime) => {
+            const elapsed = currentTime - startTime;
+            if (elapsed >= animationDuration) {
+                // Redraw bitmap
+                const primaryColor = '#000000';
+                const secondaryColor = '#FFDAB9';
+                const pixelSize = 2;
+                renderBitmap(bitmap, winnerButton, pixelSize, primaryColor, secondaryColor);
+                // Reset styles and unlock
+                winnerButton.style.transform = 'none';
+                winnerButton.style.opacity = '1';
+                winnerButton.classList.remove(rotationClass);
+                animationLocks[winnerButtonId] = false;
+            } else {
+                // Schedule next frame
+                requestAnimationFrame(animate);
+            }
+        };
+
+        // Start animation loop
+        requestAnimationFrame(animate);
     } else {
         // Immediate render
         const primaryColor = '#000000';
