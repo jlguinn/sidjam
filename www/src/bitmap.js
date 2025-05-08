@@ -201,12 +201,22 @@ export function renderProfileBitmap(isLoggedIn, color, pixelSize = 4, domElement
     renderBitmap(bitmap, domElement, pixelSize, color);
 }
 
-// Winner button rendering
+const animationLocks = {
+    'winner-left': false,
+    'winner-right': false
+};
+
 export function renderWinnerButtonBitmap(contenderIndex, playerState) {
     const winnerButtonId = contenderIndex === 0 ? 'winner-left' : 'winner-right';
     const winnerButton = document.getElementById(winnerButtonId);
     if (!winnerButton) {
         window.logmsg(`Winner button for contender ${contenderIndex} (ID: ${winnerButtonId}) not found`, 0);
+        return;
+    }
+
+    // Check if button is animating
+    if (animationLocks[winnerButtonId]) {
+        window.logmsg(`Animation locked for ${winnerButtonId}, skipping render`, 2);
         return;
     }
 
@@ -228,20 +238,20 @@ export function renderWinnerButtonBitmap(contenderIndex, playerState) {
         newState = 'in';
     }
 
-    // Get current bitmap state from data attribute
-    const currentState = winnerButton.dataset.bitmapState || 'in'; // Default to 'in' if unset
+    // Get current bitmap state
+    const currentState = winnerButton.dataset.bitmapState || 'in';
 
-    // Determine rotation class based on button, current state, and new state
+    // Determine rotation class
     let rotationClass = null;
     if (currentState !== newState) {
-        if (contenderIndex === 0) { // winner-left: down=counterclockwise, up=clockwise
+        if (contenderIndex === 0) {
             if (currentState === 'in' && newState === 'up') rotationClass = 'rotate-minus-90';
             else if (currentState === 'in' && newState === 'down') rotationClass = 'rotate-plus-90';
             else if (currentState === 'up' && newState === 'down') rotationClass = 'rotate-plus-180';
             else if (currentState === 'down' && newState === 'up') rotationClass = 'rotate-minus-180';
             else if (currentState === 'up' && newState === 'in') rotationClass = 'rotate-plus-90';
             else if (currentState === 'down' && newState === 'in') rotationClass = 'rotate-minus-90';
-        } else { // winner-right: down=clockwise, up=counterclockwise
+        } else {
             if (currentState === 'in' && newState === 'up') rotationClass = 'rotate-plus-90';
             else if (currentState === 'in' && newState === 'down') rotationClass = 'rotate-minus-90';
             else if (currentState === 'up' && newState === 'down') rotationClass = 'rotate-minus-180';
@@ -253,23 +263,24 @@ export function renderWinnerButtonBitmap(contenderIndex, playerState) {
 
     // Apply rotation animation and delay bitmap redraw
     if (rotationClass) {
+        animationLocks[winnerButtonId] = true; // Lock animation
+        winnerButton.dataset.bitmapState = newState; // Update state immediately
         winnerButton.classList.add(rotationClass);
-        winnerButton.style.opacity = '0.7'; // Fade during rotation
+        winnerButton.style.opacity = '0.7';
         setTimeout(() => {
-            // Redraw bitmap after animation
+            // Redraw bitmap
             const primaryColor = '#000000';
             const secondaryColor = '#FFDAB9';
             const pixelSize = 2;
             renderBitmap(bitmap, winnerButton, pixelSize, primaryColor, secondaryColor);
-            // Update bitmap state
-            winnerButton.dataset.bitmapState = newState;
-            // Reset transform, opacity, and remove rotation class
+            // Reset styles and unlock
             winnerButton.style.transform = 'none';
             winnerButton.style.opacity = '1';
             winnerButton.classList.remove(rotationClass);
-        }, 500); // Matches 0.5s animation duration
+            animationLocks[winnerButtonId] = false;
+        }, 500);
     } else {
-        // No animation needed, redraw immediately
+        // Immediate render
         const primaryColor = '#000000';
         const secondaryColor = '#FFDAB9';
         const pixelSize = 2;

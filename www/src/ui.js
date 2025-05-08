@@ -416,6 +416,10 @@ export function updateWinnerButtons(playerState, sidPlayer) {
     winnerLeft.classList.toggle("disabled", disabled);
     winnerRight.classList.toggle("disabled", disabled);
     jamButton.disabled = !sidPlayer;
+
+    // Render bitmaps for both buttons
+    renderWinnerButtonBitmap(0, playerState);
+    renderWinnerButtonBitmap(1, playerState);
 }
 
 export function updateJamButton(isPlaying) {

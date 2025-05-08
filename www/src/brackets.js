@@ -511,37 +511,29 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
         }
     }
 }
-
 export function updateWinner(contenderIndex, updateRoundInfo, updateWinnerButtons, updateFlameButton) {
     const isZeroZeroBracket = playerState.activeBracket === "0 - 0";
 
     if (playerState.winner === null && !playerState.bothContendersSelected) {
-        // First winner selection
         updatePlayerState({ winner: contenderIndex });
     } else if (playerState.winner !== null && playerState.winner !== contenderIndex) {
         if (isZeroZeroBracket) {
-            // Allow both contenders to be selected in 0-0 bracket
             updatePlayerState({ bothContendersSelected: true, winner: null });
         } else {
-            // In non-0-0 brackets, switch to the new winner
             updatePlayerState({ winner: contenderIndex });
             window.logmsg(`Switched winner to contender ${contenderIndex} in ${playerState.activeBracket} bracket`, 1);
         }
     } else if (playerState.bothContendersSelected && isZeroZeroBracket) {
-        // In 0-0 bracket, toggle off the clicked contender, make the other the winner
         const otherContender = contenderIndex === 0 ? 1 : 0;
         updatePlayerState({ winner: otherContender, bothContendersSelected: false });
         window.logmsg(`Toggled off contender ${contenderIndex}, set contender ${otherContender} as winner in 0-0 bracket`, 1);
     } else {
-        // Deselect the current winner
         updatePlayerState({ winner: null });
     }
 
     updateRoundInfo(playerState);
-    updateWinnerButtons(playerState, sidPlayer);
+    updateWinnerButtons(playerState, sidPlayer); // Handles rendering
     updateFlameButton(playerState, sidPlayer);
-    renderWinnerButtonBitmap(0, playerState);
-    renderWinnerButtonBitmap(1, playerState);
 }
 
 export function toggleFlame(updateFlameButton, updateVsMatchup, updateWinnerButtons) {
