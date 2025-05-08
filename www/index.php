@@ -288,8 +288,8 @@ $cxn->close();
             </canvas>
         </div>
         <div id="waveform-zoom-controls">
-            <button id="zoom-out-button" class="zoom-button" aria-label="Zoom Out Waveform"> - </button>
-            <button id="zoom-in-button" class="zoom-button" aria-label="Zoom Out Waveform"> + </button>
+            <button id="zoom-out-button" class="zoom-button" aria-label="Zoom Out Waveform"><b>-</b></button>
+            <button id="zoom-in-button" class="zoom-button" aria-label="Zoom Out Waveform"><b>+</b></button>
         </div>
     </section>
 

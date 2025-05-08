@@ -576,20 +576,20 @@ body {
     width: 20px;
     height: 20px;
     padding: 0;
-    border: 1px solid var(--border); /* #4c566a */
+    border: 1px solid #4c566a; /* Matches --border */
     border-radius: 4px;
-    background-color: var(--background); /* #2e3440, matches canvas */
-    color: var(--primary); /* #00ff00, green text to match waveform lines */
-    font-size: 14px; /* Reduced to fit comfortably in 18x18px content area */
+    background-color: #2e3440; /* Explicit canvas background match */
+    color: #00bb00; /* Softer green for better contrast */
+    font-size: 14px;
     font-weight: bold;
-    line-height: 20px; /* Matches height for vertical centering */
+    line-height: 20px;
     cursor: pointer;
     transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-sizing: border-box; /* Ensure border is included in dimensions */
-    -webkit-user-select: none; /* Prevent text selection */
+    box-sizing: border-box;
+    -webkit-user-select: none;
     user-select: none;
 }
 
@@ -608,6 +608,7 @@ body {
     filter: grayscale(100%) opacity(0.5);
     cursor: not-allowed;
 }
+
 .viz-toggle-button {
     position: absolute;
     top: 0;
