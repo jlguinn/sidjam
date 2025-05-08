@@ -317,11 +317,18 @@ export function updateSongInfo(sidPlayer) {
 export function updateWaveformVisibility(isWaveformActive) {
     const waveformContainer = document.getElementById("voice-visualizations");
     const waveformToggleButton = document.getElementById("wave-toggle-button");
+    const waveformZoomControls = document.getElementById("waveform-zoom-controls");
 
     if (waveformContainer) {
         waveformContainer.style.display = isWaveformActive ? "flex" : "none";
     } else {
         console.error('Waveform container not found in the DOM');
+    }
+
+    if (waveformZoomControls) {
+        waveformZoomControls.classList.toggle("hidden", !isWaveformActive);
+    } else {
+        console.error('Waveform zoom controls not found in the DOM');
     }
 
     if (waveformToggleButton) {

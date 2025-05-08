@@ -218,6 +218,21 @@ export async function togglePlayPause(updateRoundInfo, updatePlayPauseButton, up
         window.logmsg('Revive button not found in the DOM', 0);
     }
 
+    // Enable zoom buttons
+    const zoomOutButton = document.getElementById('zoom-out-button');
+    const zoomInButton = document.getElementById('zoom-in-button');
+    if (zoomOutButton) {
+        zoomOutButton.disabled = false;
+    } else {
+        window.logmsg('Zoom out button not found in the DOM', 0);
+    }
+    if (zoomInButton) {
+        zoomInButton.disabled = false;
+    } else {
+        window.logmsg('Zoom in button not found in the DOM', 0);
+    }
+
+
     updateFlameButton();
     ui.updateNavigationButtons(sidPlayer);
 }

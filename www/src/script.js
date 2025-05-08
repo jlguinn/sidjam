@@ -1210,11 +1210,35 @@ async function initializeApp() {
         window.logmsg('VU toggle button not found in the DOM', 0);
     }
 
+    // Add zoom button event listeners and disable initially
+    window.logmsg('Adding zoom button listeners...');
+    const zoomOutButton = document.getElementById('zoom-out-button');
+    const zoomInButton = document.getElementById('zoom-in-button');
+    if (zoomOutButton) {
+        window.logmsg('Adding zoom out listener', 2);
+        zoomOutButton.addEventListener('click', () => {
+            window.logmsg('[-]', 1);
+        });
+        zoomOutButton.disabled = true; // Disable initially
+    } else {
+        window.logmsg('Zoom out button not found in the DOM', 0);
+    }
+    if (zoomInButton) {
+        window.logmsg('Adding zoom in listener', 2);
+        zoomInButton.addEventListener('click', () => {
+            window.logmsg('[+]', 1);
+        });
+        zoomInButton.disabled = true; // Disable initially
+    } else {
+        window.logmsg('Zoom in button not found in the DOM', 0);
+    }
+
+
     if (!window.user || !window.user.id) {
         window.logmsg('window.user.id not defined on DOM load', 0);
         return;
     }
-
+ 
     try {
         const songsResponse = await fetch('dbcontrol/get_sidtunes.php?full_list=true');
         if (!songsResponse.ok) throw new Error(`Failed to load sidtunes: ${songsResponse.statusText}`);

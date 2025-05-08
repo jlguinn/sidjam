@@ -287,6 +287,10 @@ $cxn->close();
                 Voice 3 Waveform (visualization not supported)
             </canvas>
         </div>
+        <div id="waveform-zoom-controls">
+            <button id="zoom-out-button" class="zoom-button" aria-label="Zoom Out Waveform"> - </button>
+            <button id="zoom-in-button" class="zoom-button" aria-label="Zoom Out Waveform"> + </button>
+        </div>
     </section>
 
     <div id="jam-controls">
