@@ -1,3 +1,5 @@
+// viz.js - Real-time oscilloscope waveform and VU meter visualizations for SID JAm
+
 import { updateWaveformVisibility, updateVUMeterVisibility } from './ui.js';
 import { getPlayerState } from './brackets.js';
 
@@ -20,6 +22,11 @@ const DECAY_RATE = 0.07; // Seconds, for spring strength (~50–100ms decay)
 const OVERSHOOT = 0.15; // 15% overshoot for controlled 70s bounce
 const LOG_INTERVAL = 0.1; // Seconds, log 10 times per second (100ms)
 const ZERO_TICK_THRESHOLD = 2; // Stop logging after 2 consecutive all-zero ticks
+
+// Zoom configuration
+const SINGLE_CLICK_ZOOM_STEP = 1.125; // 12.5% for single clicks
+const CONTINUOUS_ZOOM_STEP = 1.025; // 2.5% for continuous zooming
+const ZOOM_INTERVAL = 50; // ms between continuous zoom steps
 
 // Circular buffers for each voice
 const circularBuffers = [
@@ -63,6 +70,9 @@ let lastRenderTime = 0;
 let logTimer = 0;
 let logCounter = 0;
 let zeroTickCount = 0;
+
+// Continuous zoom state
+let zoomIntervalId = null;
 
 // Draw static waveform
 function drawStaticWaveform(canvasId) {
@@ -441,26 +451,30 @@ function updateViz() {
 }
 
 // Zoom controls
-export function zoomWaveformIn() {
-    zoomFactor *= 1.125; // Zoom in by 12.5%
+export function zoomWaveformIn(isContinuous = false) {
+    const step = isContinuous ? CONTINUOUS_ZOOM_STEP : SINGLE_CLICK_ZOOM_STEP;
+    zoomFactor *= step; // Zoom in by step (2.5% continuous, 12.5% single click)
     zoomFactor = Math.max(1, Math.min(zoomFactor, 8820)); // Max zoom to see ~5 samples
+    window.logmsg('[+]', 1);
     window.logmsg(`Zoomed in to ${zoomFactor.toFixed(2)}x`, 1);
     updateZoomButtonStates();
 }
 
-export function zoomWaveformOut() {
-    zoomFactor /= 1.125; // Zoom out by 12.5%
+export function zoomWaveformOut(isContinuous = false) {
+    const step = isContinuous ? CONTINUOUS_ZOOM_STEP : SINGLE_CLICK_ZOOM_STEP;
+    zoomFactor /= step; // Zoom out by step (2.5% continuous, 12.5% single click)
     zoomFactor = Math.max(1, Math.min(zoomFactor, 8820));
+    window.logmsg('[-]', 1);
     window.logmsg(`Zoomed out to ${zoomFactor.toFixed(2)}x`, 1);
     updateZoomButtonStates();
 }
 
 export function resetView() {
     zoomFactor = 46.13; // Reset to 44100 / 956 ≈ 956 samples
+    window.logmsg('[⭯]', 1); // Log with U+2B6F character
     window.logmsg('View reset', 1);
     updateZoomButtonStates();
 }
-
 function updateZoomButtonStates() {
     const zoomOutButton = document.getElementById('zoom-out-button');
     const zoomInButton = document.getElementById('zoom-in-button');
@@ -473,6 +487,41 @@ function updateZoomButtonStates() {
     }
     if (resetButton) {
         resetButton.disabled = zoomFactor === 46.13;
+    }
+}
+
+// Continuous zoom setup
+function setupContinuousZoom() {
+    const zoomInButton = document.getElementById('zoom-in-button');
+    const zoomOutButton = document.getElementById('zoom-out-button');
+
+    if (zoomInButton) {
+        zoomInButton.addEventListener('mousedown', () => {
+            if (!zoomInButton.disabled) {
+                zoomWaveformIn(true); // Initial zoom
+                zoomIntervalId = setInterval(() => zoomWaveformIn(true), ZOOM_INTERVAL);
+            }
+        });
+        zoomInButton.addEventListener('mouseup', stopContinuousZoom);
+        zoomInButton.addEventListener('mouseleave', stopContinuousZoom);
+    }
+
+    if (zoomOutButton) {
+        zoomOutButton.addEventListener('mousedown', () => {
+            if (!zoomOutButton.disabled) {
+                zoomWaveformOut(true); // Initial zoom
+                zoomIntervalId = setInterval(() => zoomWaveformOut(true), ZOOM_INTERVAL);
+            }
+        });
+        zoomOutButton.addEventListener('mouseup', stopContinuousZoom);
+        zoomOutButton.addEventListener('mouseleave', stopContinuousZoom);
+    }
+}
+
+function stopContinuousZoom() {
+    if (zoomIntervalId) {
+        clearInterval(zoomIntervalId);
+        zoomIntervalId = null;
     }
 }
 
@@ -518,6 +567,7 @@ function startVisualizations() {
             lastRenderTime = performance.now();
             updateViz();
             updateWaveformVisibility(getPlayerState().isWaveformActive);
+            setupContinuousZoom(); // Initialize continuous zoom listeners
         } else if (retryCount < maxRetries) {
             retryCount++;
             window.logmsg(`Trace streams not ready, retrying in ${retryInterval}ms (${retryCount}/${maxRetries})`, 1);
@@ -564,3 +614,8 @@ export function isAudioActive() {
 
 window.viz = window.viz || {};
 window.viz.isAudioActive = isAudioActive;
+
+// Expose zoom and reset functions to global scope for onclick handlers
+window.zoomWaveformIn = zoomWaveformIn;
+window.zoomWaveformOut = zoomWaveformOut;
+window.resetView = resetView;
