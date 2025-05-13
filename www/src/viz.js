@@ -1,7 +1,5 @@
-// viz.js - Real-time oscilloscope waveform and VU meter visualizations for SID JAm
-
 import { updateWaveformVisibility, updateVUMeterVisibility } from './ui.js';
-import { getPlayerState } from './brackets.js';
+import { getPlayerState, updatePlayerState } from './brackets.js';
 
 // Configuration
 const BUFFER_SIZE = 9000; // WebSID buffer size (~204ms at 44100 Hz)
@@ -35,7 +33,7 @@ const circularBuffers = [
     new Float32Array(CIRCULAR_BUFFER_SIZE)  // Voice 3
 ];
 let writePosition = 0; // Current write position in the circular buffer
-let zoomFactor = 46.13; // Start with 44100 / 46.13 ≈ 956 samples visible
+let zoomFactor; // Initialize later in initStaticVisualizations
 
 // VU meter state
 const vuLabelImage = new Image();
@@ -455,26 +453,51 @@ export function zoomWaveformIn(isContinuous = false) {
     const step = isContinuous ? CONTINUOUS_ZOOM_STEP : SINGLE_CLICK_ZOOM_STEP;
     zoomFactor *= step; // Zoom in by step (2.5% continuous, 12.5% single click)
     zoomFactor = Math.max(1, Math.min(zoomFactor, 8820)); // Max zoom to see ~5 samples
+    updatePlayerState({ zoomFactor }); // Update playerState
     window.logmsg('[+]', 1);
     window.logmsg(`Zoomed in to ${zoomFactor.toFixed(2)}x`, 1);
     updateZoomButtonStates();
+    // Force redraw to apply new zoom
+    const playerState = getPlayerState();
+    if (playerState.isWaveformActive && window.player && window.player._isSongReady) {
+        drawVoiceWaveform('voice1-canvas', 0);
+        drawVoiceWaveform('voice2-canvas', 1);
+        drawVoiceWaveform('voice3-canvas', 2);
+    }
 }
 
 export function zoomWaveformOut(isContinuous = false) {
     const step = isContinuous ? CONTINUOUS_ZOOM_STEP : SINGLE_CLICK_ZOOM_STEP;
     zoomFactor /= step; // Zoom out by step (2.5% continuous, 12.5% single click)
     zoomFactor = Math.max(1, Math.min(zoomFactor, 8820));
+    updatePlayerState({ zoomFactor }); // Update playerState
     window.logmsg('[-]', 1);
     window.logmsg(`Zoomed out to ${zoomFactor.toFixed(2)}x`, 1);
     updateZoomButtonStates();
+    // Force redraw to apply new zoom
+    const playerState = getPlayerState();
+    if (playerState.isWaveformActive && window.player && window.player._isSongReady) {
+        drawVoiceWaveform('voice1-canvas', 0);
+        drawVoiceWaveform('voice2-canvas', 1);
+        drawVoiceWaveform('voice3-canvas', 2);
+    }
 }
 
 export function resetView() {
     zoomFactor = 46.13; // Reset to 44100 / 956 ≈ 956 samples
-    window.logmsg('[⭯]', 1); // Log with U+2B6F character
+    updatePlayerState({ zoomFactor }); // Update playerState
+    window.logmsg('[⭯]', 1);
     window.logmsg('View reset', 1);
     updateZoomButtonStates();
+    // Force redraw to apply reset zoom
+    const playerState = getPlayerState();
+    if (playerState.isWaveformActive && window.player && window.player._isSongReady) {
+        drawVoiceWaveform('voice1-canvas', 0);
+        drawVoiceWaveform('voice2-canvas', 1);
+        drawVoiceWaveform('voice3-canvas', 2);
+    }
 }
+
 function updateZoomButtonStates() {
     const zoomOutButton = document.getElementById('zoom-out-button');
     const zoomInButton = document.getElementById('zoom-in-button');
@@ -486,7 +509,7 @@ function updateZoomButtonStates() {
         zoomInButton.disabled = zoomFactor >= 8820;
     }
     if (resetButton) {
-        resetButton.disabled = zoomFactor === 46.13;
+        resetButton.disabled = Math.abs(zoomFactor - 46.13) < 0.01; // Account for floating-point precision
     }
 }
 
@@ -558,6 +581,14 @@ function startVisualizations() {
 
     function attemptTraceStreamInit() {
         if (initTraceStreams()) {
+            // Initialize zoomFactor from playerState
+            zoomFactor = getPlayerState().zoomFactor || 46.13;
+            if (typeof zoomFactor !== 'number' || zoomFactor < 1 || zoomFactor > 8820) {
+                zoomFactor = 46.13;
+                updatePlayerState({ zoomFactor });
+            }
+            window.logmsg(`[viz.js] Initialized zoomFactor to ${zoomFactor.toFixed(2)}x`, 2);
+            updateZoomButtonStates(); // Update button states with loaded zoomFactor
             circularBuffers.forEach(buffer => buffer.fill(0));
             vuLevels.fill(0);
             needleAngles.fill(ANGLE_RANGE[0]);
@@ -568,6 +599,13 @@ function startVisualizations() {
             updateViz();
             updateWaveformVisibility(getPlayerState().isWaveformActive);
             setupContinuousZoom(); // Initialize continuous zoom listeners
+            // Force initial waveform redraw
+            const playerState = getPlayerState();
+            if (playerState.isWaveformActive && window.player && window.player._isSongReady) {
+                drawVoiceWaveform('voice1-canvas', 0);
+                drawVoiceWaveform('voice2-canvas', 1);
+                drawVoiceWaveform('voice3-canvas', 2);
+            }
         } else if (retryCount < maxRetries) {
             retryCount++;
             window.logmsg(`Trace streams not ready, retrying in ${retryInterval}ms (${retryCount}/${maxRetries})`, 1);
@@ -585,6 +623,7 @@ window.startVisualizations = startVisualizations;
 // Initialize static visualizations
 function initStaticVisualizations() {
     renderStaticVisualizations();
+    updateZoomButtonStates(); // Update button states with temporary zoomFactor
 }
 
 if (document.readyState === 'loading') {

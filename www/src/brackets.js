@@ -1,7 +1,5 @@
-// brackets.js
-
 import { sidPlayer, isPlaying, stopTimer, setIsPlaying } from './player.js';
-import { applyTheme, updateRoundInfo, getCurrentThemeIndex, updateSongTitleHighlight } from './ui.js'; // Added updateSongTitleHighlight
+import { applyTheme, updateRoundInfo, getCurrentThemeIndex, updateSongTitleHighlight } from './ui.js';
 import { baseColorSchemes } from './themes.js';
 import { renderWinnerButtonBitmap } from './bitmap.js';
 
@@ -65,7 +63,8 @@ export let playerState = {
     nowPlayingSongBracket: null,
     isUnplayableSID: false,
     isWaveformActive: true,
-    isVUActive: true
+    isVUActive: true,
+    zoomFactor: 46.13 // Default zoom level (956 samples)
 };
 
 export function debug(message) {
@@ -80,6 +79,7 @@ export function updatePlayerState(updates) {
     playerState = { ...playerState, ...updates };
     // window.logmsg(`Updated playerState: ${JSON.stringify(playerState)}`, 2);
 }
+
 
 export function isSpecialBracket(bracket) {
     const specialBrackets = ["All", "Eliminated"];

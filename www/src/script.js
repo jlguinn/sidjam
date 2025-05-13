@@ -11,12 +11,50 @@ import * as brackets from './brackets.js';
 import { baseColorSchemes } from './themes.js';
 import * as player from './player.js';
 import { renderSpriteAnimation } from './spriteAnimator.js';
-import { zoomWaveformIn, zoomWaveformOut } from './viz.js';
+import { zoomWaveformIn, zoomWaveformOut, resetView } from './viz.js';
 
 function debug(message) { window.logmsg(`[DEBUG] ${message}`, 2); }
 
 window.logmsg("Default logMsg");
 window.logmsg("Verbose logMsg", 1);
+
+// Define bound functions at the top to ensure availability
+const updateTimerBound = () => player.updateTimer();
+const loadSongBound = (filename, trackNumber, autoPlay = true) => player.loadSong(
+    filename, trackNumber,
+    () => ui.updateSongInfo(player.sidPlayer),
+    () => ui.updatePlayPauseButton(player.isPlaying),
+    player.resetVoiceStates,
+    () => ui.updateNavigationButtons(player.sidPlayer),
+    updateVsMatchupBound,
+    updateJamButtonBound,
+    autoPlay
+);
+const updateVsMatchupBound = () => {
+    ui.updateVsMatchup(brackets.getPlayerState());
+    checkSong2Clipping(); 
+};
+const updateRoundInfoBound = () => ui.updateRoundInfo(brackets.getPlayerState());
+const updateWinnerButtonsBound = () => ui.updateWinnerButtons(brackets.getPlayerState(), player.sidPlayer);
+const updateFlameButtonBound = () => ui.updateFlameButton(brackets.getPlayerState(), player.sidPlayer);
+const updateJamButtonBound = (isPlaying) => ui.updateJamButton(isPlaying, brackets.getPlayerState(), player.sidPlayer);
+
+// Export and make loadPlayerState globally accessible
+export async function loadPlayerState() {
+    try {
+        const response = await fetch(`dbcontrol/get_player_state.php?user_id=${window.user.id}`);
+        if (!response.ok) throw new Error(`Failed to load player_state: ${response.statusText}`);
+        const data = await response.json();
+        if (data.success && data.player_state) {
+            return data.player_state;
+        }
+        return null;
+    } catch (error) {
+        window.logmsg(`Error loading player_state: ${error}`, 0);
+        return null;
+    }
+}
+window.loadPlayerState = loadPlayerState;
 
 async function savePlayerState() {
     const state = brackets.getPlayerState();
@@ -28,7 +66,8 @@ async function savePlayerState() {
         nowPlayingSong: state.nowPlayingSong,
         theme: ui.getCurrentThemeIndex(),
         isWaveformActive: state.isWaveformActive,
-        isVUActive: state.isVUActive
+        isVUActive: state.isVUActive,
+        zoomFactor: state.zoomFactor
     };
 
     try {
@@ -72,28 +111,6 @@ function checkSong2Clipping() {
     if (authLink) authLink.style.display = displayValue;
     if (preferencesLink) preferencesLink.style.display = displayValue;
 }
-
-const updateTimerBound = () => player.updateTimer();
-
-const loadSongBound = (filename, trackNumber, autoPlay = true) => player.loadSong(
-    filename, trackNumber,
-    () => ui.updateSongInfo(player.sidPlayer),
-    () => ui.updatePlayPauseButton(player.isPlaying),
-    player.resetVoiceStates,
-    () => ui.updateNavigationButtons(player.sidPlayer),
-    updateVsMatchupBound,
-    updateJamButtonBound,
-    autoPlay
-);
-
-const updateVsMatchupBound = () => {
-    ui.updateVsMatchup(brackets.getPlayerState());
-    checkSong2Clipping(); 
-};
-const updateRoundInfoBound = () => ui.updateRoundInfo(brackets.getPlayerState());
-const updateWinnerButtonsBound = () => ui.updateWinnerButtons(brackets.getPlayerState(), player.sidPlayer);
-const updateFlameButtonBound = () => ui.updateFlameButton(brackets.getPlayerState(), player.sidPlayer);
-const updateJamButtonBound = (isPlaying) => ui.updateJamButton(isPlaying, brackets.getPlayerState(), player.sidPlayer);
 
 window.toggleWaveform = () => {
     window.logmsg("[Waveform]", 1);
@@ -1138,22 +1155,10 @@ window.flashProfileIcon = function() {
     flash();
 };
 
-async function loadPlayerState() {
-    try {
-        const response = await fetch(`dbcontrol/get_player_state.php?user_id=${window.user.id}`);
-        if (!response.ok) throw new Error(`Failed to load player_state: ${response.statusText}`);
-        const data = await response.json();
-        if (data.success && data.player_state) {
-            return data.player_state;
-        }
-        return null;
-    } catch (error) {
-        window.logmsg(`Error loading player_state: ${error}`, 0);
-        return null;
-    }
-}
-
 async function initializeApp() {
+    // Debug to confirm bound functions
+    debug(`Bound functions defined: updateRoundInfoBound=${typeof updateRoundInfoBound}, updateVsMatchupBound=${typeof updateVsMatchupBound}`);
+
     const authLink = document.getElementById('auth-link');
     const preferencesLink = document.getElementById('preferences-link');
     const profileIcon = document.getElementById('profile-icon');
@@ -1215,13 +1220,15 @@ async function initializeApp() {
     window.logmsg('Adding zoom button listeners...');
     const zoomOutButton = document.getElementById('zoom-out-button');
     const zoomInButton = document.getElementById('zoom-in-button');
+    const resetButton = document.getElementById('reset-view-button');
     if (zoomOutButton) {
         window.logmsg('Adding zoom out listener', 2);
         zoomOutButton.addEventListener('click', () => {
             window.logmsg('[-]', 1);
             zoomWaveformOut();
+            savePlayerState();
         });
-        zoomOutButton.disabled = true; // Disable initially
+        zoomOutButton.disabled = true;
     } else {
         window.logmsg('Zoom out button not found in the DOM', 0);
     }
@@ -1230,12 +1237,23 @@ async function initializeApp() {
         zoomInButton.addEventListener('click', () => {
             window.logmsg('[+]', 1);
             zoomWaveformIn();
+            savePlayerState();
         });
-        zoomInButton.disabled = true; // Disable initially
+        zoomInButton.disabled = true;
     } else {
         window.logmsg('Zoom in button not found in the DOM', 0);
     }
-
+    if (resetButton) {
+        window.logmsg('Adding reset view listener', 2);
+        resetButton.addEventListener('click', () => {
+            window.logmsg('[⭯]', 1);
+            resetView();
+            savePlayerState();
+        });
+        resetButton.disabled = true;
+    } else {
+        window.logmsg('Reset view button not found in the DOM', 0);
+    }
 
     if (!window.user || !window.user.id) {
         window.logmsg('window.user.id not defined on DOM load', 0);
@@ -1271,7 +1289,8 @@ async function initializeApp() {
                 bothContendersSelected: false,
                 isFlameActive: false,
                 isWaveformActive: player_state.isWaveformActive !== undefined ? player_state.isWaveformActive : true,
-                isVUActive: player_state.isVUActive !== undefined ? player_state.isVUActive : true
+                isVUActive: player_state.isVUActive !== undefined ? player_state.isVUActive : true,
+                zoomFactor: player_state.zoomFactor !== undefined ? player_state.zoomFactor : 46.13
             });
             ui.setCurrentThemeIndex(player_state.theme || 0);
             brackets.updateBracketDropdown();
@@ -1279,10 +1298,10 @@ async function initializeApp() {
             if (bracketSelect) {
                 bracketSelect.value = player_state.activeBracket.replace(" - ", "-");
             }
-            updateVsMatchupBound();
-            updateRoundInfoBound();
-            updateWinnerButtonsBound();
-            updateFlameButtonBound();
+            if (typeof updateVsMatchupBound === 'function') updateVsMatchupBound();
+            if (typeof updateRoundInfoBound === 'function') updateRoundInfoBound();
+            if (typeof updateWinnerButtonsBound === 'function') updateWinnerButtonsBound();
+            if (typeof updateFlameButtonBound === 'function') updateFlameButtonBound();
             ui.updateWaveformVisibility(brackets.getPlayerState().isWaveformActive);
         } else if (player_state && player_state.currentMode === "nowPlaying" && player_state.nowPlayingSong) {
             const nowPlayingSongBracket = brackets.getSongBracket(player_state.nowPlayingSong);
@@ -1294,7 +1313,8 @@ async function initializeApp() {
                 nowPlayingSong: player_state.nowPlayingSong,
                 nowPlayingSongBracket: nowPlayingSongBracket,
                 isWaveformActive: player_state.isWaveformActive !== undefined ? player_state.isWaveformActive : true,
-                isVUActive: player_state.isVUActive !== undefined ? player_state.isVUActive : true
+                isVUActive: player_state.isVUActive !== undefined ? player_state.isVUActive : true,
+                zoomFactor: player_state.zoomFactor !== undefined ? player_state.zoomFactor : 46.13
             });
             ui.setCurrentThemeIndex(player_state.theme || 0);
             loadSongBound(player_state.nowPlayingSong, -1, false);
@@ -1303,10 +1323,10 @@ async function initializeApp() {
             if (bracketSelect) {
                 bracketSelect.value = player_state.peekBracket.replace(" - ", "-");
             }
-            updateVsMatchupBound();
-            updateRoundInfoBound();
-            updateWinnerButtonsBound();
-            updateFlameButtonBound();
+            if (typeof updateVsMatchupBound === 'function') updateVsMatchupBound();
+            if (typeof updateRoundInfoBound === 'function') updateRoundInfoBound();
+            if (typeof updateWinnerButtonsBound === 'function') updateWinnerButtonsBound();
+            if (typeof updateFlameButtonBound === 'function') updateFlameButtonBound();
             ui.updateWaveformVisibility(brackets.getPlayerState().isWaveformActive);
         } else {
             window.logmsg("Initializing with default player state");
@@ -1325,7 +1345,8 @@ async function initializeApp() {
                 nowPlayingSong: null,
                 nowPlayingSongBracket: null,
                 isWaveformActive: true,
-                isVUActive: true
+                isVUActive: true,
+                zoomFactor: 46.13
             });
             ui.setCurrentThemeIndex(0);
             brackets.updateBracketDropdown();
@@ -1340,7 +1361,8 @@ async function initializeApp() {
             activeBracket: "0 - 0",
             currentMode: "bout",
             isWaveformActive: true,
-            isVUActive: true
+            isVUActive: true,
+            zoomFactor: 46.13
         });
         ui.setCurrentThemeIndex(0);
         brackets.updateBracketDropdown();
