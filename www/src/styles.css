@@ -609,6 +609,11 @@ body {
     cursor: not-allowed;
 }
 
+.zoom-button#reset-view-button {
+    font-size: 12px; /* Slightly smaller for Unicode arrow */
+    line-height: 18px; /* Center vertically */
+}
+
 .viz-toggle-button {
     position: absolute;
     top: 0;
@@ -625,6 +630,7 @@ body {
     z-index: 10;
     transition: filter 0.3s ease, transform 0.3s ease;
 }
+
 
 .viz-toggle-button--vu {
     background-image: url('../image/vu_button.png');

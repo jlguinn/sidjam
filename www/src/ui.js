@@ -1,4 +1,3 @@
-// ui.js
 import { baseColorSchemes, getInvertedTheme } from './themes.js';
 import * as brackets from './brackets.js';
 import { renderProfileBitmap, renderWinnerButtonBitmap } from './bitmap.js';
@@ -293,7 +292,7 @@ export function decodeHtmlEntities(str) {
 
 export function updateSongInfo(sidPlayer) {
     if (!sidPlayer) {
-        console.error('SID player not provided');
+        // console.error('SID player not provided');
         return;
     }
 
@@ -372,7 +371,7 @@ export function updateVUMeterVisibility(isVUActive) {
 
 export function updateNavigationButtons(sidPlayer) {
     if (!sidPlayer) {
-        console.error('SID player not provided');
+        // console.error('SID player not provided');
         return;
     }
 

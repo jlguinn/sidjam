@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SIDViz - Visualization POC</title>
+    <style>
+        /* Inline CSS (unchanged from previous version) */
+        :root {
+            --background: #f0f0f0;
+            --primary: #007bff;
+            --muted: #333;
+            --border: #ccc;
+            --spacing-xs: 5px;
+            --spacing-sm: 10px;
+            --spacing-md: 20px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--background);
+            max-width: 800px;
+            margin: 0 auto;
+            padding: var(--spacing-md);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2em;
+            margin-bottom: var(--spacing-md);
+        }
+
+        #controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+        }
+
+        #track-select {
+            padding: var(--spacing-xs);
+            font-size: 16px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+
+        .control-button {
+            width: 47px;
+            height: 39px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .control-button--play {
+            background-image: url('image/play.png');
+        }
+
+        .control-button--pause {
+            background-image: url('image/pause.png');
+        }
+
+        .control-button:disabled {
+            filter: grayscale(100%) opacity(0.5);
+            cursor: not-allowed;
+        }
+
+        #voice-controls {
+            display: flex;
+            justify-content: center;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .voice-control-row {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .voice-button {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #fff;
+            background-color: var(--muted);
+            cursor: pointer;
+            position: relative;
+            transition: background-color 0.3s ease;
+        }
+
+        .voice-button[data-state="on"] {
+            background: radial-gradient(circle at center, #ff0000 0%, #800000 50%, var(--muted) 70%);
+            box-shadow: 0 0 8px rgba(255, 0, 0, 0.6);
+        }
+
+        .voice-button[data-state="off"] {
+            background: var(--muted);
+            box-shadow: none;
+        }
+
+        .voice-button:hover {
+            filter: brightness(1.2);
+        }
+
+        #voice-visualizations {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+            margin: 0 auto;
+            width: 250px;
+        }
+
+        #voice-visualizations canvas {
+            width: 250px;
+            height: 100px;
+            border: 1px solid #fff;
+            background-color: #444;
+        }
+    </style>
+    <script>window.WASM_SEARCH_PATH = 'src/websid/htdocs/';</script>
+    <script defer src="src/websid/htdocs/stdlib/scriptprocessor_player.min.js"></script>
+    <script defer src="src/websid/htdocs/backend_websid.js"></script>
+    <script defer src="sidviz.js"></script>
+</head>
+<body>
+    <h1>SIDViz - Visualization POC</h1>
+    <div id="controls">
+        <select id="track-select" onchange="window.loadTrack(this.value)">
+            <option value="" disabled>Select a track</option>
+            <option value="/sid/C64Music/Musicians/H/Hubbard_Rob/Commando.sid" selected>Commando.sid</option>
+            <option value="/sid/C64Music/Musicians/H/Hubbard_Rob/Last_V8.sid">Last_V8.sid</option>
+            <option value="/sid/C64Music/Musicians/H/Hubbard_Rob/Monty_on_the_Run.sid">Monty_on_the_Run.sid</option>
+        </select>
+        <button id="playPauseButton" class="control-button control-button--play" aria-label="Play Track" onclick="window.togglePlayPause()" disabled></button>
+    </div>
+    <div id="voice-controls">
+        <div class="voice-control-row" data-voice="1">
+            <button id="voice1" class="voice-button" data-state="on" title="Toggle Voice 1 Mute" aria-label="Toggle Voice 1 Mute" onclick="window.toggleVoice(1)" disabled></button>
+        </div>
+        <div class="voice-control-row" data-voice="2">
+            <button id="voice2" class="voice-button" data-state="on" title="Toggle Voice 2 Mute" aria-label="Toggle Voice 2 Mute" onclick="window.toggleVoice(2)" disabled></button>
+        </div>
+        <div class="voice-control-row" data-voice="3">
+            <button id="voice3" class="voice-button" data-state="on" title="Toggle Voice 3 Mute" aria-label="Toggle Voice 3 Mute" onclick="window.toggleVoice(3)" disabled></button>
+        </div>
+    </div>
+    <div id="voice-visualizations">
+        <canvas id="voice1-canvas" width="250" height="100" aria-label="Voice 1 Waveform"></canvas>
+        <canvas id="voice2-canvas" width="250" height="100" aria-label="Voice 2 Waveform"></canvas>
+        <canvas id="voice3-canvas" width="250" height="100" aria-label="Voice 3 Waveform"></canvas>
+    </div>
+</body>
+</html>

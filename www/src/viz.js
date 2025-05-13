@@ -1,16 +1,15 @@
 import { updateWaveformVisibility, updateVUMeterVisibility } from './ui.js';
 import { getPlayerState } from './brackets.js';
 
-// viz.js - Real-time oscilloscope waveform and VU meter visualizations for SID JAm
-
-// Static buffer for waveform samples
-const BUFFER_SIZE = 3000; // ~68ms at 44100 Hz, supports 10x zoom-out (was 150)
-const TARGET_FPS = 60; // Adjusted to match rendering loop
-const TIME_LIMIT = 1000 / TARGET_FPS; // Time per frame in ms (~16.67ms at 60 FPS)
-let waveformZoomFactor = 1.0; // Default zoom level (1.0 = no zoom)
-const minZoomFactor = 0.05; // Zoomed out: ~3000 samples (was 0.5)
-const maxZoomFactor = 50.0; // Zoomed in: ~60 samples (was 5.0)
-const zoomStep = 1.5; // Larger step for wider range (was 1.2)
+// Configuration
+const BUFFER_SIZE = 9000; // WebSID buffer size (~204ms at 44100 Hz)
+const USABLE_SAMPLES = 956; // Number of usable samples per frame from WebSID
+const CIRCULAR_BUFFER_SIZE = 44100; // Exactly 1 second at 44100 Hz
+const MAX_VISIBLE_SAMPLES = CIRCULAR_BUFFER_SIZE; // Max range for visualization
+const TARGET_FPS = 60; // Match rendering loop
+const TIME_LIMIT = 1000 / TARGET_FPS; // ~16.67ms at 60 FPS
+const BACKGROUND_COLOR = '#333333'; // Dark grey for waveform canvas
+const FALLBACK_COLOR = '#555555'; // Fallback for VU meters
 
 // VU meter configuration
 const VU_METER_COUNT = 3; // One per voice
@@ -19,15 +18,19 @@ const ANGLE_RANGE = [-50, 50]; // Degrees, -100 dB to 0 dB
 const ATTACK_RATE = 0.009; // Seconds, for spring strength (~3–6ms attack)
 const DECAY_RATE = 0.07; // Seconds, for spring strength (~50–100ms decay)
 const OVERSHOOT = 0.15; // 15% overshoot for controlled 70s bounce
-const BACKGROUND_COLOR = '#333333'; // Dark grey (for waveform canvas)
-const FALLBACK_COLOR = '#555555'; // Fallback color if images fail to load
 const LOG_INTERVAL = 0.1; // Seconds, log 10 times per second (100ms)
 const ZERO_TICK_THRESHOLD = 2; // Stop logging after 2 consecutive all-zero ticks
 
-let logTimer = 0; // Track time for logging
-let logCounter = 0; // Frame counter for throttling
-let zeroTickCount = 0; // Count consecutive all-zero ticks
+// Circular buffers for each voice
+const circularBuffers = [
+    new Float32Array(CIRCULAR_BUFFER_SIZE), // Voice 1
+    new Float32Array(CIRCULAR_BUFFER_SIZE), // Voice 2
+    new Float32Array(CIRCULAR_BUFFER_SIZE)  // Voice 3
+];
+let writePosition = 0; // Current write position in the circular buffer
+let zoomFactor = 46.13; // Start with 44100 / 46.13 ≈ 956 samples visible
 
+// VU meter state
 const vuLabelImage = new Image();
 vuLabelImage.src = '../image/vu_label.png';
 const vuFrameImage = new Image();
@@ -50,22 +53,22 @@ vuFrameImage.onerror = () => {
     window.logmsg('Failed to load VU frame image', 0);
 };
 
-const voiceBuffers = [
-    new Float32Array(BUFFER_SIZE), // Voice 1
-    new Float32Array(BUFFER_SIZE), // Voice 2
-    new Float32Array(BUFFER_SIZE)  // Voice 3
-];
 const vuLevels = new Float32Array(VU_METER_COUNT); // RMS amplitude
 const needleAngles = new Float32Array(VU_METER_COUNT); // Current angle
 const needleVelocities = new Float32Array(VU_METER_COUNT); // Physics velocity
 
 let traceStreams = null;
-let isVisualizationActive = false; // Flag to control animation loop
+let isVisualizationActive = false;
+let lastRenderTime = 0;
+let logTimer = 0;
+let logCounter = 0;
+let zeroTickCount = 0;
 
-// Draw static oscilloscope waveform (flatline)
+// Draw static waveform
 function drawStaticWaveform(canvasId) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) {
+        window.logmsg(`drawStaticWaveform: Canvas ${canvasId} not found`, 0);
         return;
     }
     const ctx = canvas.getContext('2d');
@@ -85,16 +88,16 @@ function drawStaticWaveform(canvasId) {
     ctx.stroke();
 }
 
-// Draw static VU meter (needle at zero)
+// Draw static VU meter
 function drawStaticVUMeter(canvasId) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) {
-        window.logmsg(`drawStaticVUMeter: VU canvas with ID ${canvasId} not found`, 0);
+        window.logmsg(`drawStaticVUMeter: Canvas ${canvasId} not found`, 0);
         return;
     }
     const ctx = canvas.getContext('2d');
-    const width = canvas.width; // 100
-    const height = canvas.height; // 57
+    const width = canvas.width; // 120
+    const height = canvas.height; // 70
     const pivotX = width / 2;
     const pivotY = height * 0.9;
 
@@ -115,8 +118,8 @@ function drawStaticVUMeter(canvasId) {
     ctx.beginPath();
     ctx.moveTo(pivotX, pivotY);
     ctx.lineTo(endX, endY);
-    ctx.strokeStyle = '#000000'; // Black needle
-    ctx.lineWidth = 1; // Skinny needle
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 1;
     ctx.stroke();
 
     if (isFrameImageLoaded) {
@@ -124,19 +127,18 @@ function drawStaticVUMeter(canvasId) {
     }
 }
 
-// Render static visualizations for all canvases
+// Render static visualizations
 function renderStaticVisualizations() {
     drawStaticWaveform('voice1-canvas');
     drawStaticWaveform('voice2-canvas');
     drawStaticWaveform('voice3-canvas');
     renderStaticVUMeters();
-    // Apply initial visibility states
     const playerState = getPlayerState();
     updateWaveformVisibility(playerState.isWaveformActive);
     updateVUMeterVisibility(playerState.isVUActive);
 }
 
-// Render static VU meters (called separately to handle image loading)
+// Render static VU meters
 function renderStaticVUMeters() {
     const isVUActive = getPlayerState().isVUActive;
     if (isVUActive) {
@@ -146,11 +148,11 @@ function renderStaticVUMeters() {
     }
 }
 
-// Draw dynamic oscilloscope waveform for a given voice
+// Draw dynamic waveform
 function drawVoiceWaveform(canvasId, voiceIdx) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) {
-        window.logmsg(`drawVoiceWaveform: Canvas with ID ${canvasId} not found`, 0);
+        window.logmsg(`drawVoiceWaveform: Canvas ${canvasId} not found`, 0);
         return;
     }
     const ctx = canvas.getContext('2d');
@@ -165,7 +167,7 @@ function drawVoiceWaveform(canvasId, voiceIdx) {
     const player = window.player;
     const isWaveformActive = getPlayerState().isWaveformActive;
     if (!player || !player._isSongReady || !isWaveformActive) {
-        voiceBuffers.forEach(buffer => buffer.fill(0));
+        circularBuffers.forEach(buffer => buffer.fill(0));
         vuLevels.fill(0);
         needleAngles.fill(ANGLE_RANGE[0]);
         needleVelocities.fill(0);
@@ -182,34 +184,31 @@ function drawVoiceWaveform(canvasId, voiceIdx) {
     ctx.strokeStyle = '#00FF00';
     ctx.lineWidth = 2;
 
-    const buffer = voiceBuffers[voiceIdx];
+    const buffer = circularBuffers[voiceIdx];
     let maxAmplitude = 0;
-    for (let i = 0; i < BUFFER_SIZE; i++) {
-        maxAmplitude = Math.max(maxAmplitude, Math.abs(buffer[i]));
+    const visibleSamples = Math.min(Math.round(MAX_VISIBLE_SAMPLES / zoomFactor), MAX_VISIBLE_SAMPLES);
+    const newestSampleIdx = writePosition === 0 ? CIRCULAR_BUFFER_SIZE - 1 : writePosition - 1;
+    const endCircularIdx = newestSampleIdx;
+    const startCircularIdx = (endCircularIdx - visibleSamples + CIRCULAR_BUFFER_SIZE) % CIRCULAR_BUFFER_SIZE;
+
+    let idx = startCircularIdx;
+    for (let i = 0; i < visibleSamples; i++) {
+        maxAmplitude = Math.max(maxAmplitude, Math.abs(buffer[idx]));
+        idx = (idx + 1) % CIRCULAR_BUFFER_SIZE;
     }
     const scale = maxAmplitude > 0 ? (0.8 * height / 2) / maxAmplitude : 1;
 
-    // Calculate the number of samples to display based on zoom factor
-    const zoomedSampleWindow = Math.floor(BUFFER_SIZE * waveformZoomFactor); // More samples when zoomed out
-    const halfWindow = Math.floor(zoomedSampleWindow / 2); // Center the window
-
-    // Ensure we don't exceed buffer bounds
-    const maxSamples = BUFFER_SIZE; // 3000
-    const clampedWindow = Math.min(zoomedSampleWindow, maxSamples);
-    const startSample = Math.max(0, Math.floor(BUFFER_SIZE / 2) - halfWindow); // Center in buffer
-    const endSample = Math.min(BUFFER_SIZE, startSample + clampedWindow);
-
-    // Map canvas pixels to sample indices, centered
-    const sampleRange = endSample - startSample;
-    const sampleStep = sampleRange / (width - 1); // Samples per pixel
-
+    idx = startCircularIdx;
     for (let x = 0; x < width; x++) {
-        const t = x / (width - 1); // Normalized x-coordinate (0 to 1)
-        const sampleIdx = startSample + t * sampleRange; // Map to sample range
+        const t = x / (width - 1);
+        const sampleIdx = t * (visibleSamples - 1);
         const i0 = Math.floor(sampleIdx);
-        const i1 = Math.min(i0 + 1, BUFFER_SIZE - 1);
+        const i1 = Math.min(i0 + 1, visibleSamples - 1);
         const frac = sampleIdx - i0;
-        const sample = buffer[i0] + (buffer[i1] - buffer[i0]) * frac; // Linear interpolation
+
+        const circularIdx0 = (startCircularIdx + i0) % CIRCULAR_BUFFER_SIZE;
+        const circularIdx1 = (startCircularIdx + i1) % CIRCULAR_BUFFER_SIZE;
+        const sample = buffer[circularIdx0] + (buffer[circularIdx1] - buffer[circularIdx0]) * frac;
         const y = midY - (sample * scale);
         if (x === 0) {
             ctx.moveTo(x, y);
@@ -220,47 +219,16 @@ function drawVoiceWaveform(canvasId, voiceIdx) {
     ctx.stroke();
 }
 
-export function zoomWaveformIn() {
-    if (waveformZoomFactor < maxZoomFactor) {
-        waveformZoomFactor = Math.min(maxZoomFactor, waveformZoomFactor * zoomStep);
-        window.logmsg(`Zoomed in to ${waveformZoomFactor.toFixed(2)}`, 1);
-        updateZoomButtonStates();
-    }
-}
-
-export function zoomWaveformOut() {
-    if (waveformZoomFactor > minZoomFactor) {
-        waveformZoomFactor = Math.max(minZoomFactor, waveformZoomFactor / zoomStep);
-        window.logmsg(`Zoomed out to ${waveformZoomFactor.toFixed(2)}`, 1);
-        updateZoomButtonStates();
-    }
-}
-
-function updateZoomButtonStates() {
-    const zoomOutButton = document.getElementById('zoom-out-button');
-    const zoomInButton = document.getElementById('zoom-in-button');
-    if (zoomOutButton) {
-        zoomOutButton.disabled = waveformZoomFactor <= minZoomFactor;
-    } else {
-        window.logmsg('Zoom out button not found in updateZoomButtonStates', 0);
-    }
-    if (zoomInButton) {
-        zoomInButton.disabled = waveformZoomFactor >= maxZoomFactor;
-    } else {
-        window.logmsg('Zoom in button not found in updateZoomButtonStates', 0);
-    }
-}
-
-// Draw dynamic VU meter for a given voice
+// Draw dynamic VU meter
 function drawVUMeter(canvasId, voiceIdx) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) {
-        window.logmsg(`drawVUMeter: VU canvas with ID ${canvasId} not found`, 0);
+        window.logmsg(`drawVUMeter: Canvas ${canvasId} not found`, 0);
         return;
     }
     const ctx = canvas.getContext('2d');
-    const width = canvas.width; // 100
-    const height = canvas.height; // 57
+    const width = canvas.width; // 120
+    const height = canvas.height; // 70
     const pivotX = width / 2;
     const pivotY = height * 0.9;
 
@@ -298,59 +266,69 @@ function drawVUMeter(canvasId, voiceIdx) {
 function updateVoiceBuffers() {
     const player = window.player;
     if (!player || !player._isSongReady) {
-        voiceBuffers.forEach(buffer => buffer.fill(0));
+        circularBuffers.forEach(buffer => buffer.fill(0));
         vuLevels.fill(0);
         needleAngles.fill(ANGLE_RANGE[0]);
         needleVelocities.fill(0);
+        writePosition = 0;
         return;
     }
 
     if (player.isPaused()) {
-        vuLevels.fill(0); // Set to 0 for needle decay, keep voiceBuffers
+        vuLevels.fill(0);
         return;
     }
 
     const adapter = player._backendAdapter;
     if (!adapter || !adapter.isAdapterReady()) {
-        window.logmsg('updateVoiceBuffers: SIDBackendAdapter not ready for waveform data', 0);
-        voiceBuffers.forEach(buffer => buffer.fill(0));
+        window.logmsg('updateVoiceBuffers: SIDBackendAdapter not ready', 0);
+        circularBuffers.forEach(buffer => buffer.fill(0));
         vuLevels.fill(0);
+        writePosition = 0;
         return;
     }
 
     if (!traceStreams || traceStreams.length < 3) {
-        window.logmsg('updateVoiceBuffers: Trace streams not initialized or insufficient', 0);
-        voiceBuffers.forEach(buffer => buffer.fill(0));
+        window.logmsg('updateVoiceBuffers: Trace streams not initialized', 0);
+        circularBuffers.forEach(buffer => buffer.fill(0));
         vuLevels.fill(0);
+        writePosition = 0;
         return;
     }
 
     const Module = window.backend_SID.Module;
     try {
-        for (let voiceIdx = 0; voiceIdx < 3; voiceIdx++) {
-            const stream = traceStreams[voiceIdx];
-            let rmsSum = 0;
-            for (let i = 0; i < BUFFER_SIZE; i++) {
+        for (let i = 0; i < USABLE_SAMPLES; i++) {
+            const circularIdx = (writePosition + i) % CIRCULAR_BUFFER_SIZE;
+            for (let voiceIdx = 0; voiceIdx < 3; voiceIdx++) {
+                const stream = traceStreams[voiceIdx];
+                const buffer = circularBuffers[voiceIdx];
                 const sample = Module.HEAP16[stream + i] / 32768;
-                voiceBuffers[voiceIdx][i] = sample;
-                rmsSum += sample * sample;
+                buffer[circularIdx] = sample;
+                if (i < BUFFER_SIZE) {
+                    vuLevels[voiceIdx] += sample * sample;
+                }
             }
-            const rms = Math.sqrt(rmsSum / BUFFER_SIZE) * 0.2; // Moderate scaling for SID amplitudes
-            vuLevels[voiceIdx] = Math.min(rms, 1.0);
+        }
+        writePosition = (writePosition + USABLE_SAMPLES) % CIRCULAR_BUFFER_SIZE;
+        for (let voiceIdx = 0; voiceIdx < 3; voiceIdx++) {
+            vuLevels[voiceIdx] = Math.sqrt(vuLevels[voiceIdx] / BUFFER_SIZE) * 0.2;
+            vuLevels[voiceIdx] = Math.min(vuLevels[voiceIdx], 1.0);
         }
     } catch (error) {
         window.logmsg(`updateVoiceBuffers: Error fetching waveform data: ${error.message}`, 0);
-        voiceBuffers.forEach(buffer => buffer.fill(0));
+        circularBuffers.forEach(buffer => buffer.fill(0));
         vuLevels.fill(0);
+        writePosition = 0;
     }
 }
 
 // Update needle physics
 function updateNeedlePhysics() {
-    const dt = 1 / TARGET_FPS; // Time step aligned with TARGET_FPS
-    const kAttack = 100 / ATTACK_RATE; // Strong spring for attack
-    const kDecay = 50 / DECAY_RATE; // Moderate spring for decay
-    const damping = 0.95; // Tighter damping for control
+    const dt = 1 / TARGET_FPS;
+    const kAttack = 100 / ATTACK_RATE;
+    const kDecay = 50 / DECAY_RATE;
+    const damping = 0.95;
 
     logTimer += dt;
     logCounter++;
@@ -405,7 +383,7 @@ function updateNeedlePhysics() {
 function initTraceStreams() {
     const player = window.player;
     if (!player || !player._backendAdapter) {
-        window.logmsg('initTraceStreams: ScriptNodePlayer not ready for trace streams', 0);
+        window.logmsg('initTraceStreams: ScriptNodePlayer not ready', 0);
         return false;
     }
     const Module = window.backend_SID.Module;
@@ -417,6 +395,7 @@ function initTraceStreams() {
             traceStreams = [];
             for (let i = 0; i < numStreams && i < 3; i++) {
                 traceStreams.push(streamsArray[i] >> 1);
+                window.logmsg(`Trace stream ${i}: ${traceStreams[i]}`, 1);
             }
             return true;
         } else {
@@ -430,11 +409,9 @@ function initTraceStreams() {
 }
 
 // Animation loop
-let lastRenderTime = 0;
-
 function updateViz() {
     if (!isVisualizationActive) {
-        window.logmsg('updateViz: Visualization loop stopped: isVisualizationActive is false', 2);
+        window.logmsg('updateViz: Visualization loop stopped', 2);
         return;
     }
 
@@ -463,10 +440,46 @@ function updateViz() {
     requestAnimationFrame(updateViz);
 }
 
-// Start dynamic visualizations (called from player.js)
+// Zoom controls
+export function zoomWaveformIn() {
+    zoomFactor *= 1.125; // Zoom in by 12.5%
+    zoomFactor = Math.max(1, Math.min(zoomFactor, 8820)); // Max zoom to see ~5 samples
+    window.logmsg(`Zoomed in to ${zoomFactor.toFixed(2)}x`, 1);
+    updateZoomButtonStates();
+}
+
+export function zoomWaveformOut() {
+    zoomFactor /= 1.125; // Zoom out by 12.5%
+    zoomFactor = Math.max(1, Math.min(zoomFactor, 8820));
+    window.logmsg(`Zoomed out to ${zoomFactor.toFixed(2)}x`, 1);
+    updateZoomButtonStates();
+}
+
+export function resetView() {
+    zoomFactor = 46.13; // Reset to 44100 / 956 ≈ 956 samples
+    window.logmsg('View reset', 1);
+    updateZoomButtonStates();
+}
+
+function updateZoomButtonStates() {
+    const zoomOutButton = document.getElementById('zoom-out-button');
+    const zoomInButton = document.getElementById('zoom-in-button');
+    const resetButton = document.getElementById('reset-view-button');
+    if (zoomOutButton) {
+        zoomOutButton.disabled = zoomFactor <= 1;
+    }
+    if (zoomInButton) {
+        zoomInButton.disabled = zoomFactor >= 8820;
+    }
+    if (resetButton) {
+        resetButton.disabled = zoomFactor === 46.13;
+    }
+}
+
+// Start visualizations
 function startVisualizations() {
     if (!window.player) {
-        window.logmsg('startVisualizations: window.player not defined, retrying initialization', 0);
+        window.logmsg('startVisualizations: window.player not defined, retrying', 0);
         let retryCount = 0;
         const maxRetries = 5;
         const retryInterval = 500;
@@ -478,7 +491,7 @@ function startVisualizations() {
                 window.logmsg(`startVisualizations: window.player not ready, retrying in ${retryInterval}ms (${retryCount}/${maxRetries})`, 1);
                 setTimeout(retryInit, retryInterval);
             } else {
-                window.logmsg('startVisualizations: Max retries reached for window.player initialization, visualizations disabled', 0);
+                window.logmsg('startVisualizations: Max retries reached, visualizations disabled', 0);
             }
         };
         retryInit();
@@ -496,10 +509,11 @@ function startVisualizations() {
 
     function attemptTraceStreamInit() {
         if (initTraceStreams()) {
-            voiceBuffers.forEach(buffer => buffer.fill(0));
+            circularBuffers.forEach(buffer => buffer.fill(0));
             vuLevels.fill(0);
             needleAngles.fill(ANGLE_RANGE[0]);
             needleVelocities.fill(0);
+            writePosition = 0;
             isVisualizationActive = true;
             lastRenderTime = performance.now();
             updateViz();
@@ -516,36 +530,37 @@ function startVisualizations() {
     attemptTraceStreamInit();
 }
 
-// Make startVisualizations globally accessible
 window.startVisualizations = startVisualizations;
 
-// Initialize static visualizations on page load
+// Initialize static visualizations
 function initStaticVisualizations() {
     renderStaticVisualizations();
 }
 
-// Start static visualizations immediately
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initStaticVisualizations);
 } else {
     initStaticVisualizations();
 }
 
+// Check audio activity
 export function isAudioActive() {
     if (!traceStreams || !window.player || !window.player._isSongReady) {
-        return false; // No audio if player or streams aren't ready
+        return false;
     }
     for (let voiceIdx = 0; voiceIdx < 3; voiceIdx++) {
-        const buffer = voiceBuffers[voiceIdx];
-        for (let i = 0; i < BUFFER_SIZE; i++) {
-            if (buffer[i] !== 0) {
-                return true; // Non-zero sample indicates audio
+        const buffer = circularBuffers[voiceIdx];
+        const newestIdx = writePosition === 0 ? CIRCULAR_BUFFER_SIZE - 1 : writePosition - 1;
+        const startIdx = (newestIdx - USABLE_SAMPLES + CIRCULAR_BUFFER_SIZE) % CIRCULAR_BUFFER_SIZE;
+        for (let i = 0; i < USABLE_SAMPLES; i++) {
+            const idx = (startIdx + i) % CIRCULAR_BUFFER_SIZE;
+            if (buffer[idx] !== 0) {
+                return true;
             }
         }
     }
-    return false; // No audio detected
+    return false;
 }
 
-// Make isAudioActive globally accessible
 window.viz = window.viz || {};
 window.viz.isAudioActive = isAudioActive;

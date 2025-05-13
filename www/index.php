@@ -287,10 +287,11 @@ $cxn->close();
                 Voice 3 Waveform (visualization not supported)
             </canvas>
         </div>
-        <div id="waveform-zoom-controls">
-            <button id="zoom-out-button" class="zoom-button" aria-label="Zoom Out Waveform"><b>-</b></button>
-            <button id="zoom-in-button" class="zoom-button" aria-label="Zoom Out Waveform"><b>+</b></button>
-        </div>
+<div id="waveform-zoom-controls">
+    <button id="zoom-out-button" class="zoom-button" onclick="zoomWaveformOut()" aria-label="Zoom Out Waveform"><b>-</b></button>
+    <button id="reset-view-button" class="zoom-button" onclick="resetView()" aria-label="Reset Waveform View">⭯</button>
+    <button id="zoom-in-button" class="zoom-button" onclick="zoomWaveformIn()" aria-label="Zoom In Waveform"><b>+</b></button>
+</div>
     </section>
 
     <div id="jam-controls">
