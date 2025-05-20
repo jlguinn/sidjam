@@ -6,7 +6,7 @@ if (!$cxn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
-$stmt = $cxn->prepare("SELECT fullpath FROM sidtunes ORDER BY id");
+$stmt = $cxn->prepare("SELECT fullpath FROM sidtunes");
 $stmt->execute();
 $result = $stmt->get_result();
 $songs = [];

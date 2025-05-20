@@ -5,7 +5,11 @@ ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 ini_set('error_log', '/var/log/php_errors.log'); // Adjust path as needed
 
-include_once "sidcon.php";
+$sidconPath = file_exists(__DIR__ . '/../../../dbcontrol_sidjam/sidcon.php')
+    ? __DIR__ . '/../../../dbcontrol_sidjam/sidcon.php'
+    : __DIR__ . '/sidcon.php';
+
+include_once $sidconPath;
 $cxn = mysqli_connect($host, $user, $pass, $database);
 if (!$cxn) {
     header('Content-Type: application/json');

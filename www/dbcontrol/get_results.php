@@ -1,5 +1,9 @@
 <?php
-include_once "sidcon.php";
+$sidconPath = file_exists(__DIR__ . '/../../../dbcontrol_sidjam/sidcon.php')
+    ? __DIR__ . '/../../../dbcontrol_sidjam/sidcon.php'
+    : __DIR__ . '/sidcon.php';
+
+require_once $sidconPath;
 $cxn = mysqli_connect($host, $user, $pass, $database) or die(json_encode(["error" => "Connection failed"]));
 $user_id = $_GET['user_id'] ?? 0; // Get from client
 if ($user_id == 0) {

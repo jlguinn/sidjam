@@ -1,6 +1,10 @@
 <?php
 session_start();
-require_once "sidcon.php";
+$sidconPath = file_exists(__DIR__ . '/../../../dbcontrol_sidjam/sidcon.php')
+    ? __DIR__ . '/../../../dbcontrol_sidjam/sidcon.php'
+    : __DIR__ . '/sidcon.php';
+
+require_once $sidconPath;
 header('Content-Type: text/html; charset=UTF-8');
 
 ini_set('display_errors', 0);

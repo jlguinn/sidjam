@@ -1,6 +1,6 @@
 MySQL
 ====
-docker exec -it sidjam-db-1 mysql -u siduser -<pw> sidjam
+docker exec -it sidjam-db-1 mysql -u siduser -pjam@sid2025 sidjam
 
 QUERY: Win-Loss by user
 =======================

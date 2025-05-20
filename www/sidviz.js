@@ -364,7 +364,7 @@ function initStaticVisualizations() {
 async function onPageLoad() {
     initStaticVisualizations();
     // Load default track
-    const defaultTrack = "/sid/C64Music/Musicians/H/Hubbard_Rob/Commando.sid";
+    const defaultTrack = "/sid/HVSC_82-all-of-them/C64Music/Musicians/H/Hubbard_Rob/Commando.sid";
     await initPlayer(defaultTrack);
 }
 
