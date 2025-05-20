@@ -211,9 +211,9 @@ export function updateVsMatchup(playerState) {
         const song1Class = playerState.isFlameActive && playerState.activeContender === 0 ? 'flame-song text--flame' : (playerState.hasPlayed && playerState.activeContender === 0 ? 'active-song text--contender' : 'text--exterior');
         const song2Class = playerState.isFlameActive && playerState.activeContender === 1 ? 'flame-song text--flame' : (playerState.hasPlayed && playerState.activeContender === 1 ? 'active-song text--contender' : 'text--exterior');
 
-        song1.innerHTML = `<span class="${song1Class}" title="${playerState.contenders[0]?.replace('/sid/C64Music', '') || '-'}">${songName0}</span>`;
+        song1.innerHTML = `<span class="${song1Class}" title="${playerState.contenders[0] || '-'}">${songName0}</span>`;
         vsText.textContent = " - vs - ";
-        song2.innerHTML = `<span class="${song2Class}" title="${playerState.contenders[1]?.replace('/sid/C64Music', '') || '-'}">${songName1}</span>`;
+        song2.innerHTML = `<span class="${song2Class}" title="${playerState.contenders[1] || '-'}">${songName1}</span>`;
     }
 }
 

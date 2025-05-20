@@ -442,7 +442,7 @@ function updatePlayingIndicator() {
     }
     songList.querySelectorAll("li").forEach(li => {
         const state = brackets.getPlayerState();
-        if (li.textContent === state.peekPlayingSong?.replace('/sid/C64Music', '')) {
+        if (li.textContent === state.peekPlayingSong) {
             li.classList.add("playing");
         } else {
             li.classList.remove("playing");

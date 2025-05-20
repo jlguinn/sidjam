@@ -17,7 +17,11 @@ export function setIsPlaying(value) {
 export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseButton, resetVoiceStates, updateNavigationButtons, updateVsMatchup, updateJamButton, autoPlay = true) {
     if (!filename) return Promise.resolve();
 
-    let onFail = () => window.logmsg("Failed to load song", 0);
+    // Prepend the new root path to the filename
+    const rootPath = 'sid/HVSC_82-all-of-them/C64Music/';
+    const fullFilePath = `${rootPath}${filename.startsWith('/') ? filename.slice(1) : filename}`;
+
+    let onFail = () => window.logmsg(`Failed to load song: ${fullFilePath}`, 0);
     let onProgress = (total, loaded) => {};
     let options = { track: trackNumber, timeout: -1, traceSID: true };
 
@@ -39,7 +43,7 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
     // Helper function to check for audio activity using viz.js
     async function checkAudioActivity(durationMs = 3000) {
         if (!window.viz || !window.viz.isAudioActive) {
-            window.logmsg(`No audio activity checker available for ${filename}`, 0);
+            window.logmsg(`No audio activity checker available for ${fullFilePath}`, 0);
             return true; // Assume playable if viz.js checker is unavailable
         }
 
@@ -48,28 +52,28 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
 
         while (Date.now() < endTime) {
             if (!isPlaying) {
-                window.logmsg(`Audio check aborted for ${filename}: Playback paused by user`, 0);
+                window.logmsg(`Audio check aborted for ${fullFilePath}: Playback paused by user`, 0);
                 return true; // Assume playable if user pauses
             }
             const hasAudio = window.viz.isAudioActive();
             if (hasAudio) {
-                window.logmsg(`Audio activity detected for ${filename} at ${durationMs - (endTime - Date.now())}ms`, 0);
+                window.logmsg(`Audio activity detected for ${fullFilePath} at ${durationMs - (endTime - Date.now())}ms`, 0);
                 return true; // Audio detected, file is playable
             }
             await new Promise(resolve => setTimeout(resolve, checkIntervalMs));
         }
 
-        window.logmsg(`No audio activity for ${filename} after ${durationMs}ms`, 0);
+        window.logmsg(`No audio activity for ${fullFilePath} after ${durationMs}ms`, 0);
         return false; // No audio detected, file is unplayable
     }
 
-    return ScriptNodePlayer.loadMusicFromURL(filename, options, onFail, onProgress).then(async () => {
+    return ScriptNodePlayer.loadMusicFromURL(fullFilePath, options, onFail, onProgress).then(async () => {
         // Log initial load info
-        window.logmsg(`Loading SID: ${filename}, RAM[0x0801]=${window.backend.getRAM ? window.backend.getRAM(0x0801) : 'N/A'}`, 0);
+        window.logmsg(`Loading SID: ${fullFilePath}, RAM[0x0801]=${window.backend.getRAM ? window.backend.getRAM(0x0801) : 'N/A'}`, 0);
 
         // Log player state context
         const state = brackets.getPlayerState();
-        window.logmsg(`Player State for ${filename}: Mode=${state.currentMode}, Bracket=${state.activeBracket}, Round=${state.roundCount}, FlameActive=${state.isFlameActive}`, 0);
+        window.logmsg(`Player State for ${fullFilePath}: Mode=${state.currentMode}, Bracket=${state.activeBracket}, Round=${state.roundCount}, FlameActive=${state.isFlameActive}`, 0);
 
         let isUnplayable = false;
         if (window.backend.getRAM && window.backend.getRAM(0x0801) !== 0) {
@@ -85,14 +89,14 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
             if (!hasAudio) {
                 // No audio detected, confirm unplayable
                 isUnplayable = true;
-                window.logmsg(`Unplayable SID Confirmed: ${filename}, RAM[0x0801]=${window.backend.getRAM(0x0801)}, No audio for 3s`, 0);
+                window.logmsg(`Unplayable SID Confirmed: ${fullFilePath}, RAM[0x0801]=${window.backend.getRAM(0x0801)}, No audio for 3s`, 0);
             } else {
                 // Audio detected, cancel unplayable flag
-                window.logmsg(`Playable SID: ${filename}, RAM[0x0801]=${window.backend.getRAM(0x0801)}, Audio detected`, 0);
+                window.logmsg(`Playable SID: ${fullFilePath}, RAM[0x0801]=${window.backend.getRAM(0x0801)}, Audio detected`, 0);
             }
         } else {
             // Skip audio check for RAM[0x0801]=0
-            window.logmsg(`No audio check needed for ${filename}: RAM[0x0801]=0`, 0);
+            window.logmsg(`No audio check needed for ${fullFilePath}: RAM[0x0801]=0`, 0);
         }
 
         if (isUnplayable && state.currentMode === "bout" && state.activeBracket === "0 - 0" && state.roundCount === 1) {
@@ -127,9 +131,9 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
         ui.updateFlameButton(state);
         ui.updateRoundInfo(state);
 
-        window.logmsg(`Playback Success: ${filename}, Loaded and playable`, 0);
+        window.logmsg(`Playback Success: ${fullFilePath}, Loaded and playable`, 0);
     }).catch(error => {
-        window.logmsg(`Playback Failure: ${filename}, Error=${error}`, 0);
+        window.logmsg(`Playback Failure: ${fullFilePath}, Error=${error}`, 0);
         onFail();
     }).finally(() => {
         if (!autoPlay && isPlaying) {

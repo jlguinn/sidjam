@@ -14,7 +14,7 @@ const FALLBACK_COLOR = '#555555'; // Fallback for VU meters
 // VU meter configuration
 const VU_METER_COUNT = 3; // One per voice
 const NEEDLE_LENGTH = 50; // Pixels, scaled for 100x57px canvas
-const ANGLE_RANGE = [-50, 50]; // Degrees, -100 dB to 0 dB
+const ANGLE_RANGE = [-50, 38]; // Degrees, -100 dB to 0 dB
 const ATTACK_RATE = 0.009; // Seconds, for spring strength (~3–6ms attack)
 const DECAY_RATE = 0.07; // Seconds, for spring strength (~50–100ms decay)
 const OVERSHOOT = 0.15; // 15% overshoot for controlled 70s bounce
