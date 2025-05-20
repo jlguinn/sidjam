@@ -6,7 +6,12 @@ $log_level = 2; // 0 terse (default); 1 verbose; 2 debugging; -1 silent
 // Set session cookie lifetime to 30 days
 session_set_cookie_params(30 * 24 * 60 * 60);
 session_start();
-require_once "dbcontrol/sidcon.php";
+$sidconPath = file_exists(__DIR__ . '/../../dbcontrol_sidjam/sidcon.php')
+    ? __DIR__ . '/../../dbcontrol_sidjam/sidcon.php'
+    : __DIR__ . '/dbcontrol/sidcon.php';
+
+require_once $sidconPath;
+
 $cxn = mysqli_connect($host, $user, $pass, $database) or die("Connection failed: " . mysqli_connect_error());
 
 // Helper function to clear session
