@@ -1259,7 +1259,7 @@ async function initializeApp() {
         window.logmsg('window.user.id not defined on DOM load', 0);
         return;
     }
- 
+
     try {
         const songsResponse = await fetch('dbcontrol/get_sidtunes.php?full_list=true');
         if (!songsResponse.ok) throw new Error(`Failed to load sidtunes: ${songsResponse.statusText}`);
@@ -1276,7 +1276,26 @@ async function initializeApp() {
         window.sidJamData.cachedResults = await resultsResponse.json();
 
         const player_state = await loadPlayerState();
-        if (player_state && player_state.contenders && player_state.currentMode === "bout" && player_state.contenders[0] && player_state.contenders[1]) {
+        // Validate player_state paths
+        let isValidState = true;
+        if (player_state) {
+            const validPaths = new Set(window.sidJamData.sidFiles);
+            // Check contenders and nowPlayingSong
+            if (player_state.contenders) {
+                player_state.contenders.forEach((path, index) => {
+                    if (path && !validPaths.has(path)) {
+                        window.logmsg(`Invalid contender path in saved state: ${path}`, 0);
+                        isValidState = false;
+                    }
+                });
+            }
+            if (player_state.nowPlayingSong && !validPaths.has(player_state.nowPlayingSong)) {
+                window.logmsg(`Invalid nowPlayingSong path in saved state: ${player_state.nowPlayingSong}`, 0);
+                isValidState = false;
+            }
+        }
+
+        if (player_state && isValidState && player_state.contenders && player_state.currentMode === "bout" && player_state.contenders[0] && player_state.contenders[1]) {
             brackets.updatePlayerState({
                 contenders: player_state.contenders,
                 peekBracket: player_state.activeBracket,
@@ -1303,7 +1322,7 @@ async function initializeApp() {
             if (typeof updateWinnerButtonsBound === 'function') updateWinnerButtonsBound();
             if (typeof updateFlameButtonBound === 'function') updateFlameButtonBound();
             ui.updateWaveformVisibility(brackets.getPlayerState().isWaveformActive);
-        } else if (player_state && player_state.currentMode === "nowPlaying" && player_state.nowPlayingSong) {
+        } else if (player_state && isValidState && player_state.currentMode === "nowPlaying" && player_state.nowPlayingSong) {
             const nowPlayingSongBracket = brackets.getSongBracket(player_state.nowPlayingSong);
             brackets.updatePlayerState({
                 contenders: player_state.contenders || [],
@@ -1329,7 +1348,7 @@ async function initializeApp() {
             if (typeof updateFlameButtonBound === 'function') updateFlameButtonBound();
             ui.updateWaveformVisibility(brackets.getPlayerState().isWaveformActive);
         } else {
-            window.logmsg("Initializing with default player state");
+            window.logmsg("Initializing with default player state due to invalid or missing saved state", 0);
             brackets.updatePlayerState({
                 contenders: [],
                 peekBracket: "0 - 0",
@@ -1357,9 +1376,19 @@ async function initializeApp() {
     } catch (error) {
         window.logmsg(`Error loading data: ${error}`, 0);
         brackets.updatePlayerState({
+            contenders: [],
             peekBracket: "0 - 0",
             activeBracket: "0 - 0",
             currentMode: "bout",
+            activeContender: 0,
+            roundCount: 1,
+            winner: null,
+            hasPlayed: false,
+            hasJammed: false,
+            bothContendersSelected: false,
+            isFlameActive: false,
+            nowPlayingSong: null,
+            nowPlayingSongBracket: null,
             isWaveformActive: true,
             isVUActive: true,
             zoomFactor: 46.13
@@ -1368,6 +1397,7 @@ async function initializeApp() {
         brackets.updateBracketDropdown();
         brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateFlameButtonBound);
         ui.updateWaveformVisibility(true);
+        ui.updateVUMeterVisibility(true);
     }
 
     const playPauseButton = document.getElementById("playPauseButton");
@@ -1420,7 +1450,7 @@ async function initializeApp() {
 
     checkSong2Clipping();
 }
-
+    
 const authOverlay = document.getElementById('authOverlay');
 if (authOverlay) {
     authOverlay.addEventListener('click', function(event) {
