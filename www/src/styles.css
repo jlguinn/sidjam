@@ -1196,3 +1196,129 @@ body {
     background-color: #555;
     border-color: #999;
 }
+
+
+/* Help Button */
+/* Help Button */
+#help-button {
+    position: absolute;
+    top: 2px; /* Keep vertical position */
+    left: 140px; /* Move to the left edge */
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: transparent; /* No background */
+    border: none; /* No border */
+    color: var(--text); /* Adapts to theme */
+    font-size: 16px; /* Clear emoji */
+    line-height: 24px;
+    text-align: center;
+    cursor: pointer;
+    z-index: 1001; /* Above other elements */
+    transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+#help-button:hover {
+    filter: brightness(1.2);
+    transform: scale(1.1);
+}
+
+#help-button:focus {
+    outline: none;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+}
+
+/* Log Player State Button */
+#log-player-state {
+    position: absolute;
+    top: 2px; /* Align with help button */
+    left: 28px; /* Adjusted to maintain 4px gap from help button (24px width + 4px) */
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background-color: var(--muted);
+    color: var(--background-alt);
+    border: 2px solid #666;
+    border-radius: 4px;
+    font-family: 'Tektur', sans-serif;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 1000;
+}
+
+#log-player-state:hover {
+    background-color: #555;
+    border-color: #999;
+}
+#help-button:focus {
+    outline: none;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+}
+
+/* Log Player State Button */
+#log-player-state {
+    position: absolute;
+    top: 2px; /* Align with help button */
+    left: 30px; /* Shift right to avoid overlap (2px + 24px + 4px gap) */
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background-color: var(--muted);
+    color: var(--background-alt);
+    border: 2px solid #666;
+    border-radius: 4px;
+    font-family: 'Tektur', sans-serif;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 1000;
+}
+
+#log-player-state:hover {
+    background-color: #555;
+    border-color: #999;
+}
+
+/* Help Overlay */
+.overlay:not(.hidden) {
+    display: block !important; /* Ensure overlay is visible when not hidden */
+}
+
+#helpOverlay {
+    z-index: 1002; /* Higher than other elements */
+}
+
+#helpContainer {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--background-alt);
+    padding: var(--spacing-md);
+    border-radius: var(--spacing-xs);
+    width: 80%;
+    max-width: 400px;
+    box-sizing: border-box;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); /* Add shadow for visibility */
+}
+
+#helpContent h2 {
+    margin-top: 0;
+    text-align: center;
+    font-size: 1.5em;
+}
+
+#helpContent p {
+    margin: var(--spacing-sm) 0;
+}
+
+#helpContent a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+#helpContent a:hover {
+    text-decoration: underline;
+}

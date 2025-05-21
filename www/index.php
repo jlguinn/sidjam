@@ -192,20 +192,54 @@ $cxn->close();
             const PLAYER_LOG_LEVEL = typeof window.LOG_LEVEL === 'number' ? window.LOG_LEVEL : 0;
             if (PLAYER_LOG_LEVEL >= msgLogLevel) console.log(msg);
         };
-        console.log("sID JAm Version (ALPHA) 2025.04.27a");
+        console.log("sID JAm Version 2025.05.20 (Beta)");
         window.logmsg("Hello world!");
         window.logmsg(`Log Level: ${window.LOG_LEVEL === 1 ? "VERBOSE" : window.LOG_LEVEL === 2 ? "DEBUGGING" : window.LOG_LEVEL === 0 ? "TERSE" : window.LOG_LEVEL === -1 ? "SILENT" : window.LOG_LEVEL.toString()}`, 1);
     </script>
     <script type="module" src="src/script.js"></script>
     <script type="module" src="src/viz.js"></script>
 </head>
+<script>
+    // Ensure toggleHelpPopUp is defined
+    window.toggleHelpPopUp = function() {
+        const helpOverlay = document.getElementById('helpOverlay');
+        if (helpOverlay) {
+            helpOverlay.classList.toggle('hidden');
+            const isHidden = helpOverlay.classList.contains('hidden');
+            window.logmsg('Toggled help popup, hidden: ' + isHidden, 1);
+            if (!isHidden) {
+                helpOverlay.style.display = 'block'; // Force display
+                helpOverlay.focus();
+                window.logmsg('Help overlay displayed, z-index: ' + helpOverlay.style.zIndex, 2);
+            } else {
+                helpOverlay.style.display = 'none'; // Ensure hidden
+            }
+        } else {
+            console.error('Help overlay not found in DOM');
+        }
+    };
+
+    // Add event listener for help button
+    document.addEventListener('DOMContentLoaded', () => {
+        const helpButton = document.getElementById('help-button');
+        if (helpButton) {
+            helpButton.addEventListener('click', () => {
+                window.logmsg('Help button clicked', 1);
+                window.toggleHelpPopUp();
+            });
+        } else {
+            console.error('Help button not found in DOM');
+        }
+    });
+</script>
 <body>
-    <header id="header">
-        <?php if ($debug_enabled): ?>
-            <button id="log-player-state" title="Log Player State" aria-label="Log Player State">P</button>
-        <?php endif; ?>
-        <h1 id="title">sID JAm</h1>
-    </header>
+<header id="header">
+    <button id="help-button" title="Help" aria-label="Help">💡</button>
+    <?php if ($debug_enabled): ?>
+        <button id="log-player-state" title="Log Player State" aria-label="Log Player State">P</button>
+    <?php endif; ?>
+    <h1 id="title">sID JAm</h1>
+</header>
 
     <div id="profile-package">
         <div id="user-info">
@@ -221,7 +255,7 @@ $cxn->close();
         <?php endif; ?>
     </div>
 
-    <div id="version">Version (ALPHA) 2025.03.19a</div>
+    <div id="version">Version 2025.05.20 (beta)</div>
 
     <div id="vs-matchup">
         <span id="song1">-</span>
@@ -522,5 +556,16 @@ $cxn->close();
             </div>
         </div>
     </div>
+    <div id="helpOverlay" class="overlay hidden">
+    <div id="helpContainer">
+        <button id="closeHelp" class="close-button" onclick="window.toggleHelpPopUp()" aria-label="Close Help Overlay">×</button>
+        <div id="helpContent">
+            <h2>Help</h2>
+            <p>More help coming soon. In the meantime, contact:</p>
+            <p><a href="mailto:jguinn@bonevalleyfilms.com">jguinn@bonevalleyfilms.com</a></p>
+            <p>For questions or issues.</p>
+        </div>
+    </div>
+</div>
 </body>
 </html>
