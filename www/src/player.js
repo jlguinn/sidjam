@@ -14,6 +14,14 @@ export function setIsPlaying(value) {
     isPlaying = value;
 }
 
+export function resetVisualizationState() {
+    if (window.viz && window.viz.resetVisualizationState) {
+        window.viz.resetVisualizationState();
+    } else {
+        window.logmsg('resetVisualizationState: window.viz.resetVisualizationState not defined', 0);
+    }
+}
+
 export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseButton, resetVoiceStates, updateNavigationButtons, updateVsMatchup, updateJamButton, autoPlay = true) {
     if (!filename) return Promise.resolve();
 
@@ -24,6 +32,9 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
     let onFail = () => window.logmsg(`Failed to load song: ${fullFilePath}`, 0);
     let onProgress = (total, loaded) => {};
     let options = { track: trackNumber, timeout: -1, traceSID: true };
+
+    // Reset visualization state before loading new song
+    resetVisualizationState();
 
     if (sidPlayer && isPlaying) {
         sidPlayer.pause();
@@ -155,21 +166,28 @@ export async function initPlayer(getPlayerState, updateWinnerButtons, updateFlam
     sidPlayer = ScriptNodePlayer.getInstance();
     window.player = sidPlayer; // Ensure viz.js access
 
-    // Start visualizations after player initialization
-    if (window.startVisualizations) {
-        window.startVisualizations();
-    } else {
-        window.logmsg('startVisualizations function not found on window object', 0);
-    }
-
+    // Load song based on state
+    let songLoaded = false;
     if (state.contenders.length > 0 && state.currentMode === "bout") {
         await loadSongBound(state.contenders[state.activeContender], -1);
+        songLoaded = true;
     } else if (state.nowPlayingSong && state.currentMode === "nowPlaying") {
         await loadSongBound(state.nowPlayingSong, -1);
+        songLoaded = true;
     } else if (state.peekPlayingSong) {
         await loadSongBound(state.peekPlayingSong, -1);
+        songLoaded = true;
     } else {
-        window.logmsg("No contenders or songs available to load");
+        window.logmsg("No contenders or songs available to load", 0);
+    }
+
+    // Start visualizations only if a song was loaded
+    if (songLoaded && window.startVisualizations) {
+        window.startVisualizations();
+    } else if (!songLoaded) {
+        window.logmsg('initPlayer: No song loaded, skipping visualizations', 0);
+    } else {
+        window.logmsg('startVisualizations function not found on window object', 0);
     }
 
     updateWinnerButtons();

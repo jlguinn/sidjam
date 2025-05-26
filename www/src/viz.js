@@ -1,3 +1,4 @@
+// viz.js
 import { updateWaveformVisibility, updateVUMeterVisibility } from './ui.js';
 import { getPlayerState, updatePlayerState } from './brackets.js';
 
@@ -33,7 +34,7 @@ const circularBuffers = [
     new Float32Array(CIRCULAR_BUFFER_SIZE)  // Voice 3
 ];
 let writePosition = 0; // Current write position in the circular buffer
-let zoomFactor; // Initialize later in initStaticVisualizations
+let zoomFactor; // Initialize later in startVisualizations
 
 // VU meter state
 const vuLabelImage = new Image();
@@ -199,7 +200,8 @@ function drawVoiceWaveform(canvasId, voiceIdx) {
     const endCircularIdx = newestSampleIdx;
     const startCircularIdx = (endCircularIdx - visibleSamples + CIRCULAR_BUFFER_SIZE) % CIRCULAR_BUFFER_SIZE;
 
-    let idx = startCircularIdx;
+    let idx = startCircularIdx - visibleSamples + 1;
+    if (idx < 0) idx += CIRCULAR_BUFFER_SIZE;
     for (let i = 0; i < visibleSamples; i++) {
         maxAmplitude = Math.max(maxAmplitude, Math.abs(buffer[idx]));
         idx = (idx + 1) % CIRCULAR_BUFFER_SIZE;
@@ -298,10 +300,15 @@ function updateVoiceBuffers() {
 
     if (!traceStreams || traceStreams.length < 3) {
         window.logmsg('updateVoiceBuffers: Trace streams not initialized', 0);
-        circularBuffers.forEach(buffer => buffer.fill(0));
-        vuLevels.fill(0);
-        writePosition = 0;
-        return;
+        if (initTraceStreams()) {
+            window.logmsg('updateVoiceBuffers: Successfully reinitialized trace streams', 2);
+        } else {
+            window.logmsg('updateVoiceBuffers: Failed to reinitialize trace streams', 0);
+            circularBuffers.forEach(buffer => buffer.fill(0));
+            vuLevels.fill(0);
+            writePosition = 0;
+            return;
+        }
     }
 
     const Module = window.backend_SID.Module;
@@ -328,6 +335,7 @@ function updateVoiceBuffers() {
         circularBuffers.forEach(buffer => buffer.fill(0));
         vuLevels.fill(0);
         writePosition = 0;
+        traceStreams = null; // Reset traceStreams on error
     }
 }
 
@@ -548,6 +556,7 @@ function stopContinuousZoom() {
     }
 }
 
+
 // Start visualizations
 function startVisualizations() {
     if (!window.player) {
@@ -575,30 +584,29 @@ function startVisualizations() {
         return;
     }
 
+    if (!window.player._isSongReady) {
+        window.logmsg('startVisualizations: No song loaded, skipping trace stream initialization', 0);
+        return;
+    }
+
     let retryCount = 0;
     const maxRetries = 12;
     const retryInterval = 300;
 
     function attemptTraceStreamInit() {
         if (initTraceStreams()) {
-            // Initialize zoomFactor from playerState
+            // Initialize zoomFactor
             zoomFactor = getPlayerState().zoomFactor || 46.13;
             if (typeof zoomFactor !== 'number' || zoomFactor < 1 || zoomFactor > 8820) {
                 zoomFactor = 46.13;
                 updatePlayerState({ zoomFactor });
             }
-            window.logmsg(`[viz.js] Initialized zoomFactor to ${zoomFactor.toFixed(2)}x`, 2);
-            updateZoomButtonStates(); // Update button states with loaded zoomFactor
-            circularBuffers.forEach(buffer => buffer.fill(0));
-            vuLevels.fill(0);
-            needleAngles.fill(ANGLE_RANGE[0]);
-            needleVelocities.fill(0);
-            writePosition = 0;
+            window.logmsg(`[Viz.js] Initialized ZoomFactor to ${zoomFactor.toFixed(2)}x`, 2);
             isVisualizationActive = true;
             lastRenderTime = performance.now();
             updateViz();
             updateWaveformVisibility(getPlayerState().isWaveformActive);
-            setupContinuousZoom(); // Initialize continuous zoom listeners
+            setupContinuousZoom();
             // Force initial waveform redraw
             const playerState = getPlayerState();
             if (playerState.isWaveformActive && window.player && window.player._isSongReady) {
@@ -623,7 +631,7 @@ window.startVisualizations = startVisualizations;
 // Initialize static visualizations
 function initStaticVisualizations() {
     renderStaticVisualizations();
-    updateZoomButtonStates(); // Update button states with temporary zoomFactor
+    updateZoomButtonStates();
 }
 
 if (document.readyState === 'loading') {
@@ -651,8 +659,22 @@ export function isAudioActive() {
     return false;
 }
 
+// Reset visualization state
+function resetVisualizationState() {
+    circularBuffers.forEach(buffer => buffer.fill(0));
+    vuLevels.fill(0);
+    needleAngles.fill(ANGLE_RANGE[0]);
+    needleVelocities.fill(0);
+    writePosition = 0;
+    traceStreams = null;
+    window.logmsg('resetVisualizationState: Cleared visualization state', 2);
+}
+
+// Global visualization utilities
 window.viz = window.viz || {};
+window.viz.resetVisualizationState = resetVisualizationState;
 window.viz.isAudioActive = isAudioActive;
+window.startVisualizations = startVisualizations;
 
 // Expose zoom and reset functions to global scope for onclick handlers
 window.zoomWaveformIn = zoomWaveformIn;
