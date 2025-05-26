@@ -4,13 +4,14 @@ import { getPlayerState, updatePlayerState } from './brackets.js';
 
 // Configuration
 const BUFFER_SIZE = 9000; // WebSID buffer size (~204ms at 44100 Hz)
-const USABLE_SAMPLES = 956; // Number of usable samples per frame from WebSID
+const USABLE_SAMPLES = 777; // Changed to 777 samples per frame for "bad" songs
 const CIRCULAR_BUFFER_SIZE = 44100; // Exactly 1 second at 44100 Hz
+const VU_WINDOW_SIZE = 4410; // 100 ms at 44100 Hz for VU meters
 const MAX_VISIBLE_SAMPLES = CIRCULAR_BUFFER_SIZE; // Max range for visualization
 const TARGET_FPS = 60; // Match rendering loop
 const TIME_LIMIT = 1000 / TARGET_FPS; // ~16.67ms at 60 FPS
 const BACKGROUND_COLOR = '#333333'; // Dark grey for waveform canvas
-const FALLBACK_COLOR = '#555555'; // Fallback for VU meters
+const FALLBACK_COLOR = '#555555'; // Fallback for unregulated data
 
 // VU meter configuration
 const VU_METER_COUNT = 3; // One per voice
@@ -313,23 +314,31 @@ function updateVoiceBuffers() {
 
     const Module = window.backend_SID.Module;
     try {
+        // Write waveform data to circular buffers
         for (let i = 0; i < USABLE_SAMPLES; i++) {
             const circularIdx = (writePosition + i) % CIRCULAR_BUFFER_SIZE;
             for (let voiceIdx = 0; voiceIdx < 3; voiceIdx++) {
                 const stream = traceStreams[voiceIdx];
                 const buffer = circularBuffers[voiceIdx];
-                const sample = Module.HEAP16[stream + i] / 32768;
-                buffer[circularIdx] = sample;
-                if (i < BUFFER_SIZE) {
-                    vuLevels[voiceIdx] += sample * sample;
-                }
+                buffer[circularIdx] = Module.HEAP16[stream + i] / 32768;
             }
         }
-        writePosition = (writePosition + USABLE_SAMPLES) % CIRCULAR_BUFFER_SIZE;
+
+        // Compute VU meter RMS over 4410 samples (~100 ms) from circularBuffers
+        vuLevels.fill(0);
         for (let voiceIdx = 0; voiceIdx < 3; voiceIdx++) {
-            vuLevels[voiceIdx] = Math.sqrt(vuLevels[voiceIdx] / BUFFER_SIZE) * 0.2;
+            let sumSquares = 0;
+            const buffer = circularBuffers[voiceIdx];
+            for (let i = 0; i < VU_WINDOW_SIZE; i++) {
+                const idx = (writePosition - i - 1 + CIRCULAR_BUFFER_SIZE) % CIRCULAR_BUFFER_SIZE;
+                const sample = buffer[idx];
+                sumSquares += sample * sample;
+            }
+            vuLevels[voiceIdx] = Math.sqrt(sumSquares / VU_WINDOW_SIZE) * 0.5; // Adjusted scaling factor
             vuLevels[voiceIdx] = Math.min(vuLevels[voiceIdx], 1.0);
         }
+
+        writePosition = (writePosition + USABLE_SAMPLES) % CIRCULAR_BUFFER_SIZE;
     } catch (error) {
         window.logmsg(`updateVoiceBuffers: Error fetching waveform data: ${error.message}`, 0);
         circularBuffers.forEach(buffer => buffer.fill(0));
@@ -338,6 +347,7 @@ function updateVoiceBuffers() {
         traceStreams = null; // Reset traceStreams on error
     }
 }
+
 
 // Update needle physics
 function updateNeedlePhysics() {
