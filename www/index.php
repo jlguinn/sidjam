@@ -297,17 +297,26 @@ $cxn->close();
                 <canvas id="vu1-canvas" width="120" height="70" title="Voice 1 VU Meter" data-state="on" aria-label="Voice 1 VU Meter">
                     Voice 1 VU Meter (visualization not supported)
                 </canvas>
+                <canvas id="amp1-canvas" width="20" height="70" title="Voice 1 Amplitude Bar" aria-label="Voice 1 Amplitude Bar">
+                    Voice 1 Amplitude Bar (visualization not supported)
+                </canvas>
             </div>
             <div class="voice-control-row" data-voice="2">
                 <button id="voice2" class="voice-button" data-state="on" title="Toggle Voice 2 Mute" aria-label="Toggle Voice 2 Mute"></button>
                 <canvas id="vu2-canvas" width="120" height="70" title="Voice 2 VU Meter" data-state="on" aria-label="Voice 2 VU Meter">
                     Voice 2 VU Meter (visualization not supported)
                 </canvas>
+                <canvas id="amp2-canvas" width="20" height="70" title="Voice 2 Amplitude Bar" aria-label="Voice 2 Amplitude Bar">
+                    Voice 2 Amplitude Bar (visualization not supported)
+                </canvas>
             </div>
             <div class="voice-control-row" data-voice="3">
                 <button id="voice3" class="voice-button" data-state="on" title="Toggle Voice 3 Mute" aria-label="Toggle Voice 3 Mute"></button>
                 <canvas id="vu3-canvas" width="120" height="70" title="Voice 3 VU Meter" data-state="on" aria-label="Voice 3 VU Meter">
                     Voice 3 VU Meter (visualization not supported)
+                </canvas>
+                <canvas id="amp3-canvas" width="20" height="70" title="Voice 3 Amplitude Bar" aria-label="Voice 3 Amplitude Bar">
+                    Voice 3 Amplitude Bar (visualization not supported)
                 </canvas>
             </div>
         </div>

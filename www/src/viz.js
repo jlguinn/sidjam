@@ -4,12 +4,14 @@ import { getPlayerState, updatePlayerState } from './brackets.js';
 
 // Configuration
 const BUFFER_SIZE = 9000; // WebSID buffer size (~204ms at 44100 Hz)
-const USABLE_SAMPLES = 777; // Changed to 777 samples per frame for "bad" songs
 const CIRCULAR_BUFFER_SIZE = 44100; // Exactly 1 second at 44100 Hz
-const VU_WINDOW_SIZE = 4410; // 100 ms at 44100 Hz for VU meters
+const USABLE_SAMPLES = 777; // Changed to 777 samples per frame for "bad" songs
+
+const VU_WINDOW_SIZE = 1800; // Larger for smoother, smaller for more aggressive
 const MAX_VISIBLE_SAMPLES = CIRCULAR_BUFFER_SIZE; // Max range for visualization
 const TARGET_FPS = 60; // Match rendering loop
 const TIME_LIMIT = 1000 / TARGET_FPS; // ~16.67ms at 60 FPS
+const RMS_SCALING_FACTOR = 0.4; // Adjusted scaling factor
 const BACKGROUND_COLOR = '#333333'; // Dark grey for waveform canvas
 const FALLBACK_COLOR = '#555555'; // Fallback for unregulated data
 
@@ -98,7 +100,7 @@ function drawStaticWaveform(canvasId) {
     ctx.stroke();
 }
 
-// Draw static VU meter
+// Draw static VU meter and amplitude bar
 function drawStaticVUMeter(canvasId) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) {
@@ -135,6 +137,11 @@ function drawStaticVUMeter(canvasId) {
     if (isFrameImageLoaded) {
         ctx.drawImage(vuFrameImage, 0, 0, width, height);
     }
+
+    // Draw static amplitude bar
+    const voiceIdx = parseInt(canvasId.replace('vu', '')) - 1;
+    const ampCanvasId = `amp${voiceIdx + 1}-canvas`;
+    drawAmplitudeBar(ampCanvasId, voiceIdx, 0); // Zero amplitude for static state
 }
 
 // Render static visualizations
@@ -273,6 +280,28 @@ function drawVUMeter(canvasId, voiceIdx) {
     }
 }
 
+// New: Draw amplitude bar
+function drawAmplitudeBar(canvasId, voiceIdx, amplitude) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) {
+        window.logmsg(`drawAmplitudeBar: Canvas ${canvasId} not found`, 0);
+        return;
+    }
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width; // 20
+    const height = canvas.height; // 70
+
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = '#000000'; // Black background
+    ctx.fillRect(0, 0, width, height);
+
+    // Draw bar
+    const barHeight = amplitude * height; // Scale amplitude (0–1) to canvas height
+    ctx.fillStyle = '#00FF00'; // Green for visibility
+    ctx.fillRect(0, height - barHeight, width, barHeight); // Draw from bottom up
+}
+
 // Update voice buffers and VU levels
 function updateVoiceBuffers() {
     const player = window.player;
@@ -324,7 +353,7 @@ function updateVoiceBuffers() {
             }
         }
 
-        // Compute VU meter RMS over 4410 samples (~100 ms) from circularBuffers
+        // Compute VU meter RMS over 1800 samples
         vuLevels.fill(0);
         for (let voiceIdx = 0; voiceIdx < 3; voiceIdx++) {
             let sumSquares = 0;
@@ -334,7 +363,7 @@ function updateVoiceBuffers() {
                 const sample = buffer[idx];
                 sumSquares += sample * sample;
             }
-            vuLevels[voiceIdx] = Math.sqrt(sumSquares / VU_WINDOW_SIZE) * 0.5; // Adjusted scaling factor
+            vuLevels[voiceIdx] = Math.sqrt(sumSquares / VU_WINDOW_SIZE) * RMS_SCALING_FACTOR;
             vuLevels[voiceIdx] = Math.min(vuLevels[voiceIdx], 1.0);
         }
 
@@ -347,7 +376,6 @@ function updateVoiceBuffers() {
         traceStreams = null; // Reset traceStreams on error
     }
 }
-
 
 // Update needle physics
 function updateNeedlePhysics() {
@@ -459,6 +487,10 @@ function updateViz() {
             drawVUMeter('vu1-canvas', 0);
             drawVUMeter('vu2-canvas', 1);
             drawVUMeter('vu3-canvas', 2);
+            // Draw amplitude bars
+            drawAmplitudeBar('amp1-canvas', 0, vuLevels[0]);
+            drawAmplitudeBar('amp2-canvas', 1, vuLevels[1]);
+            drawAmplitudeBar('amp3-canvas', 2, vuLevels[2]);
         }
         lastRenderTime = now;
     }
@@ -565,7 +597,6 @@ function stopContinuousZoom() {
         zoomIntervalId = null;
     }
 }
-
 
 // Start visualizations
 function startVisualizations() {

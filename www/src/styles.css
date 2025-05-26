@@ -483,7 +483,7 @@ body {
 .voice-control-row {
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-sm); /* 10px gap between elements */
     min-height: 40px;
 }
 
@@ -492,6 +492,13 @@ body {
     height: 70px;
     border: 1px solid var(--background-alt);
     background-color: transparent;
+}
+
+.voice-control-row canvas[id^="amp"] {
+    width: 20px; /* Narrow width for amplitude bars */
+    height: 70px;
+    border: 1px solid var(--background-alt);
+    background-color: #000; /* Black background to match VU meters */
 }
 
 .voice-button {
