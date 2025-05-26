@@ -7,11 +7,11 @@ const BUFFER_SIZE = 9000; // WebSID buffer size (~204ms at 44100 Hz)
 const CIRCULAR_BUFFER_SIZE = 44100; // Exactly 1 second at 44100 Hz
 const USABLE_SAMPLES = 777; // Changed to 777 samples per frame for "bad" songs
 
-const VU_WINDOW_SIZE = 1800; // Larger for smoother, smaller for more aggressive
+const VU_WINDOW_SIZE = 800; // Larger for smoother, smaller for more aggressive
 const MAX_VISIBLE_SAMPLES = CIRCULAR_BUFFER_SIZE; // Max range for visualization
 const TARGET_FPS = 60; // Match rendering loop
 const TIME_LIMIT = 1000 / TARGET_FPS; // ~16.67ms at 60 FPS
-const RMS_SCALING_FACTOR = 0.4; // Adjusted scaling factor
+const RMS_SCALING_FACTOR = 2.2; // Adjusted scaling factor
 const BACKGROUND_COLOR = '#333333'; // Dark grey for waveform canvas
 const FALLBACK_COLOR = '#555555'; // Fallback for unregulated data
 
