@@ -39,13 +39,15 @@ const updateWinnerButtonsBound = () => ui.updateWinnerButtons(brackets.getPlayer
 const updateFlameButtonBound = () => ui.updateFlameButton(brackets.getPlayerState(), player.sidPlayer);
 const updateJamButtonBound = (isPlaying) => ui.updateJamButton(isPlaying, brackets.getPlayerState(), player.sidPlayer);
 
-// Export and make loadPlayerState globally accessible
+
 export async function loadPlayerState() {
     try {
         const response = await fetch(`dbcontrol/get_player_state.php?user_id=${window.user.id}`);
         if (!response.ok) throw new Error(`Failed to load player_state: ${response.statusText}`);
         const data = await response.json();
         if (data.success && data.player_state) {
+            // Ensure isBarActive defaults to false if not present
+            data.player_state.isBarActive = data.player_state.isBarActive !== undefined ? data.player_state.isBarActive : false;
             return data.player_state;
         }
         return null;
@@ -54,27 +56,29 @@ export async function loadPlayerState() {
         return null;
     }
 }
+
 window.loadPlayerState = loadPlayerState;
 
 async function savePlayerState() {
-    const state = brackets.getPlayerState();
+    const playerState = brackets.getPlayerState();
     const player_state = {
-        contenders: state.contenders,
-        peekBracket: state.peekBracket,
-        activeBracket: state.activeBracket,
-        currentMode: state.currentMode,
-        nowPlayingSong: state.nowPlayingSong,
+        contenders: playerState.contenders, // Fix: Use playerState instead of state
+        peekBracket: playerState.peekBracket,
+        activeBracket: playerState.activeBracket,
+        currentMode: playerState.currentMode,
+        nowPlayingSong: playerState.nowPlayingSong,
         theme: ui.getCurrentThemeIndex(),
-        isWaveformActive: state.isWaveformActive,
-        isVUActive: state.isVUActive,
-        zoomFactor: state.zoomFactor
+        isWaveformActive: playerState.isWaveformActive,
+        isVUActive: playerState.isVUActive,
+        isBarActive: playerState.isBarActive,
+        zoomFactor: playerState.zoomFactor
     };
 
     try {
         const response = await fetch('dbcontrol/save_state.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ player_state })
+            body: JSON.stringify({ player_state }) // Fix: Use player_state to match the object name
         });
         const result = await response.json();
         if (!result.success) {
@@ -122,9 +126,34 @@ window.toggleWaveform = () => {
 
 window.toggleVUMeters = () => {
     window.logmsg("[VUMeters]", 1);
-    const newState = !brackets.getPlayerState().isVUActive;
-    brackets.updatePlayerState({ isVUActive: newState });
-    ui.updateVUMeterVisibility(newState);
+    const state = brackets.getPlayerState();
+    let newVUActive, newBarActive;
+
+    // Cycle through states:
+    // 1. VU on, Bar off (default)
+    // 2. VU off, Bar off
+    // 3. VU off, Bar on
+    // 4. VU on, Bar on
+    if (state.isVUActive && !state.isBarActive) {
+        // State 1 -> State 2
+        newVUActive = false;
+        newBarActive = false;
+    } else if (!state.isVUActive && !state.isBarActive) {
+        // State 2 -> State 3
+        newVUActive = false;
+        newBarActive = true;
+    } else if (!state.isVUActive && state.isBarActive) {
+        // State 3 -> State 4
+        newVUActive = true;
+        newBarActive = true;
+    } else {
+        // State 4 -> State 1
+        newVUActive = true;
+        newBarActive = false;
+    }
+
+    brackets.updatePlayerState({ isVUActive: newVUActive, isBarActive: newBarActive });
+    ui.updateVUMeterState(); // Update UI
     savePlayerState();
 };
 
@@ -1298,17 +1327,13 @@ async function initializeApp() {
         if (player_state && isValidState && player_state.contenders && player_state.currentMode === "bout" && player_state.contenders[0] && player_state.contenders[1]) {
             brackets.updatePlayerState({
                 contenders: player_state.contenders,
-                peekBracket: player_state.activeBracket,
+                peekBracket: player_state.peekBracket,
                 activeBracket: player_state.activeBracket,
-                currentMode: "bout",
-                nowPlayingSong: null,
-                nowPlayingSongBracket: null,
-                activeContender: 0,
-                hasJammed: false,
-                bothContendersSelected: false,
-                isFlameActive: false,
+                currentMode: player_state.currentMode,
+                nowPlayingSong: player_state.nowPlayingSong,
                 isWaveformActive: player_state.isWaveformActive !== undefined ? player_state.isWaveformActive : true,
                 isVUActive: player_state.isVUActive !== undefined ? player_state.isVUActive : true,
+                isBarActive: player_state.isBarActive !== undefined ? player_state.isBarActive : false, // Add new property
                 zoomFactor: player_state.zoomFactor !== undefined ? player_state.zoomFactor : 46.13
             });
             ui.setCurrentThemeIndex(player_state.theme || 0);
@@ -1317,22 +1342,23 @@ async function initializeApp() {
             if (bracketSelect) {
                 bracketSelect.value = player_state.activeBracket.replace(" - ", "-");
             }
-            if (typeof updateVsMatchupBound === 'function') updateVsMatchupBound();
-            if (typeof updateRoundInfoBound === 'function') updateRoundInfoBound();
-            if (typeof updateWinnerButtonsBound === 'function') updateWinnerButtonsBound();
-            if (typeof updateFlameButtonBound === 'function') updateFlameButtonBound();
+            updateVsMatchupBound();
+            updateRoundInfoBound();
+            updateWinnerButtonsBound();
+            updateFlameButtonBound();
             ui.updateWaveformVisibility(brackets.getPlayerState().isWaveformActive);
+            ui.updateVUMeterState(); // Update call
         } else if (player_state && isValidState && player_state.currentMode === "nowPlaying" && player_state.nowPlayingSong) {
             const nowPlayingSongBracket = brackets.getSongBracket(player_state.nowPlayingSong);
             brackets.updatePlayerState({
-                contenders: player_state.contenders || [],
+                nowPlayingSong: player_state.nowPlayingSong,
+                nowPlayingSongBracket,
                 peekBracket: player_state.peekBracket,
                 activeBracket: player_state.activeBracket,
-                currentMode: "nowPlaying",
-                nowPlayingSong: player_state.nowPlayingSong,
-                nowPlayingSongBracket: nowPlayingSongBracket,
+                currentMode: player_state.currentMode,
                 isWaveformActive: player_state.isWaveformActive !== undefined ? player_state.isWaveformActive : true,
                 isVUActive: player_state.isVUActive !== undefined ? player_state.isVUActive : true,
+                isBarActive: player_state.isBarActive !== undefined ? player_state.isBarActive : false, // Add new property
                 zoomFactor: player_state.zoomFactor !== undefined ? player_state.zoomFactor : 46.13
             });
             ui.setCurrentThemeIndex(player_state.theme || 0);
@@ -1342,36 +1368,25 @@ async function initializeApp() {
             if (bracketSelect) {
                 bracketSelect.value = player_state.peekBracket.replace(" - ", "-");
             }
-            if (typeof updateVsMatchupBound === 'function') updateVsMatchupBound();
-            if (typeof updateRoundInfoBound === 'function') updateRoundInfoBound();
-            if (typeof updateWinnerButtonsBound === 'function') updateWinnerButtonsBound();
-            if (typeof updateFlameButtonBound === 'function') updateFlameButtonBound();
+            updateVsMatchupBound();
+            updateRoundInfoBound();
+            updateWinnerButtonsBound();
+            updateFlameButtonBound();
             ui.updateWaveformVisibility(brackets.getPlayerState().isWaveformActive);
+            ui.updateVUMeterState(); // Update call
         } else {
             window.logmsg("Initializing with default player state due to invalid or missing saved state", 0);
             brackets.updatePlayerState({
-                contenders: [],
-                peekBracket: "0 - 0",
-                activeBracket: "0 - 0",
-                currentMode: "bout",
-                activeContender: 0,
-                roundCount: 1,
-                winner: null,
-                hasPlayed: false,
-                hasJammed: false,
-                bothContendersSelected: false,
-                isFlameActive: false,
-                nowPlayingSong: null,
-                nowPlayingSongBracket: null,
                 isWaveformActive: true,
                 isVUActive: true,
+                isBarActive: false, // Add new property
                 zoomFactor: 46.13
             });
             ui.setCurrentThemeIndex(0);
             brackets.updateBracketDropdown();
             brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateFlameButtonBound);
             ui.updateWaveformVisibility(true);
-            ui.updateVUMeterVisibility(true);
+            ui.updateVUMeterState(); // Update call
         }
     } catch (error) {
         window.logmsg(`Error loading data: ${error}`, 0);

@@ -340,13 +340,17 @@ export function updateWaveformVisibility(isWaveformActive) {
     }
 }
 
-export function updateVUMeterVisibility(isVUActive) {
+export function updateVUMeterVisibility(isVUActive, isBarActive) {
     const vuContainer = document.getElementById("voice-controls-container");
-    const vuToggleButton = document.getElementById("vu-toggle-button");
     const vuCanvases = [
         document.getElementById("vu1-canvas"),
         document.getElementById("vu2-canvas"),
         document.getElementById("vu3-canvas")
+    ];
+    const barCanvases = [
+        document.getElementById("amp1-canvas"),
+        document.getElementById("amp2-canvas"),
+        document.getElementById("amp3-canvas")
     ];
 
     if (vuContainer) {
@@ -355,15 +359,23 @@ export function updateVUMeterVisibility(isVUActive) {
                 canvas.style.display = isVUActive ? "block" : "none";
             }
         });
+        barCanvases.forEach(canvas => {
+            if (canvas) {
+                canvas.style.display = isBarActive ? "block" : "none";
+            }
+        });
     } else {
         console.error('VU container not found in the DOM');
     }
+}
 
+export function updateVUMeterState() {
+    const state = brackets.getPlayerState();
+    updateVUMeterVisibility(state.isVUActive, state.isBarActive);
+    const vuToggleButton = document.getElementById("vu-toggle-button");
     if (vuToggleButton) {
-        vuToggleButton.style.filter = isVUActive ? "none" : "brightness(70%)";
-        vuToggleButton.classList.remove("inactive");
+        // Maintain existing button behavior (no appearance changes)
         vuToggleButton.disabled = false;
-        vuToggleButton.title = isVUActive ? "Hide VU Meters" : "Show VU Meters";
     } else {
         console.error('VU toggle button not found in the DOM');
     }

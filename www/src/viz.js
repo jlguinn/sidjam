@@ -11,7 +11,7 @@ const VU_WINDOW_SIZE = 800; // Larger for smoother, smaller for more aggressive
 const MAX_VISIBLE_SAMPLES = CIRCULAR_BUFFER_SIZE; // Max range for visualization
 const TARGET_FPS = 60; // Match rendering loop
 const TIME_LIMIT = 1000 / TARGET_FPS; // ~16.67ms at 60 FPS
-const RMS_SCALING_FACTOR = 2.2; // Adjusted scaling factor
+const RMS_SCALING_FACTOR = 2.0; // Adjusted scaling factor
 const BACKGROUND_COLOR = '#333333'; // Dark grey for waveform canvas
 const FALLBACK_COLOR = '#555555'; // Fallback for unregulated data
 
@@ -155,15 +155,23 @@ function renderStaticVisualizations() {
     updateVUMeterVisibility(playerState.isVUActive);
 }
 
-// Render static VU meters
 function renderStaticVUMeters() {
-    const isVUActive = getPlayerState().isVUActive;
+    const state = getPlayerState();
+    const isVUActive = state.isVUActive;
+    const isBarActive = state.isBarActive;
     if (isVUActive) {
         drawStaticVUMeter('vu1-canvas');
         drawStaticVUMeter('vu2-canvas');
         drawStaticVUMeter('vu3-canvas');
     }
+    if (isBarActive) {
+        drawAmplitudeBar('amp1-canvas', 0, 0);
+        drawAmplitudeBar('amp2-canvas', 1, 0);
+        drawAmplitudeBar('amp3-canvas', 2, 0);
+    }
 }
+
+
 
 // Draw dynamic waveform
 function drawVoiceWaveform(canvasId, voiceIdx) {
@@ -478,6 +486,7 @@ function updateViz() {
         const playerState = getPlayerState();
         const isWaveformActive = playerState.isWaveformActive;
         const isVUActive = playerState.isVUActive;
+        const isBarActive = playerState.isBarActive;
         if (isWaveformActive) {
             drawVoiceWaveform('voice1-canvas', 0);
             drawVoiceWaveform('voice2-canvas', 1);
@@ -487,7 +496,8 @@ function updateViz() {
             drawVUMeter('vu1-canvas', 0);
             drawVUMeter('vu2-canvas', 1);
             drawVUMeter('vu3-canvas', 2);
-            // Draw amplitude bars
+        }
+        if (isBarActive) {
             drawAmplitudeBar('amp1-canvas', 0, vuLevels[0]);
             drawAmplitudeBar('amp2-canvas', 1, vuLevels[1]);
             drawAmplitudeBar('amp3-canvas', 2, vuLevels[2]);
