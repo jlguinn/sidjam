@@ -157,7 +157,7 @@ export function applyTheme(currentMode) {
 
     // Reapply waveform visibility
     updateWaveformVisibility(brackets.getPlayerState().isWaveformActive);
-    updateVUMeterVisibility(brackets.getPlayerState().isVUActive);
+    updateVUMeterVisibility(brackets.getPlayerState().isVUActive, brackets.getPlayerState().isBarActive);
 }
 
 // Synchronize hover effects
