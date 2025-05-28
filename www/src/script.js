@@ -62,7 +62,7 @@ window.loadPlayerState = loadPlayerState;
 async function savePlayerState() {
     const playerState = brackets.getPlayerState();
     const player_state = {
-        contenders: playerState.contenders, // Fix: Use playerState instead of state
+        contenders: playerState.contenders,
         peekBracket: playerState.peekBracket,
         activeBracket: playerState.activeBracket,
         currentMode: playerState.currentMode,
@@ -71,14 +71,15 @@ async function savePlayerState() {
         isWaveformActive: playerState.isWaveformActive,
         isVUActive: playerState.isVUActive,
         isBarActive: playerState.isBarActive,
-        zoomFactor: playerState.zoomFactor
+        zoomFactor: playerState.zoomFactor,
+        vuMetrics: playerState.vuMetrics // New: Include metrics
     };
 
     try {
         const response = await fetch('dbcontrol/save_state.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ player_state }) // Fix: Use player_state to match the object name
+            body: JSON.stringify({ player_state })
         });
         const result = await response.json();
         if (!result.success) {

@@ -65,7 +65,8 @@ export let playerState = {
     isWaveformActive: true,
     isVUActive: true,
     isBarActive: false, 
-    zoomFactor: 46.13 // Default zoom level (956 samples)
+    zoomFactor: 46.13,
+    vuMetrics: []
 };
 
 export function debug(message) {

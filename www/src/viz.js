@@ -487,6 +487,43 @@ function updateViz() {
         const isWaveformActive = playerState.isWaveformActive;
         const isVUActive = playerState.isVUActive;
         const isBarActive = playerState.isBarActive;
+
+        // Collect metrics every LOG_INTERVAL (100ms)
+        logTimer += renderTime / 1000; // Convert ms to seconds
+        if (logTimer >= LOG_INTERVAL) {
+            const metricsFrame = {
+                timestamp: now.toFixed(2), // Frame timestamp in ms
+                needleAngles: Array.from(needleAngles).map(a => a.toFixed(2)), // VU needle angles
+                vuLevels: Array.from(vuLevels).map(l => l.toFixed(4)), // RMS levels
+                barLevels: Array.from(vuLevels).map(l => l.toFixed(4)), // Same as vuLevels for bars
+                rawAmplitudes: [], // Max absolute sample per voice
+                zeroTickCount: zeroTickCount // Consecutive zero ticks
+            };
+
+            // Compute raw waveform amplitudes
+            for (let voiceIdx = 0; voiceIdx < 3; voiceIdx++) {
+                const buffer = circularBuffers[voiceIdx];
+                let maxAmp = 0;
+                const newestIdx = writePosition === 0 ? CIRCULAR_BUFFER_SIZE - 1 : writePosition - 1;
+                const startIdx = (newestIdx - USABLE_SAMPLES + CIRCULAR_BUFFER_SIZE) % CIRCULAR_BUFFER_SIZE;
+                for (let i = 0; i < USABLE_SAMPLES; i++) {
+                    const idx = (startIdx + i) % CIRCULAR_BUFFER_SIZE;
+                    maxAmp = Math.max(maxAmp, Math.abs(buffer[idx]));
+                }
+                metricsFrame.rawAmplitudes.push(maxAmp.toFixed(4));
+            }
+
+            // Update playerState.vuMetrics (keep last 10 frames)
+            playerState.vuMetrics.push(metricsFrame);
+            if (playerState.vuMetrics.length > 10) {
+                playerState.vuMetrics.shift(); // Remove oldest frame
+            }
+            updatePlayerState({ vuMetrics: playerState.vuMetrics });
+
+            logTimer = 0; // Reset timer
+        }
+
+        // Existing rendering code
         if (isWaveformActive) {
             drawVoiceWaveform('voice1-canvas', 0);
             drawVoiceWaveform('voice2-canvas', 1);
