@@ -359,7 +359,7 @@ function updateVoiceBuffers() {
             }
         }
 
-        // Compute VU meter RMS over USABLE_SAMPLES (777) for consistency
+        // Compute VU meter RMS
         vuLevels.fill(0);
         for (let voiceIdx = 0; voiceIdx < 3; voiceIdx++) {
             let sumSquares = 0;
@@ -371,23 +371,24 @@ function updateVoiceBuffers() {
                 const sample = buffer[idx];
                 sumSquares += sample * sample;
             }
-            vuLevels[voiceIdx] = Math.sqrt(sumSquares / USABLE_SAMPLES) * 1.5; // Reduced RMS_SCALING_FACTOR from 2.0 to 1.5
+            vuLevels[voiceIdx] = Math.sqrt(sumSquares / USABLE_SAMPLES) * 2.0; // Increased RMS_SCALING_FACTOR from 1.5 to 2.0
             vuLevels[voiceIdx] = Math.min(vuLevels[voiceIdx], 1.0);
         }
 
         writePosition = (writePosition + USABLE_SAMPLES) % CIRCULAR_BUFFER_SIZE;
     } catch (error) {
         window.logmsg(`updateVoiceBuffers: Error fetching waveform data: ${error.message}`, 0);
-        traceStreams = null; // Reset traceStreams to force reinitialization
+        traceStreams = null;
     }
 }
 
 // Update needle physics
 function updateNeedlePhysics() {
     const now = performance.now();
-    const renderTime = Math.min(now - lastPhysicsTime, 33.33) / 1000; // Cap dt at 33.33ms (30 FPS)
-    const dt = renderTime > 0 ? renderTime : 1 / TARGET_FPS; // Fallback to 1/60
-    const smoothing = 0.1; // Interpolation factor (lower = smoother, slower response)
+    const renderTime = Math.min(now - lastPhysicsTime, 33.33) / 1000;
+    const dt = renderTime > 0 ? renderTime : 1 / TARGET_FPS;
+    const attackSmoothing = 0.3; // Fast attack for rising signals
+    const decaySmoothing = 0.05; // Slower decay for falling signals
 
     logTimer += dt;
     logCounter++;
@@ -399,7 +400,7 @@ function updateNeedlePhysics() {
             zeroTickCount = 0;
         }
 
-        logTimer = 0; // Reset to enforce 100ms intervals
+        logTimer = 0;
         logCounter = 0;
     }
 
@@ -411,12 +412,14 @@ function updateNeedlePhysics() {
     for (let i = 0; i < VU_METER_COUNT; i++) {
         const level = vuLevels[i];
         const db = level > 0 ? 20 * Math.log10(level) : -100;
-        const targetAngle = ANGLE_RANGE[0] + (db + 100) / 125 * (ANGLE_RANGE[1] - ANGLE_RANGE[0]) * 0.8;
+        // Adjusted mapping to allow peaks to hit closer to 38°
+        const targetAngle = ANGLE_RANGE[0] + (db + 100) / 100 * (ANGLE_RANGE[1] - ANGLE_RANGE[0]);
 
-        // Interpolate toward targetAngle
+        // Dynamic smoothing: fast attack, slow decay
+        const smoothing = needleAngles[i] < targetAngle ? attackSmoothing : decaySmoothing;
         needleAngles[i] += (targetAngle - needleAngles[i]) * smoothing * (dt / (1 / TARGET_FPS));
         needleAngles[i] = Math.max(ANGLE_RANGE[0], Math.min(ANGLE_RANGE[1], needleAngles[i]));
-        needleVelocities[i] = 0; // No velocity needed for interpolation
+        needleVelocities[i] = 0;
     }
 
     lastPhysicsTime = now;
@@ -473,7 +476,7 @@ function updateViz() {
         // Collect metrics every LOG_INTERVAL (100ms)
         logTimer += renderTime / 1000;
         if (logTimer >= LOG_INTERVAL) {
-            const fps = logCounter / LOG_INTERVAL; // Calculate FPS
+            const fps = logCounter / LOG_INTERVAL;
             const metricsFrame = {
                 timestamp: now.toFixed(2),
                 needleAngles: Array.from(needleAngles).map(a => a.toFixed(2)),
@@ -485,10 +488,11 @@ function updateViz() {
                 traceStreamsStatus: traceStreams ? 'active' : 'inactive',
                 targetAngles: Array.from(vuLevels).map(level => {
                     const db = level > 0 ? 20 * Math.log10(level) : -100;
-                    return (ANGLE_RANGE[0] + (db + 100) / 125 * (ANGLE_RANGE[1] - ANGLE_RANGE[0]) * 0.8).toFixed(2);
+                    return (ANGLE_RANGE[0] + (db + 100) / 100 * (ANGLE_RANGE[1] - ANGLE_RANGE[0])).toFixed(2);
                 }),
                 needleVelocities: Array.from(needleVelocities).map(v => v.toFixed(4)),
-                fps: fps.toFixed(2) // New: Track frame rate
+                fps: fps.toFixed(2),
+                dt: (renderTime / 1000).toFixed(4) // New: Track dt
             };
 
             // Compute raw waveform amplitudes
@@ -511,7 +515,8 @@ function updateViz() {
             }
             updatePlayerState({ vuMetrics: playerState.vuMetrics });
 
-            logTimer = 0; // Reset to enforce 100ms
+            logTimer = 0;
+            logCounter = 0;
         }
 
         // Existing rendering code
