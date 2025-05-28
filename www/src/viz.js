@@ -337,10 +337,8 @@ function updateVoiceBuffers() {
     }
 
     if (!traceStreams || traceStreams.length < 3) {
-        window.logmsg('updateVoiceBuffers: Trace streams not initialized', 0);
-        if (initTraceStreams()) {
-            window.logmsg('updateVoiceBuffers: Successfully reinitialized trace streams', 2);
-        } else {
+        window.logmsg('updateVoiceBuffers: Trace streams not initialized, attempting reinitialization', 0);
+        if (!initTraceStreams()) {
             window.logmsg('updateVoiceBuffers: Failed to reinitialize trace streams', 0);
             circularBuffers.forEach(buffer => buffer.fill(0));
             vuLevels.fill(0);
@@ -361,36 +359,35 @@ function updateVoiceBuffers() {
             }
         }
 
-        // Compute VU meter RMS over 1800 samples
+        // Compute VU meter RMS over USABLE_SAMPLES (777) for consistency
         vuLevels.fill(0);
         for (let voiceIdx = 0; voiceIdx < 3; voiceIdx++) {
             let sumSquares = 0;
             const buffer = circularBuffers[voiceIdx];
-            for (let i = 0; i < VU_WINDOW_SIZE; i++) {
-                const idx = (writePosition - i - 1 + CIRCULAR_BUFFER_SIZE) % CIRCULAR_BUFFER_SIZE;
+            const newestIdx = writePosition === 0 ? CIRCULAR_BUFFER_SIZE - 1 : writePosition - 1;
+            const startIdx = (newestIdx - USABLE_SAMPLES + CIRCULAR_BUFFER_SIZE) % CIRCULAR_BUFFER_SIZE;
+            for (let i = 0; i < USABLE_SAMPLES; i++) {
+                const idx = (startIdx + i) % CIRCULAR_BUFFER_SIZE;
                 const sample = buffer[idx];
                 sumSquares += sample * sample;
             }
-            vuLevels[voiceIdx] = Math.sqrt(sumSquares / VU_WINDOW_SIZE) * RMS_SCALING_FACTOR;
+            vuLevels[voiceIdx] = Math.sqrt(sumSquares / USABLE_SAMPLES) * 1.5; // Reduced RMS_SCALING_FACTOR from 2.0 to 1.5
             vuLevels[voiceIdx] = Math.min(vuLevels[voiceIdx], 1.0);
         }
 
         writePosition = (writePosition + USABLE_SAMPLES) % CIRCULAR_BUFFER_SIZE;
     } catch (error) {
         window.logmsg(`updateVoiceBuffers: Error fetching waveform data: ${error.message}`, 0);
-        circularBuffers.forEach(buffer => buffer.fill(0));
-        vuLevels.fill(0);
-        writePosition = 0;
-        traceStreams = null; // Reset traceStreams on error
+        traceStreams = null; // Reset traceStreams to force reinitialization
     }
 }
 
 // Update needle physics
 function updateNeedlePhysics() {
-    const dt = 1 / TARGET_FPS;
-    const kAttack = 100 / ATTACK_RATE;
-    const kDecay = 50 / DECAY_RATE;
-    const damping = 0.95;
+    const now = performance.now();
+    const renderTime = Math.min(now - lastPhysicsTime, 33.33) / 1000; // Cap dt at 33.33ms (30 FPS)
+    const dt = renderTime > 0 ? renderTime : 1 / TARGET_FPS; // Fallback to 1/60
+    const smoothing = 0.1; // Interpolation factor (lower = smoother, slower response)
 
     logTimer += dt;
     logCounter++;
@@ -402,14 +399,7 @@ function updateNeedlePhysics() {
             zeroTickCount = 0;
         }
 
-        if (zeroTickCount < ZERO_TICK_THRESHOLD) {
-            for (let i = 0; i < VU_METER_COUNT; i++) {
-                const db = vuLevels[i] > 0 ? 20 * Math.log10(vuLevels[i]) : -100;
-                const targetAngle = ANGLE_RANGE[0] + (db + 100) / 100 * (ANGLE_RANGE[1] - ANGLE_RANGE[0]);
-            }
-        }
-
-        logTimer = 0;
+        logTimer = 0; // Reset to enforce 100ms intervals
         logCounter = 0;
     }
 
@@ -421,25 +411,17 @@ function updateNeedlePhysics() {
     for (let i = 0; i < VU_METER_COUNT; i++) {
         const level = vuLevels[i];
         const db = level > 0 ? 20 * Math.log10(level) : -100;
-        const targetAngle = ANGLE_RANGE[0] + (db + 100) / 100 * (ANGLE_RANGE[1] - ANGLE_RANGE[0]);
+        const targetAngle = ANGLE_RANGE[0] + (db + 100) / 125 * (ANGLE_RANGE[1] - ANGLE_RANGE[0]) * 0.8;
 
-        const angleDiff = targetAngle - needleAngles[i];
-        if (angleDiff < -20) {
-            const alphaDecay = Math.min(1.0, dt / DECAY_RATE);
-            needleAngles[i] = needleAngles[i] + alphaDecay * (targetAngle - needleAngles[i]);
-            needleVelocities[i] = 0;
-        } else {
-            const currentAngle = needleAngles[i];
-            const velocity = needleVelocities[i];
-            const k = currentAngle < targetAngle ? kAttack : kDecay;
-            const acceleration = k * angleDiff * (1 + OVERSHOOT) - damping * velocity;
-            needleVelocities[i] += acceleration * dt;
-            needleAngles[i] += velocity * dt;
-        }
-
+        // Interpolate toward targetAngle
+        needleAngles[i] += (targetAngle - needleAngles[i]) * smoothing * (dt / (1 / TARGET_FPS));
         needleAngles[i] = Math.max(ANGLE_RANGE[0], Math.min(ANGLE_RANGE[1], needleAngles[i]));
+        needleVelocities[i] = 0; // No velocity needed for interpolation
     }
+
+    lastPhysicsTime = now;
 }
+
 
 // Initialize trace streams
 function initTraceStreams() {
@@ -489,15 +471,24 @@ function updateViz() {
         const isBarActive = playerState.isBarActive;
 
         // Collect metrics every LOG_INTERVAL (100ms)
-        logTimer += renderTime / 1000; // Convert ms to seconds
+        logTimer += renderTime / 1000;
         if (logTimer >= LOG_INTERVAL) {
+            const fps = logCounter / LOG_INTERVAL; // Calculate FPS
             const metricsFrame = {
-                timestamp: now.toFixed(2), // Frame timestamp in ms
-                needleAngles: Array.from(needleAngles).map(a => a.toFixed(2)), // VU needle angles
-                vuLevels: Array.from(vuLevels).map(l => l.toFixed(4)), // RMS levels
-                barLevels: Array.from(vuLevels).map(l => l.toFixed(4)), // Same as vuLevels for bars
-                rawAmplitudes: [], // Max absolute sample per voice
-                zeroTickCount: zeroTickCount // Consecutive zero ticks
+                timestamp: now.toFixed(2),
+                needleAngles: Array.from(needleAngles).map(a => a.toFixed(2)),
+                vuLevels: Array.from(vuLevels).map(l => l.toFixed(4)),
+                barLevels: Array.from(vuLevels).map(l => l.toFixed(4)),
+                rawAmplitudes: [],
+                zeroTickCount: zeroTickCount,
+                writePosition: writePosition,
+                traceStreamsStatus: traceStreams ? 'active' : 'inactive',
+                targetAngles: Array.from(vuLevels).map(level => {
+                    const db = level > 0 ? 20 * Math.log10(level) : -100;
+                    return (ANGLE_RANGE[0] + (db + 100) / 125 * (ANGLE_RANGE[1] - ANGLE_RANGE[0]) * 0.8).toFixed(2);
+                }),
+                needleVelocities: Array.from(needleVelocities).map(v => v.toFixed(4)),
+                fps: fps.toFixed(2) // New: Track frame rate
             };
 
             // Compute raw waveform amplitudes
@@ -516,11 +507,11 @@ function updateViz() {
             // Update playerState.vuMetrics (keep last 10 frames)
             playerState.vuMetrics.push(metricsFrame);
             if (playerState.vuMetrics.length > 10) {
-                playerState.vuMetrics.shift(); // Remove oldest frame
+                playerState.vuMetrics.shift();
             }
             updatePlayerState({ vuMetrics: playerState.vuMetrics });
 
-            logTimer = 0; // Reset timer
+            logTimer = 0; // Reset to enforce 100ms
         }
 
         // Existing rendering code
@@ -768,3 +759,5 @@ window.startVisualizations = startVisualizations;
 window.zoomWaveformIn = zoomWaveformIn;
 window.zoomWaveformOut = zoomWaveformOut;
 window.resetView = resetView;
+
+let lastPhysicsTime = performance.now()
