@@ -19,7 +19,7 @@ const FALLBACK_COLOR = '#555555'; // Fallback for unregulated data
 const VU_METER_COUNT = 3; // One per voice
 const NEEDLE_LENGTH = 50; // Pixels, scaled for 100x57px canvas
 const ANGLE_RANGE = [-50, 43]; // Degrees, -100 dB to 0 dB
-const ATTACK_RATE = 0.009; // Seconds, for spring strength (~3–6ms attack)
+const ATTACK_RATE = 0.9; // Seconds, for spring strength (~3–6ms attack)
 const DECAY_RATE = 0.07; // Seconds, for spring strength (~50–100ms decay)
 const OVERSHOOT = 0.15; // 15% overshoot for controlled 70s bounce
 const LOG_INTERVAL = 0.05; // Seconds, log 10 times per second (100ms)
@@ -306,10 +306,36 @@ function drawAmplitudeBar(canvasId, voiceIdx, amplitude) {
     ctx.fillStyle = '#000000'; // Black background
     ctx.fillRect(0, 0, width, height);
 
-    // Draw bar
-    const barHeight = amplitude * height; // Scale amplitude (0–1) to canvas height
-    ctx.fillStyle = '#00FF00'; // Green for visibility
+    // Use effectiveLevel and apply adjusted logarithmic scaling for bars
+    const effectiveLevel = Math.max(peakRMS[voiceIdx], amplitude);
+    const db = effectiveLevel > 0 ? 20 * Math.log10(effectiveLevel) : -100;
+    const normalizedLevel = (db + 100) / 110; // Less aggressive curve for bars (visual impact)
+    const barHeight = Math.min(Math.max(normalizedLevel * height, 0), height);
+
+    // Color gradient: green (bottom) to yellow (middle) to red (top)
+    const gradient = ctx.createLinearGradient(0, height, 0, 0);
+    gradient.addColorStop(0, '#00FF00'); // Green at bottom
+    gradient.addColorStop(0.5, '#FFFF00'); // Yellow in middle
+    gradient.addColorStop(1, '#FF0000'); // Red at top
+    ctx.fillStyle = gradient;
     ctx.fillRect(0, height - barHeight, width, barHeight); // Draw from bottom up
+
+    // Add a subtle peak marker (store peak height in a global array)
+    if (!window.peakBarHeights) {
+        window.peakBarHeights = new Float32Array(VU_METER_COUNT).fill(0);
+    }
+    window.peakBarHeights[voiceIdx] = Math.max(window.peakBarHeights[voiceIdx], barHeight);
+    // Decay peak marker slowly (mimic needle decay)
+    window.peakBarHeights[voiceIdx] -= 0.5; // ~0.5 pixels per frame (~30 pixels/sec at 60 FPS)
+    window.peakBarHeights[voiceIdx] = Math.max(0, window.peakBarHeights[voiceIdx]);
+    if (window.peakBarHeights[voiceIdx] > barHeight) {
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, height - window.peakBarHeights[voiceIdx]);
+        ctx.lineTo(width, height - window.peakBarHeights[voiceIdx]);
+        ctx.stroke();
+    }
 }
 
 // Update voice buffers and VU levels
@@ -410,8 +436,8 @@ function updateNeedlePhysics() {
     const now = performance.now();
     const renderTime = Math.min(now - lastPhysicsTime, 33.33) / 1000;
     const dt = renderTime > 0 ? renderTime : 1 / TARGET_FPS;
-    const attackSmoothing = 0.9; // Faster attack for sharper response
-    const decaySmoothing = 0.1; // Slightly faster decay for liveliness
+    const attackSmoothing = ATTACK_RATE; // Faster attack for sharper response
+    const decaySmoothing = DECAY_RATE; // Slightly faster decay for liveliness
 
     logTimer += dt;
     logCounter++;
@@ -504,14 +530,19 @@ function updateViz() {
         const player = window.player;
         if (logTimer >= LOG_INTERVAL && player && !player.isPaused()) {
             const fps = (logCounter / logTimer).toFixed(2);
-            const effectiveLevels = Array.from(vuLevels).map((level, i) => Math.max(peakRMS[i], level)); // For metrics
+            const effectiveLevels = Array.from(vuLevels).map((level, i) => Math.max(peakRMS[i], level));
+            const barHeightPercentages = effectiveLevels.map(level => {
+                const db = level > 0 ? 20 * Math.log10(level) : -100;
+                return ((db + 100) / 110).toFixed(4); // Match bar scaling
+            });
             const metricsFrame = {
                 timestamp: now.toFixed(2),
                 needleAngles: Array.from(needleAngles).map(a => a.toFixed(2)),
                 vuLevels: Array.from(vuLevels).map(l => l.toFixed(4)),
                 barLevels: Array.from(vuLevels).map(l => l.toFixed(4)),
                 peakRMS: Array.from(peakRMS).map(l => l.toFixed(4)),
-                effectiveLevels: effectiveLevels.map(l => l.toFixed(4)), // New: Track effective level used
+                effectiveLevels: effectiveLevels.map(l => l.toFixed(4)),
+                barHeightPercentage: barHeightPercentages, // New: Track bar height percentage
                 rawAmplitudes: [],
                 zeroTickCount: zeroTickCount,
                 writePosition: writePosition,
