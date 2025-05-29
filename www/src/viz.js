@@ -18,12 +18,14 @@ const FALLBACK_COLOR = '#555555'; // Fallback for unregulated data
 // VU meter configuration
 const VU_METER_COUNT = 3; // One per voice
 const NEEDLE_LENGTH = 50; // Pixels, scaled for 100x57px canvas
-const ANGLE_RANGE = [-50, 38]; // Degrees, -100 dB to 0 dB
+const ANGLE_RANGE = [-50, 43]; // Degrees, -100 dB to 0 dB
 const ATTACK_RATE = 0.009; // Seconds, for spring strength (~3–6ms attack)
 const DECAY_RATE = 0.07; // Seconds, for spring strength (~50–100ms decay)
 const OVERSHOOT = 0.15; // 15% overshoot for controlled 70s bounce
-const LOG_INTERVAL = 0.1; // Seconds, log 10 times per second (100ms)
+const LOG_INTERVAL = 0.05; // Seconds, log 10 times per second (100ms)
 const ZERO_TICK_THRESHOLD = 2; // Stop logging after 2 consecutive all-zero ticks
+const PEAK_WINDOW_SIZE = 200; // ~5ms at 44100 Hz for short transients
+let peakRMS = new Float32Array(VU_METER_COUNT); // Peak RMS for each voice
 
 // Zoom configuration
 const SINGLE_CLICK_ZOOM_STEP = 1.125; // 12.5% for single clicks
@@ -316,6 +318,7 @@ function updateVoiceBuffers() {
     if (!player || !player._isSongReady) {
         circularBuffers.forEach(buffer => buffer.fill(0));
         vuLevels.fill(0);
+        peakRMS.fill(0);
         needleAngles.fill(ANGLE_RANGE[0]);
         needleVelocities.fill(0);
         writePosition = 0;
@@ -324,6 +327,7 @@ function updateVoiceBuffers() {
 
     if (player.isPaused()) {
         vuLevels.fill(0);
+        peakRMS.fill(0);
         return;
     }
 
@@ -332,6 +336,7 @@ function updateVoiceBuffers() {
         window.logmsg('updateVoiceBuffers: SIDBackendAdapter not ready', 0);
         circularBuffers.forEach(buffer => buffer.fill(0));
         vuLevels.fill(0);
+        peakRMS.fill(0);
         writePosition = 0;
         return;
     }
@@ -342,6 +347,7 @@ function updateVoiceBuffers() {
             window.logmsg('updateVoiceBuffers: Failed to reinitialize trace streams', 0);
             circularBuffers.forEach(buffer => buffer.fill(0));
             vuLevels.fill(0);
+            peakRMS.fill(0);
             writePosition = 0;
             return;
         }
@@ -359,7 +365,7 @@ function updateVoiceBuffers() {
             }
         }
 
-        // Compute VU meter RMS
+        // Compute average RMS (existing)
         vuLevels.fill(0);
         for (let voiceIdx = 0; voiceIdx < 3; voiceIdx++) {
             let sumSquares = 0;
@@ -371,8 +377,24 @@ function updateVoiceBuffers() {
                 const sample = buffer[idx];
                 sumSquares += sample * sample;
             }
-            vuLevels[voiceIdx] = Math.sqrt(sumSquares / USABLE_SAMPLES) * 2.0; // Increased RMS_SCALING_FACTOR from 1.5 to 2.0
+            vuLevels[voiceIdx] = Math.sqrt(sumSquares / USABLE_SAMPLES) * 2.0;
             vuLevels[voiceIdx] = Math.min(vuLevels[voiceIdx], 1.0);
+        }
+
+        // Compute peak RMS (new, shorter window)
+        peakRMS.fill(0);
+        for (let voiceIdx = 0; voiceIdx < 3; voiceIdx++) {
+            let sumSquares = 0;
+            const buffer = circularBuffers[voiceIdx];
+            const newestIdx = writePosition === 0 ? CIRCULAR_BUFFER_SIZE - 1 : writePosition - 1;
+            const startIdx = (newestIdx - PEAK_WINDOW_SIZE + CIRCULAR_BUFFER_SIZE) % CIRCULAR_BUFFER_SIZE;
+            for (let i = 0; i < PEAK_WINDOW_SIZE; i++) {
+                const idx = (startIdx + i) % CIRCULAR_BUFFER_SIZE;
+                const sample = buffer[idx];
+                sumSquares += sample * sample;
+            }
+            peakRMS[voiceIdx] = Math.sqrt(sumSquares / PEAK_WINDOW_SIZE) * 2.0;
+            peakRMS[voiceIdx] = Math.min(peakRMS[voiceIdx], 1.0);
         }
 
         writePosition = (writePosition + USABLE_SAMPLES) % CIRCULAR_BUFFER_SIZE;
@@ -382,13 +404,14 @@ function updateVoiceBuffers() {
     }
 }
 
+
 // Update needle physics
 function updateNeedlePhysics() {
     const now = performance.now();
     const renderTime = Math.min(now - lastPhysicsTime, 33.33) / 1000;
     const dt = renderTime > 0 ? renderTime : 1 / TARGET_FPS;
-    const attackSmoothing = 0.3; // Fast attack for rising signals
-    const decaySmoothing = 0.05; // Slower decay for falling signals
+    const attackSmoothing = 0.9; // Faster attack for sharper response
+    const decaySmoothing = 0.1; // Slightly faster decay for liveliness
 
     logTimer += dt;
     logCounter++;
@@ -410,12 +433,11 @@ function updateNeedlePhysics() {
     }
 
     for (let i = 0; i < VU_METER_COUNT; i++) {
-        const level = vuLevels[i];
+        // Use the higher of peakRMS and vuLevels to capture transients
+        const level = Math.max(peakRMS[i], vuLevels[i]);
         const db = level > 0 ? 20 * Math.log10(level) : -100;
-        // Adjusted mapping to allow peaks to hit closer to 38°
         const targetAngle = ANGLE_RANGE[0] + (db + 100) / 100 * (ANGLE_RANGE[1] - ANGLE_RANGE[0]);
 
-        // Dynamic smoothing: fast attack, slow decay
         const smoothing = needleAngles[i] < targetAngle ? attackSmoothing : decaySmoothing;
         needleAngles[i] += (targetAngle - needleAngles[i]) * smoothing * (dt / (1 / TARGET_FPS));
         needleAngles[i] = Math.max(ANGLE_RANGE[0], Math.min(ANGLE_RANGE[1], needleAngles[i]));
@@ -456,6 +478,8 @@ function initTraceStreams() {
 }
 
 // Animation loop
+let waveformFrameSkip = 0;
+let vuMeterFrameSkip = 0;
 function updateViz() {
     if (!isVisualizationActive) {
         window.logmsg('updateViz: Visualization loop stopped', 2);
@@ -473,39 +497,50 @@ function updateViz() {
         const isVUActive = playerState.isVUActive;
         const isBarActive = playerState.isBarActive;
 
-        // Collect metrics every LOG_INTERVAL (100ms)
-        logTimer += renderTime / 1000;
-        if (logTimer >= LOG_INTERVAL) {
-            const fps = logCounter / LOG_INTERVAL;
+        // Enforce 100ms intervals for metrics, but only collect if not paused
+        const elapsed = (now - lastLogTime) / 1000;
+        logTimer += elapsed;
+        logCounter++;
+        const player = window.player;
+        if (logTimer >= LOG_INTERVAL && player && !player.isPaused()) { // Skip metrics collection when paused
+            const fps = (logCounter / logTimer).toFixed(2);
             const metricsFrame = {
                 timestamp: now.toFixed(2),
                 needleAngles: Array.from(needleAngles).map(a => a.toFixed(2)),
                 vuLevels: Array.from(vuLevels).map(l => l.toFixed(4)),
                 barLevels: Array.from(vuLevels).map(l => l.toFixed(4)),
+                peakRMS: Array.from(peakRMS).map(l => l.toFixed(4)),
                 rawAmplitudes: [],
                 zeroTickCount: zeroTickCount,
                 writePosition: writePosition,
                 traceStreamsStatus: traceStreams ? 'active' : 'inactive',
                 targetAngles: Array.from(vuLevels).map(level => {
-                    const db = level > 0 ? 20 * Math.log10(level) : -100;
-                    return (ANGLE_RANGE[0] + (db + 100) / 100 * (ANGLE_RANGE[1] - ANGLE_RANGE[0])).toFixed(2);
+                    const effectiveLevel = Math.max(peakRMS[vuLevels.indexOf(level)], level);
+                    const db = effectiveLevel > 0 ? 20 * Math.log10(effectiveLevel) : -100;
+                    return (ANGLE_RANGE[0] + (db + 100) / 120 * (ANGLE_RANGE[1] - ANGLE_RANGE[0])).toFixed(2);
                 }),
                 needleVelocities: Array.from(needleVelocities).map(v => v.toFixed(4)),
-                fps: fps.toFixed(2),
-                dt: (renderTime / 1000).toFixed(4) // New: Track dt
+                fps: fps,
+                dt: (renderTime / 1000).toFixed(4),
+                bufferSampleCheck: [],
+                paused: false // Indicate player state
             };
 
-            // Compute raw waveform amplitudes
+            // Compute raw waveform amplitudes and buffer check
             for (let voiceIdx = 0; voiceIdx < 3; voiceIdx++) {
                 const buffer = circularBuffers[voiceIdx];
                 let maxAmp = 0;
+                let sampleSum = 0;
                 const newestIdx = writePosition === 0 ? CIRCULAR_BUFFER_SIZE - 1 : writePosition - 1;
                 const startIdx = (newestIdx - USABLE_SAMPLES + CIRCULAR_BUFFER_SIZE) % CIRCULAR_BUFFER_SIZE;
                 for (let i = 0; i < USABLE_SAMPLES; i++) {
                     const idx = (startIdx + i) % CIRCULAR_BUFFER_SIZE;
-                    maxAmp = Math.max(maxAmp, Math.abs(buffer[idx]));
+                    const sample = buffer[idx];
+                    maxAmp = Math.max(maxAmp, Math.abs(sample));
+                    sampleSum += Math.abs(sample);
                 }
                 metricsFrame.rawAmplitudes.push(maxAmp.toFixed(4));
+                metricsFrame.bufferSampleCheck.push((sampleSum / USABLE_SAMPLES).toFixed(4));
             }
 
             // Update playerState.vuMetrics (keep last 10 frames)
@@ -517,15 +552,18 @@ function updateViz() {
 
             logTimer = 0;
             logCounter = 0;
+            lastLogTime = now;
         }
 
-        // Existing rendering code
-        if (isWaveformActive) {
+        // Throttle rendering
+        waveformFrameSkip = (waveformFrameSkip + 1) % 2;
+        vuMeterFrameSkip = (vuMeterFrameSkip + 1) % 2;
+        if (isWaveformActive && waveformFrameSkip === 0) {
             drawVoiceWaveform('voice1-canvas', 0);
             drawVoiceWaveform('voice2-canvas', 1);
             drawVoiceWaveform('voice3-canvas', 2);
         }
-        if (isVUActive) {
+        if (isVUActive && vuMeterFrameSkip === 0) {
             drawVUMeter('vu1-canvas', 0);
             drawVUMeter('vu2-canvas', 1);
             drawVUMeter('vu3-canvas', 2);
@@ -540,6 +578,9 @@ function updateViz() {
 
     requestAnimationFrame(updateViz);
 }
+
+// Initialize lastLogTime
+let lastLogTime = performance.now();
 
 // Zoom controls
 export function zoomWaveformIn(isContinuous = false) {
