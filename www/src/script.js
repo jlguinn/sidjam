@@ -32,7 +32,6 @@ const loadSongBound = (filename, trackNumber, autoPlay = true) => player.loadSon
 );
 const updateVsMatchupBound = () => {
     ui.updateVsMatchup(brackets.getPlayerState());
-    checkSong2Clipping(); 
 };
 const updateRoundInfoBound = () => ui.updateRoundInfo(brackets.getPlayerState());
 const updateWinnerButtonsBound = () => ui.updateWinnerButtons(brackets.getPlayerState(), player.sidPlayer);
@@ -88,33 +87,6 @@ async function savePlayerState() {
     } catch (error) {
         window.logmsg(`Error saving state: ${error}`, 0);
     }
-}
-
-function checkSong2Clipping() {
-    const song2 = document.getElementById('song2');
-    const authLink = document.getElementById('auth-link');
-    const preferencesLink = document.getElementById('preferences-link');
-
-    if (!song2) {
-        window.logmsg('song2 element not found', 0);
-        return;
-    }
-
-    const tempElement = document.createElement('span');
-    tempElement.style.visibility = 'hidden';
-    tempElement.style.position = 'absolute';
-    tempElement.style.whiteSpace = 'nowrap';
-    tempElement.style.font = window.getComputedStyle(song2).font;
-    tempElement.textContent = song2.textContent;
-    document.body.appendChild(tempElement);
-
-    const intrinsicWidth = tempElement.offsetWidth;
-    document.body.removeChild(tempElement);
-
-    const clippingThreshold = 194;
-    const displayValue = intrinsicWidth > clippingThreshold ? 'none' : 'block';
-    if (authLink) authLink.style.display = displayValue;
-    if (preferencesLink) preferencesLink.style.display = displayValue;
 }
 
 window.toggleWaveform = () => {
@@ -1208,13 +1180,6 @@ async function initializeApp() {
         });
     }
 
-    if (preferencesLink) {
-        preferencesLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            window.togglePreferencesPopUp();
-        });
-    }
-
     if (profileIcon) {
         profileIcon.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -1464,7 +1429,6 @@ async function initializeApp() {
         window.logmsg('Color toggle button not found in the DOM', 0);
     }
 
-    checkSong2Clipping();
 }
     
 const authOverlay = document.getElementById('authOverlay');

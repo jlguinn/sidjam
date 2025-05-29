@@ -233,13 +233,13 @@ $cxn->close();
     });
 </script>
 <body>
-<header id="header">
-    <button id="help-button" title="Help" aria-label="Help">💡</button>
-    <?php if ($debug_enabled): ?>
-        <button id="log-player-state" title="Log Player State" aria-label="Log Player State">P</button>
-    <?php endif; ?>
-    <h1 id="title">sID JAm</h1>
-</header>
+    <header id="header">
+        <button id="help-button" title="Help" aria-label="Help">💡</button>
+        <?php if ($debug_enabled): ?>
+            <button id="log-player-state" title="Log Player State" aria-label="Log Player State">P</button>
+        <?php endif; ?>
+        <h1 id="title">sID JAm</h1>
+    </header>
 
     <div id="profile-package">
         <div id="user-info">
@@ -248,11 +248,6 @@ $cxn->close();
         <div id="profile-icon">
             <div id="profile-bitmap"></div>
         </div>
-        <?php if ($is_logged_in): ?>
-            <div id="preferences-link"><a href="#" onclick="window.togglePreferencesPopUp(); return false;">My Preferences</a></div>
-        <?php else: ?>
-            <div id="auth-link"><a href="#" onclick="window.toggleAuthPopUp(); return false;">Sign in / Register</a></div>
-        <?php endif; ?>
     </div>
 
     <div id="version">Version 2025.05.20 (beta)</div>

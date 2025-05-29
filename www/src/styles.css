@@ -96,7 +96,7 @@ body {
 
 #profile-icon {
     margin-top: 5px; /* Add space above the bitmap to nudge it down */
-    margin-bottom: var(--spacing-xs);
+    margin-bottom: 10px; /* Increased to compensate for removed links */
     transition: filter 0.3s ease;
     cursor: pointer;
 }
@@ -110,35 +110,20 @@ body {
     cursor: pointer;
 }
 
-#auth-link a,
-#preferences-link a {
-    color: inherit;
-    text-decoration: underline;
-    cursor: pointer;
-    transition: filter 0.3s ease, transform 0.3s ease;
-}
-
-#auth-link a.brighten-on-hover:hover,
 #profile-icon.brighten-on-hover:hover,
-#auth-link a.brighten-on-hover.hover,
-#profile-icon.brighten-on-hover.hover,
-#preferences-link a.brighten-on-hover:hover,
-#preferences-link a.brighten-on-hover.hover {
+#profile-icon.brighten-on-hover.hover {
     filter: brightness(1.3);
     transform: scale(1.05);
 }
 
-#auth-link a.darken-on-hover:hover,
 #profile-icon.darken-on-hover:hover,
-#auth-link a.darken-on-hover.hover,
-#profile-icon.darken-on-hover.hover,
-#preferences-link a.darken-on-hover:hover,
-#preferences-link a.darken-on-hover.hover {
+#profile-icon.darken-on-hover.hover {
     filter: brightness(0.7);
     transform: scale(1.05);
 }
 
 /* Matchup and Round Info */
+
 #vs-matchup {
     display: flex;
     justify-content: center;

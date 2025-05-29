@@ -160,21 +160,6 @@ export function applyTheme(currentMode) {
     updateVUMeterVisibility(brackets.getPlayerState().isVUActive, brackets.getPlayerState().isBarActive);
 }
 
-// Synchronize hover effects
-function syncHoverOn() {
-    const authLink = document.getElementById("auth-link")?.querySelector("a");
-    const profileIcon = document.getElementById("profile-icon");
-    if (authLink) authLink.classList.add('hover');
-    if (profileIcon) profileIcon.classList.add('hover');
-}
-
-function syncHoverOff() {
-    const authLink = document.getElementById("auth-link")?.querySelector("a");
-    const profileIcon = document.getElementById("profile-icon");
-    if (authLink) authLink.classList.remove('hover');
-    if (profileIcon) profileIcon.classList.remove('hover');
-}
-
 export function updateVsMatchup(playerState) {
     const vsMatchup = document.getElementById("vs-matchup");
     const song1 = document.getElementById("song1");
