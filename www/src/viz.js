@@ -433,10 +433,10 @@ function updateNeedlePhysics() {
     }
 
     for (let i = 0; i < VU_METER_COUNT; i++) {
-        // Use the higher of peakRMS and vuLevels to capture transients
         const level = Math.max(peakRMS[i], vuLevels[i]);
         const db = level > 0 ? 20 * Math.log10(level) : -100;
-        const targetAngle = ANGLE_RANGE[0] + (db + 100) / 100 * (ANGLE_RANGE[1] - ANGLE_RANGE[0]);
+        // Adjusted mapping to reduce pegging: soften mid-level response
+        const targetAngle = ANGLE_RANGE[0] + (db + 100) / 130 * (ANGLE_RANGE[1] - ANGLE_RANGE[0]);
 
         const smoothing = needleAngles[i] < targetAngle ? attackSmoothing : decaySmoothing;
         needleAngles[i] += (targetAngle - needleAngles[i]) * smoothing * (dt / (1 / TARGET_FPS));
@@ -497,33 +497,35 @@ function updateViz() {
         const isVUActive = playerState.isVUActive;
         const isBarActive = playerState.isBarActive;
 
-        // Enforce 100ms intervals for metrics, but only collect if not paused
+        // Enforce LOG_INTERVAL intervals for metrics (e.g., 0.05s = 50ms), but only collect if not paused
         const elapsed = (now - lastLogTime) / 1000;
         logTimer += elapsed;
         logCounter++;
         const player = window.player;
-        if (logTimer >= LOG_INTERVAL && player && !player.isPaused()) { // Skip metrics collection when paused
+        if (logTimer >= LOG_INTERVAL && player && !player.isPaused()) {
             const fps = (logCounter / logTimer).toFixed(2);
+            const effectiveLevels = Array.from(vuLevels).map((level, i) => Math.max(peakRMS[i], level)); // For metrics
             const metricsFrame = {
                 timestamp: now.toFixed(2),
                 needleAngles: Array.from(needleAngles).map(a => a.toFixed(2)),
                 vuLevels: Array.from(vuLevels).map(l => l.toFixed(4)),
                 barLevels: Array.from(vuLevels).map(l => l.toFixed(4)),
                 peakRMS: Array.from(peakRMS).map(l => l.toFixed(4)),
+                effectiveLevels: effectiveLevels.map(l => l.toFixed(4)), // New: Track effective level used
                 rawAmplitudes: [],
                 zeroTickCount: zeroTickCount,
                 writePosition: writePosition,
                 traceStreamsStatus: traceStreams ? 'active' : 'inactive',
-                targetAngles: Array.from(vuLevels).map(level => {
-                    const effectiveLevel = Math.max(peakRMS[vuLevels.indexOf(level)], level);
+                targetAngles: Array.from(vuLevels).map((level, i) => {
+                    const effectiveLevel = effectiveLevels[i];
                     const db = effectiveLevel > 0 ? 20 * Math.log10(effectiveLevel) : -100;
-                    return (ANGLE_RANGE[0] + (db + 100) / 120 * (ANGLE_RANGE[1] - ANGLE_RANGE[0])).toFixed(2);
+                    return (ANGLE_RANGE[0] + (db + 100) / 130 * (ANGLE_RANGE[1] - ANGLE_RANGE[0])).toFixed(2);
                 }),
                 needleVelocities: Array.from(needleVelocities).map(v => v.toFixed(4)),
                 fps: fps,
                 dt: (renderTime / 1000).toFixed(4),
                 bufferSampleCheck: [],
-                paused: false // Indicate player state
+                paused: false
             };
 
             // Compute raw waveform amplitudes and buffer check
