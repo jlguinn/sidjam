@@ -1,3 +1,4 @@
+// ui.js
 import { baseColorSchemes, getInvertedTheme } from './themes.js';
 import * as brackets from './brackets.js';
 import { renderProfileBitmap, renderWinnerButtonBitmap } from './bitmap.js';
@@ -14,11 +15,6 @@ export function getCurrentThemeIndex() {
     return currentThemeIndex;
 }
 
-function flipBitmapHorizontally(bitmap) {
-    return bitmap.map(row => [...row].reverse());
-}
-
-// Utility function to calculate luminance of a hex color
 function calculateLuminance(hexColor) {
     hexColor = hexColor.replace('#', '');
     const r = parseInt(hexColor.substr(0, 2), 16) / 255;
@@ -27,16 +23,14 @@ function calculateLuminance(hexColor) {
     return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 
-// Calculate contrast ratio between two colors
 function getContrastRatio(color1, color2) {
     const l1 = calculateLuminance(color1) + 0.05;
     const l2 = calculateLuminance(color2) + 0.05;
     return l1 > l2 ? l1 / l2 : l2 / l1;
 }
 
-// Adjust text color based on contrast with highlight
 function adjustTextColor(textColor, highlightColor, fallbackColor) {
-    const contrastThreshold = 4.5; // WCAG AA standard
+    const contrastThreshold = 4.5;
     if (getContrastRatio(textColor, highlightColor) >= contrastThreshold) {
         return textColor;
     }
@@ -50,7 +44,6 @@ export function applyTheme(currentMode) {
     const baseTheme = baseColorSchemes[currentThemeIndex];
     const theme = currentMode === "nowPlaying" ? getInvertedTheme(baseTheme) : baseTheme;
 
-    // Apply exterior styles
     const body = document.body;
     const title = document.getElementById("title");
     const version = document.getElementById("version");
@@ -96,7 +89,6 @@ export function applyTheme(currentMode) {
         profileIcon.classList.add(luminance > 0.5 ? 'darken-on-hover' : 'brighten-on-hover');
     }
 
-    // Synchronize hover effects for both auth and preferences links
     const isLoggedIn = window.isLoggedIn || false;
     const activeLink = isLoggedIn ? preferencesLink : authLink;
     if (activeLink && profileIcon) {
@@ -120,7 +112,6 @@ export function applyTheme(currentMode) {
         profileIcon.removeEventListener('mouseout', hoverOffHandler);
     }
 
-    // Apply interior styles
     const playerInfo = document.getElementById("player-info");
     const trackDetails = document.getElementById("track-details");
     const songTitle = document.getElementById("song-title");
@@ -134,10 +125,8 @@ export function applyTheme(currentMode) {
     trackDetails.style.color = theme.interiorTextColor;
     songTitle.style.color = theme.interiorTextColor;
 
-    // Update profile bitmap based on login status
     renderProfileBitmap(isLoggedIn, theme.exteriorTextColor);
 
-    // Update color toggle button
     const nextIndex = (currentThemeIndex + 1) % baseColorSchemes.length;
     const nextBaseTheme = baseColorSchemes[nextIndex];
     const nextTheme = currentMode === "nowPlaying" ? getInvertedTheme(nextBaseTheme) : nextBaseTheme;
@@ -155,7 +144,6 @@ export function applyTheme(currentMode) {
     }
     button.title = `Switch Theme \n  From: ${baseTheme.name}\n  To: ${nextBaseTheme.name}`;
 
-    // Reapply waveform visibility
     updateWaveformVisibility(brackets.getPlayerState().isWaveformActive);
     updateVUMeterVisibility(brackets.getPlayerState().isVUActive, brackets.getPlayerState().isBarActive);
 }
@@ -173,13 +161,10 @@ export function updateVsMatchup(playerState) {
     const baseTheme = baseColorSchemes[currentThemeIndex];
     const theme = playerState.currentMode === "nowPlaying" ? getInvertedTheme(baseTheme) : baseTheme;
     const contenderHighlight = "#00FFFF";
-    const flameHighlight = "#8B0000";
     const contenderTextColor = adjustTextColor(theme.exteriorTextColor, contenderHighlight, theme.interiorTextColor);
-    const flameTextColor = "#FFFFFF";
 
     vsMatchup.style.setProperty('--text-exterior', theme.exteriorTextColor);
     vsMatchup.style.setProperty('--text-contender', contenderTextColor);
-    vsMatchup.style.setProperty('--text-flame', flameTextColor);
 
     song1.classList.remove("active-song", "flame-song");
     song2.classList.remove("active-song", "flame-song");
@@ -193,14 +178,24 @@ export function updateVsMatchup(playerState) {
         vsMatchup.classList.remove("now-playing");
         const songName0 = playerState.contenders[0]?.split('/').pop() || "-";
         const songName1 = playerState.contenders[1]?.split('/').pop() || "-";
-        const song1Class = playerState.isFlameActive && playerState.activeContender === 0 ? 'flame-song text--flame' : (playerState.hasPlayed && playerState.activeContender === 0 ? 'active-song text--contender' : 'text--exterior');
-        const song2Class = playerState.isFlameActive && playerState.activeContender === 1 ? 'flame-song text--flame' : (playerState.hasPlayed && playerState.activeContender === 1 ? 'active-song text--contender' : 'text--exterior');
+        let song1Class = playerState.hasPlayed && playerState.activeContender === 0 ? 'active-song text--contender' : 'text--exterior';
+        let song2Class = playerState.hasPlayed && playerState.activeContender === 1 ? 'active-song text--contender' : 'text--exterior';
+
+        // Apply flame-song class to the active contender when isFlameActive is true
+        if (playerState.isFlameActive) {
+            if (playerState.activeContender === 0) {
+                song1Class = 'flame-song';
+            } else if (playerState.activeContender === 1) {
+                song2Class = 'flame-song';
+            }
+        }
 
         song1.innerHTML = `<span class="${song1Class}" title="${playerState.contenders[0] || '-'}">${songName0}</span>`;
         vsText.textContent = " - vs - ";
         song2.innerHTML = `<span class="${song2Class}" title="${playerState.contenders[1] || '-'}">${songName1}</span>`;
     }
 }
+
 
 let blinkMessageTimeout = null;
 
@@ -244,14 +239,11 @@ export function updateRoundInfo(playerState) {
         return;
     }
 
-    if (playerState.isFlameActive && !playerState.bothContendersSelected && playerState.winner === null) {
+    if (playerState.isFlameActive) {
         roundDiv.innerHTML = `<span class="flame-activated text--exterior">Flame Activated</span>`;
         blinkMessageTimeout = setTimeout(() => {
-            if (playerState.currentMode === "bout" && playerState.isFlameActive && !playerState.bothContendersSelected && playerState.winner === null) {
-                const marqueeMessage = playerState.isUnplayableSID
-                    ? "Unplayable SID detected... Click jAM to eliminate or flame to cancel..."
-                    : "Contender queued for elimination... Click jAM to confirm or flame to cancel...";
-                roundDiv.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="3" class="text--exterior">${marqueeMessage}</marquee>`;
+            if (playerState.isFlameActive) {
+                roundDiv.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="3">Click jAM to flame this contender or click Flame again to cancel...</marquee>`;
             }
             blinkMessageTimeout = null;
         }, 2000);
@@ -277,7 +269,6 @@ export function decodeHtmlEntities(str) {
 
 export function updateSongInfo(sidPlayer) {
     if (!sidPlayer) {
-        // console.error('SID player not provided');
         return;
     }
 
@@ -359,7 +350,6 @@ export function updateVUMeterState() {
     updateVUMeterVisibility(state.isVUActive, state.isBarActive);
     const vuToggleButton = document.getElementById("vu-toggle-button");
     if (vuToggleButton) {
-        // Maintain existing button behavior (no appearance changes)
         vuToggleButton.disabled = false;
     } else {
         console.error('VU toggle button not found in the DOM');
@@ -368,7 +358,6 @@ export function updateVUMeterState() {
 
 export function updateNavigationButtons(sidPlayer) {
     if (!sidPlayer) {
-        // console.error('SID player not provided');
         return;
     }
 
@@ -420,7 +409,6 @@ export function updateWinnerButtons(playerState, sidPlayer) {
     winnerRight.classList.toggle("disabled", disabled);
     jamButton.disabled = !sidPlayer;
 
-    // Render bitmaps only if state has changed
     const buttons = [
         { id: 'winner-left', index: 0, element: winnerLeft },
         { id: 'winner-right', index: 1, element: winnerRight }

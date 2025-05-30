@@ -15,9 +15,8 @@
     --spacing-sm: 10px;
     --spacing-md: 20px;
     --spacing-lg: 40px;
-     --text-exterior: inherit;
+    --text-exterior: inherit;
     --text-contender: inherit;
-    --text-flame: #FFFFFF;
     --text-winner: #000000;
 }
 /* CSS Reset */
@@ -44,7 +43,6 @@ body {
 /* Utility Classes */
 .text--exterior { color: var(--text-exterior); }
 .text--contender { color: var(--text-contender); }
-.text--flame { color: var(--text-flame); }
 .text--winner { color: var(--text-winner); }
 
 /* Header Styles */
@@ -123,7 +121,6 @@ body {
 }
 
 /* Matchup and Round Info */
-
 #vs-matchup {
     display: flex;
     justify-content: center;
@@ -131,9 +128,8 @@ body {
     font-weight: bold;
     margin-bottom: var(--spacing-xs);
     transition: color 0.3s;
-     --text-exterior: inherit;
+    --text-exterior: inherit;
     --text-contender: inherit;
-    --text-flame: #FFFFFF;
     --text-winner: #000000;
 }
 #vs-matchup.now-playing {
@@ -167,9 +163,8 @@ body {
     transition: color 0.3s;
     min-height: 31px;
     line-height: 24px;
-     --text-exterior: inherit;
+    --text-exterior: inherit;
     --text-contender: inherit;
-    --text-flame: #FFFFFF;
     --text-winner: #000000;
 }
 
@@ -295,13 +290,6 @@ body {
     background-color: #00ffff;
     padding: 2px var(--spacing-xs);
     border-radius: 3px;
-}
-
-.flame-song {
-    background-color: #8B0000;
-    padding: 2px var(--spacing-xs);
-    border-radius: 3px;
-    color: white;
 }
 
 .winner-highlight {
@@ -623,7 +611,6 @@ body {
     transition: filter 0.3s ease, transform 0.3s ease;
 }
 
-
 .viz-toggle-button--vu {
     background-image: url('../image/vu_button.png');
 }
@@ -682,7 +669,6 @@ body {
     align-items: center;
 }
 
-
 #bracket-select {
     margin-right: var(--spacing-xs);
 }
@@ -740,6 +726,18 @@ body {
 #flame-controls.hidden {
     display: none;
 }
+
+.flame-activated {
+    animation: blink 2s forwards;
+}
+
+.flame-song {
+    background-color: #8B0000;
+    padding: 2px var(--spacing-xs);
+    border-radius: 3px;
+    color: #FFFFFF;
+}
+
 
 #reviveButton {
     display: none;
@@ -1189,8 +1187,6 @@ body {
     border-color: #999;
 }
 
-
-/* Help Button */
 /* Help Button */
 #help-button {
     position: absolute;
@@ -1225,34 +1221,6 @@ body {
     position: absolute;
     top: 2px; /* Align with help button */
     left: 28px; /* Adjusted to maintain 4px gap from help button (24px width + 4px) */
-    width: 24px;
-    height: 24px;
-    padding: 0;
-    background-color: var(--muted);
-    color: var(--background-alt);
-    border: 2px solid #666;
-    border-radius: 4px;
-    font-family: 'Tektur', sans-serif;
-    font-size: 12px;
-    font-weight: bold;
-    cursor: pointer;
-    z-index: 1000;
-}
-
-#log-player-state:hover {
-    background-color: #555;
-    border-color: #999;
-}
-#help-button:focus {
-    outline: none;
-    box-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
-}
-
-/* Log Player State Button */
-#log-player-state {
-    position: absolute;
-    top: 2px; /* Align with help button */
-    left: 30px; /* Shift right to avoid overlap (2px + 24px + 4px gap) */
     width: 24px;
     height: 24px;
     padding: 0;

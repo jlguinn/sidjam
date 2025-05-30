@@ -1,3 +1,4 @@
+// brackets.js
 import { sidPlayer, isPlaying, stopTimer, setIsPlaying } from './player.js';
 import { applyTheme, updateRoundInfo, getCurrentThemeIndex, updateSongTitleHighlight } from './ui.js';
 import { baseColorSchemes } from './themes.js';
@@ -61,10 +62,9 @@ export let playerState = {
     nowPlayingSong: null,
     peekPlayingSong: null,
     nowPlayingSongBracket: null,
-    isUnplayableSID: false,
     isWaveformActive: true,
     isVUActive: true,
-    isBarActive: false, 
+    isBarActive: false,
     zoomFactor: 46.13,
     vuMetrics: []
 };
@@ -79,9 +79,7 @@ export function getPlayerState() {
 
 export function updatePlayerState(updates) {
     playerState = { ...playerState, ...updates };
-    // window.logmsg(`Updated playerState: ${JSON.stringify(playerState)}`, 2);
 }
-
 
 export function isSpecialBracket(bracket) {
     const specialBrackets = ["All", "Eliminated"];
@@ -149,8 +147,8 @@ export function findFallbackBracket() {
     nonEmptyBrackets.sort((a, b) => {
         const [aWins, aLosses] = a.split(" - ").map(Number);
         const [bWins, bLosses] = b.split(" - ").map(Number);
-        if (aWins !== bWins) return aWins - bWins; // Sort by wins ASC
-        return bLosses - aLosses; // If wins equal, sort by losses DESC
+        if (aWins !== bWins) return aWins - bWins;
+        return bLosses - aLosses;
     });
 
     const selectedBracket = nonEmptyBrackets[0];
@@ -225,7 +223,6 @@ export function pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerBut
         hasJammed: false,
         bothContendersSelected: false,
         isFlameActive: false,
-        isUnplayableSID: false,
         activeContender: 0
     });
 
@@ -298,8 +295,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                     winner: null,
                     hasJammed: false,
                     bothContendersSelected: false,
-                    isFlameActive: false,
-                    isUnplayableSID: false
+                    isFlameActive: false
                 });
 
                 applyTheme("bout");
@@ -335,8 +331,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 winner: null,
                 hasJammed: false,
                 bothContendersSelected: false,
-                isFlameActive: false,
-                isUnplayableSID: false
+                isFlameActive: false
             });
             if (playerState.contenders.length === 2 && 
                 playerState.contenders.every(c => window.sidJamData.sidFiles.includes(c)) &&
@@ -348,7 +343,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 if (!success) {
                     newBracket = findEligibleBracket();
                     if (newBracket) {
-                        updatePlayerState({ peekBracket: newBracket, activeBracket: newBracket, isUnplayableSID: false });
+                        updatePlayerState({ peekBracket: newBracket, activeBracket: newBracket });
                         shouldUpdateBracketDropdown = true;
                         pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
                     } else {
@@ -433,8 +428,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
 
             updatePlayerState({
                 contenders: playerState.contenders.map((c, i) => i === flamedIndex ? newContender : c),
-                isFlameActive: false,
-                isUnplayableSID: false
+                isFlameActive: false
             });
             loadSong(newContender, -1);
             updatePlayerState({ hasPlayed: true });
@@ -455,14 +449,13 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
             updatePlayerState({
                 roundCount: 1,
                 winner: null,
-                bothContendersSelected: false,
-                isUnplayableSID: false
+                bothContendersSelected: false
             });
             let success = pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
             if (!success) {
                 newBracket = findEligibleBracket();
                 if (newBracket) {
-                    updatePlayerState({ peekBracket: newBracket, activeBracket: newBracket, isUnplayableSID: false });
+                    updatePlayerState({ peekBracket: newBracket, activeBracket: newBracket });
                     shouldUpdateBracketDropdown = true;
                     pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
                 } else {
@@ -513,6 +506,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
         }
     }
 }
+
 export function updateWinner(contenderIndex, updateRoundInfo, updateWinnerButtons, updateFlameButton) {
     const isZeroZeroBracket = playerState.activeBracket === "0 - 0";
 
@@ -534,12 +528,12 @@ export function updateWinner(contenderIndex, updateRoundInfo, updateWinnerButton
     }
 
     updateRoundInfo(playerState);
-    updateWinnerButtons(playerState, sidPlayer); // Handles rendering
+    updateWinnerButtons(playerState, sidPlayer);
     updateFlameButton(playerState, sidPlayer);
 }
 
 export function toggleFlame(updateFlameButton, updateVsMatchup, updateWinnerButtons) {
-    updatePlayerState({ isFlameActive: !playerState.isFlameActive, isUnplayableSID: false });
+    updatePlayerState({ isFlameActive: !playerState.isFlameActive });
     updateFlameButton(playerState, sidPlayer);
     updateVsMatchup(playerState);
     updateWinnerButtons(playerState, sidPlayer);
@@ -663,7 +657,7 @@ export async function logResult() {
                 sessionStorage.setItem('voteCount', voteCount.toString());
             } catch (error) {
                 window.logmsg(`logResult: Error accessing sessionStorage: ${error.message}`, 0);
-                voteCount += 1; // Fallback to in-memory counter
+                voteCount += 1;
             }
 
             if (voteCount === 3 && !window.isLoggedIn) {
