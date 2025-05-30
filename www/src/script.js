@@ -39,6 +39,19 @@ const updateFlameButtonBound = () => ui.updateFlameButton(brackets.getPlayerStat
 const updateJamButtonBound = (isPlaying) => ui.updateJamButton(isPlaying, brackets.getPlayerState(), player.sidPlayer);
 
 
+function wildcardToSqlLike(pattern) {
+    if (!pattern) return ''; // Empty input matches all
+    // Check if pattern contains explicit wildcards
+    if (pattern.includes('*') || pattern.includes('?')) {
+        return pattern
+            .replace(/[\\%_]/g, '\\$&') // Escape SQL special chars
+            .replace(/\*/g, '%') // * -> %
+            .replace(/\?/g, '_'); // ? -> _
+    }
+    // Plain input: wrap with % for substring match
+    return '%' + pattern.replace(/[\\%_]/g, '\\$&') + '%';
+}
+
 export async function loadPlayerState() {
     try {
         const response = await fetch(`dbcontrol/get_player_state.php?user_id=${window.user.id}`);
@@ -324,7 +337,8 @@ function handleFilterInput() {
         window.logmsg('Filter input not found in the DOM', 0);
         return;
     }
-    const filterText = filterInput.value;
+    const filterText = wildcardToSqlLike(filterInput.value.trim());
+    window.logmsg(`Applying filter: ${filterText}`, 2); // Debug log
     populateSongList(filterText);
 }
 
@@ -378,14 +392,21 @@ function populateSongList(filter) {
         queryParams += "&wins=-1&losses=2";
     }
 
+    window.logmsg(`Fetching songs with filter: ${filter}, offset: ${currentOffset}, limit: ${SONGS_PER_FETCH}`, 2);
     fetch(`dbcontrol/get_sidtunes.php?${queryParams}`)
         .then(response => {
-            if (!response.ok) throw new Error(`Failed to fetch songs: ${response.status}`);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch songs: ${response.status} ${response.statusText}`);
+            }
             return response.json();
         })
         .then(data => {
+            if (data.error) {
+                throw new Error(`Server error: ${data.error}`);
+            }
             const { files, offset, limit, hasMore } = data;
             hasMoreSongs = hasMore;
+            window.logmsg(`Received ${files.length} songs, hasMore: ${hasMore}, total contenders: ${currentOffset + files.length}`, 2);
 
             if (files.length === 0 && currentOffset === 0) {
                 const li = document.createElement("li");
@@ -431,8 +452,12 @@ function populateSongList(filter) {
             isLoading = false;
         })
         .catch(error => {
-            window.logmsg(`Error fetching songs: ${error}`, 0);
+            window.logmsg(`Error fetching songs: ${error.message}`, 0);
             isLoading = false;
+            const li = document.createElement("li");
+            li.textContent = "Error loading songs";
+            li.className = "no-results";
+            songList.appendChild(li);
         });
 }
 

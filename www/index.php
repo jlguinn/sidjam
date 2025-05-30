@@ -361,7 +361,7 @@ $cxn->close();
     <div id="songListOverlay" class="overlay hidden">
         <div id="songListContainer">
             <button id="closeSongList" class="close-button" onclick="(() => { window.logmsg('(x)', 1); window.toggleSongList(); })()" aria-label="Close Song List">×</button>
-            <input type="text" id="filterInput" placeholder="Filter songs..." aria-label="Filter Songs">
+            <input type="text" id="filterInput" placeholder="Filter songs (e.g., song.sid, song*, s?ng)" aria-label="Filter Songs">
             <div id="songListWrapper">
                 <ul id="songList"></ul>
             </div>

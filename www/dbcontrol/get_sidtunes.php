@@ -1,4 +1,5 @@
 <?php
+// dbcontrol/get_sidtunes.php
 // Prevent HTML output from errors
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
@@ -14,7 +15,7 @@ $cxn = mysqli_connect($host, $user, $pass, $database) or die(json_encode(["error
 // Get parameters
 $filter = isset($_GET['filter']) ? $_GET['filter'] : '';
 $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
-$limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 50;
+$limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 0; // Default to 0 for no limit
 $full_list = isset($_GET['full_list']) && $_GET['full_list'] === 'true';
 $wins = isset($_GET['wins']) ? (int)$_GET['wins'] : -1;
 $losses = isset($_GET['losses']) ? (int)$_GET['losses'] : -1;
@@ -27,17 +28,27 @@ error_log("Request: " . json_encode($_GET));
 if ($full_list) {
     $query = "SELECT sid_id, fullpath FROM sidtunes";
     $params = [];
+    $types = '';
     if ($filter !== '') {
         $query .= " WHERE fullpath LIKE ?";
-        $params[] = "%$filter%";
+        $params[] = $filter;
+        $types .= 's';
     }
+    $query .= " ORDER BY fullpath";
+    if ($limit > 0) {
+        $query .= " LIMIT ? OFFSET ?";
+        $params[] = $limit;
+        $params[] = $offset;
+        $types .= 'ii';
+    }
+
     $stmt = $cxn->prepare($query);
     if (!$stmt) {
         error_log("Prepare failed: " . $cxn->error);
         die(json_encode(["error" => "Prepare failed: " . $cxn->error]));
     }
     if (!empty($params)) {
-        $stmt->bind_param("s", ...$params);
+        $stmt->bind_param($types, ...$params);
     }
 } else {
     $query = "SELECT a.fullpath FROM sidtunes a";
@@ -53,7 +64,7 @@ if ($full_list) {
                        GROUP BY sid_id) s ON a.sid_id = s.sid_id";
         $params[] = $user_id;
         $types .= "i";
-    } else if ($losses === 2 && $user_id > 0) {
+    } else if ($losses == 2 && $user_id > 0) {
         $query .= " LEFT JOIN (SELECT sid_id, SUM(win) as wins, SUM(loss) as losses 
                        FROM sidjam 
                        WHERE user_id = ? 
@@ -65,12 +76,12 @@ if ($full_list) {
     // Now add conditions and their parameters
     if ($filter !== '') {
         $conditions[] = "a.fullpath LIKE ?";
-        $params[] = "%$filter%";
+        $params[] = $filter;
         $types .= "s";
     }
 
     if ($wins >= 0 && $losses >= 0 && $user_id > 0) {
-        if ($wins === 0 && $losses === 0) {
+        if ($wins == 0 && $losses == 0) {
             $conditions[] = "((s.wins = 0 AND s.losses = 0) OR (s.wins IS NULL AND s.losses IS NULL))";
         } else {
             $conditions[] = "(s.wins = ? AND s.losses = ?)";
@@ -78,13 +89,13 @@ if ($full_list) {
             $params[] = $losses;
             $types .= "ii";
         }
-    } else if ($losses === 2 && $user_id > 0) {
+    } else if ($losses == 2 && $user_id > 0) {
         $conditions[] = "(s.losses >= 2)";
     } else {
         // For user_id = 0 (Guest User), don't join with sidjam
         if ($filter !== '') {
             $conditions[] = "a.fullpath LIKE ?";
-            $params[] = "%$filter%";
+            $params[] = $filter;
             $types .= "s";
         }
     }
@@ -92,10 +103,13 @@ if ($full_list) {
     if (!empty($conditions)) {
         $query .= " WHERE " . implode(" AND ", $conditions);
     }
-    $query .= " LIMIT ? OFFSET ?";
-    $params[] = $limit;
-    $params[] = $offset;
-    $types .= "ii";
+    $query .= " ORDER BY a.fullpath";
+    if ($limit > 0) {
+        $query .= " LIMIT ? OFFSET ?";
+        $params[] = $limit;
+        $params[] = $offset;
+        $types .= "ii";
+    }
 
     $stmt = $cxn->prepare($query);
     if (!$stmt) {
@@ -107,35 +121,18 @@ if ($full_list) {
     }
 }
 
-// Log the query with parameters substituted for debugging (commented out for performance)
-// $logQuery = $query;
-// $logParams = $params;
-// $paramIndex = 0;
-// while ($paramIndex < count($logParams)) {
-//     $pos = strpos($logQuery, '?');
-//     if ($pos !== false) {
-//         $param = $logParams[$paramIndex];
-//         if (is_string($param)) {
-//             $param = "'$param'";
-//         }
-//         $logQuery = substr_replace($logQuery, $param, $pos, 1);
-//         $paramIndex++;
-//     } else {
-//         break;
-//     }
-// }
-// error_log("Fully substituted query: $logQuery");
-// error_log("Parameter array: " . json_encode($params));
-// error_log("Types string: $types");
-
-$stmt->execute();
-error_log("Executed query: $query");
+// Log the query for debugging
+error_log("Query: $query");
 $encodedParams = json_encode($params);
 if ($encodedParams === false) {
     error_log("Parameters: Unable to encode params - " . json_last_error_msg());
 } else {
     error_log("Parameters: " . $encodedParams);
 }
+error_log("Types: $types");
+
+$stmt->execute();
+error_log("Executed query: $query");
 $result = $stmt->get_result();
 $files = [];
 if ($full_list) {
@@ -158,11 +155,10 @@ if ($full_list) {
 } else {
     echo json_encode([
         'query' => $query,
-        'displayQuery' => $logQuery ?? $query, // Fallback to $query if $logQuery isn't set
         'files' => $files,
         'offset' => $offset,
         'limit' => $limit,
-        'hasMore' => count($files) === $limit
+        'hasMore' => count($files) > 0 // Continue fetching if any files returned
     ]);
 }
 ?>
