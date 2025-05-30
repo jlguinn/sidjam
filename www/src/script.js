@@ -41,16 +41,17 @@ const updateJamButtonBound = (isPlaying) => ui.updateJamButton(isPlaying, bracke
 
 function wildcardToSqlLike(pattern) {
     if (!pattern) return ''; // Empty input matches all
-    // Check if pattern contains explicit wildcards
-    if (pattern.includes('*') || pattern.includes('?')) {
-        return pattern
-            .replace(/[\\%_]/g, '\\$&') // Escape SQL special chars
-            .replace(/\*/g, '%') // * -> %
-            .replace(/\?/g, '_'); // ? -> _
-    }
-    // Plain input: wrap with % for substring match
-    return '%' + pattern.replace(/[\\%_]/g, '\\$&') + '%';
+    // Prepend and append % for implied wildcards
+    let sqlPattern = '%' + pattern
+        .toLowerCase() // Ensure case-insensitive matching
+        .replace(/[\\%_]/g, '\\$&') // Escape SQL special chars
+        .replace(/\*/g, '%') // * -> %
+        .replace(/\?/g, '_') + '%'; // ? -> _
+    window.logmsg(`Converted pattern '${pattern}' to SQL LIKE: '${sqlPattern}'`, 2); // Debug log
+    return sqlPattern;
 }
+
+
 
 export async function loadPlayerState() {
     try {
