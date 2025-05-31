@@ -1189,7 +1189,7 @@ async function initializeApp() {
     window.logmsg('Preloading flame sprite sheet', 1);
 
     // Add admin welcome message for user_id < 1100
-    if (window.isLoggedIn && window.user && window.user.id < 1100) {
+    if (window.isLoggedIn && window.user && window.user.email === 'jguinn@bonevalleyfilms.com') {
         try {
             const response = await fetch('dbcontrol/get_registered_users.php');
             if (!response.ok) {
@@ -1197,7 +1197,7 @@ async function initializeApp() {
             }
             const data = await response.json();
             if (data.success) {
-                window.logmsg(`Hello Admin!\nThere are ${data.user_count} registered users.`, 1);
+                window.logmsg(`Hello Admin!\nThere are ${data.user_count} registered users.`);
             } else {
                 window.logmsg(`Failed to fetch registered users: ${data.message}`, 1);
             }

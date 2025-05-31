@@ -196,7 +196,7 @@ $cxn->close();
     <script defer src="src/websid/htdocs/stdlib/scriptprocessor_player.min.js"></script>
     <script defer src="src/websid/htdocs/backend_websid.js"></script>
     <script>
-        window.user = <?php echo json_encode(['id' => $user_id, 'session_id' => $_SESSION['session_id']]); ?>;
+        window.user = <?php echo json_encode(['id' => $user_id, 'session_id' => $_SESSION['session_id'], 'email' => $_SESSION['email'] ?? '']); ?>;
         window.isLoggedIn = <?php echo json_encode($is_logged_in); ?>;
         window.DEBUG_ENABLED = <?php echo json_encode($debug_enabled); ?>;
         window.LOG_LEVEL = <?php echo json_encode($log_level); ?>;
