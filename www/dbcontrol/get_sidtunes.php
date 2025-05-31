@@ -19,6 +19,7 @@ $full_list = isset($_GET['full_list']) && $_GET['full_list'] === 'true';
 $wins = isset($_GET['wins']) ? (int)$_GET['wins'] : -1;
 $losses = isset($_GET['losses']) ? (int)$_GET['losses'] : -1;
 $user_id = isset($_GET['user_id']) ? (int)$_GET['user_id'] : 0;
+$bracket = isset($_GET['bracket']) ? $_GET['bracket'] : '';
 
 // Log the request
 error_log("Request: " . json_encode($_GET));
@@ -34,18 +35,30 @@ function wildcardToSqlLike($pattern) {
 
 // Use prepared statements
 if ($full_list) {
+    // For Leaderboard full list, fetch global wins/losses; otherwise, user-specific
     $query = "SELECT a.sid_id, a.fullpath, COALESCE(s.wins, 0) as wins, COALESCE(s.losses, 0) as losses 
-              FROM sidtunes a 
-              LEFT JOIN (
-                  SELECT sid_id, SUM(win) as wins, SUM(loss) as losses 
-                  FROM sidjam 
-                  WHERE user_id = ? 
-                  GROUP BY sid_id
-              ) s ON a.sid_id = s.sid_id";
-    $params = [$user_id];
-    $types = 'i';
+              FROM sidtunes a";
+    if ($bracket === 'Leaderboard') {
+        $query .= " INNER JOIN (
+                      SELECT sid_id, SUM(win) as wins, SUM(loss) as losses 
+                      FROM sidjam 
+                      WHERE user_id IN (SELECT user_id FROM siduser WHERE email IS NOT NULL)
+                      GROUP BY sid_id
+                      HAVING SUM(win) > 0
+                  ) s ON a.sid_id = s.sid_id";
+    } else {
+        $query .= " LEFT JOIN (
+                      SELECT sid_id, SUM(win) as wins, SUM(loss) as losses 
+                      FROM sidjam 
+                      WHERE user_id = ? 
+                      GROUP BY sid_id
+                  ) s ON a.sid_id = s.sid_id";
+    }
+    $params = $bracket === 'Leaderboard' ? [] : [$user_id];
+    $types = $bracket === 'Leaderboard' ? '' : 'i';
     if ($filter !== '') {
-        $query .= " WHERE LOWER(CONCAT('(', COALESCE(s.wins, 0), ' - ', COALESCE(s.losses, 0), ') ', REPLACE(a.fullpath, '/sid/C64Music', ''))) LIKE LOWER(?)";
+        $query .= $bracket === 'Leaderboard' ? " WHERE" : " WHERE";
+        $query .= " LOWER(CONCAT('(', COALESCE(s.wins, 0), ' - ', COALESCE(s.losses, 0), ') ', REPLACE(a.fullpath, '/sid/C64Music', ''))) LIKE LOWER(?)";
         $params[] = wildcardToSqlLike($filter);
         $types .= 's';
     }
@@ -72,15 +85,25 @@ if ($full_list) {
     $params = [];
     $types = "";
 
-    if ($user_id > 0) {
-        $query .= " LEFT JOIN (
+    if ($bracket === 'Leaderboard') {
+        $query .= " INNER JOIN (
                       SELECT sid_id, SUM(win) as wins, SUM(loss) as losses 
                       FROM sidjam 
-                      WHERE user_id = ? 
+                      WHERE user_id IN (SELECT user_id FROM siduser WHERE email IS NOT NULL)
                       GROUP BY sid_id
+                      HAVING SUM(win) > 0
                   ) s ON a.sid_id = s.sid_id";
-        $params[] = $user_id;
-        $types .= "i";
+    } else {
+        if ($user_id > 0) {
+            $query .= " LEFT JOIN (
+                          SELECT sid_id, SUM(win) as wins, SUM(loss) as losses 
+                          FROM sidjam 
+                          WHERE user_id = ? 
+                          GROUP BY sid_id
+                      ) s ON a.sid_id = s.sid_id";
+            $params[] = $user_id;
+            $types .= "i";
+        }
     }
 
     if ($filter !== '') {
@@ -89,7 +112,7 @@ if ($full_list) {
         $types .= "s";
     }
 
-    if ($wins >= 0 && $losses >= 0 && $user_id > 0) {
+    if ($bracket !== 'Leaderboard' && $wins >= 0 && $losses >= 0 && $user_id > 0) {
         if ($wins == 0 && $losses == 0) {
             $conditions[] = "((s.wins = 0 AND s.losses = 0) OR (s.wins IS NULL AND s.losses IS NULL))";
         } else {
@@ -98,7 +121,7 @@ if ($full_list) {
             $params[] = $losses;
             $types .= "ii";
         }
-    } else if ($losses == 2 && $user_id > 0) {
+    } else if ($bracket !== 'Leaderboard' && $losses == 2 && $user_id > 0) {
         $conditions[] = "(COALESCE(s.losses, 0) >= 2)";
     }
 

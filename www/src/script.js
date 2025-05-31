@@ -374,16 +374,16 @@ function populateSongList(filter) {
 
     isLoading = true;
 
-    // Pass raw filter to backend
-    let queryParams = `filter=${encodeURIComponent(filter)}&offset=${currentOffset}&limit=${SONGS_PER_FETCH}&user_id=${window.user.id}`;
-    if (state.peekBracket !== "All" && state.peekBracket !== "Eliminated") {
+    // Pass raw filter and bracket to backend
+    let queryParams = `filter=${encodeURIComponent(filter)}&offset=${currentOffset}&limit=${SONGS_PER_FETCH}&user_id=${window.user.id}&bracket=${encodeURIComponent(state.peekBracket)}`;
+    if (state.peekBracket !== "All" && state.peekBracket !== "Eliminated" && state.peekBracket !== "Leaderboard") {
         let [wins, losses] = state.peekBracket.split(' - ').map(Number);
         queryParams += `&wins=${wins}&losses=${losses}`;
     } else if (state.peekBracket === "Eliminated") {
         queryParams += "&wins=-1&losses=2";
     }
 
-    window.logmsg(`Fetching songs with filter: ${filter}, offset: ${currentOffset}, limit: ${SONGS_PER_FETCH}`, 2);
+    window.logmsg(`Fetching songs with filter: ${filter}, offset: ${currentOffset}, limit: ${SONGS_PER_FETCH}, bracket: ${state.peekBracket}`, 2);
     fetch(`dbcontrol/get_sidtunes.php?${queryParams}`)
         .then(response => {
             if (!response.ok) {
@@ -1176,7 +1176,6 @@ window.flashProfileIcon = function() {
 };
 
 async function initializeApp() {
-    // Existing debug and log messages
     debug(`Bound functions defined: updateRoundInfoBound=${typeof updateRoundInfoBound}, updateVsMatchupBound=${typeof updateVsMatchupBound}`);
     window.logmsg('Preloading flame sprite sheet', 1);
 
@@ -1248,7 +1247,6 @@ async function initializeApp() {
         window.logmsg('VU toggle button not found in the DOM', 1);
     }
 
-    // Add zoom button event listeners and disable initially
     const zoomOutButton = document.getElementById('zoom-out-button');
     const zoomInButton = document.getElementById('zoom-in-button');
     const resetButton = document.getElementById('reset-view-button');
@@ -1292,7 +1290,8 @@ async function initializeApp() {
     }
 
     try {
-        const songsResponse = await fetch('dbcontrol/get_sidtunes.php?full_list=true');
+        // Fetch user-specific tunes
+        const songsResponse = await fetch(`dbcontrol/get_sidtunes.php?full_list=true&user_id=${window.user.id}`);
         if (!songsResponse.ok) throw new Error(`Failed to load sidtunes: ${songsResponse.statusText}`);
         const tunesData = await songsResponse.json();
         window.sidJamData.sidFiles = tunesData.map(tune => tune.fullpath);
@@ -1301,9 +1300,19 @@ async function initializeApp() {
         window.sidJamData.pathToRecord = {};
         tunesData.forEach(tune => {
             window.sidJamData.pathToId[tune.fullpath] = tune.id;
+            // Initialize pathToRecord with user-specific data
             window.sidJamData.pathToRecord[tune.fullpath] = { wins: tune.wins, losses: tune.losses };
         });
-        
+
+        // Fetch Leaderboard tunes (global data)
+        const leaderboardResponse = await fetch('dbcontrol/get_sidtunes.php?full_list=true&bracket=Leaderboard');
+        if (!leaderboardResponse.ok) throw new Error(`Failed to load Leaderboard tunes: ${leaderboardResponse.statusText}`);
+        const leaderboardData = await leaderboardResponse.json();
+        leaderboardData.forEach(tune => {
+            // Update pathToRecord with global wins/losses for Leaderboard
+            window.sidJamData.pathToRecord[tune.fullpath] = { wins: tune.wins, losses: tune.losses };
+        });
+
         const resultsResponse = await fetch(`dbcontrol/get_results.php?user_id=${window.user.id}`);
         if (!resultsResponse.ok) throw new Error(`Failed to load results: ${resultsResponse.statusText}`);
         window.sidJamData.cachedResults = await resultsResponse.json();
@@ -1335,7 +1344,7 @@ async function initializeApp() {
                 nowPlayingSong: player_state.nowPlayingSong,
                 isWaveformActive: player_state.isWaveformActive !== undefined ? player_state.isWaveformActive : true,
                 isVUActive: player_state.isVUActive !== undefined ? player_state.isVUActive : true,
-                isBarActive: player_state.isBarActive !== undefined ? player_state.isBarActive : false, // Add new property
+                isBarActive: player_state.isBarActive !== undefined ? player_state.isBarActive : false,
                 zoomFactor: player_state.zoomFactor !== undefined ? player_state.zoomFactor : 46.13
             });
             ui.setCurrentThemeIndex(player_state.theme || 0);
@@ -1349,7 +1358,7 @@ async function initializeApp() {
             updateWinnerButtonsBound();
             updateFlameButtonBound();
             ui.updateWaveformVisibility(brackets.getPlayerState().isWaveformActive);
-            ui.updateVUMeterState(); // Update call
+            ui.updateVUMeterState();
         } else if (player_state && isValidState && player_state.currentMode === "nowPlaying" && player_state.nowPlayingSong) {
             const nowPlayingSongBracket = brackets.getSongBracket(player_state.nowPlayingSong);
             brackets.updatePlayerState({
@@ -1360,7 +1369,7 @@ async function initializeApp() {
                 currentMode: player_state.currentMode,
                 isWaveformActive: player_state.isWaveformActive !== undefined ? player_state.isWaveformActive : true,
                 isVUActive: player_state.isVUActive !== undefined ? player_state.isVUActive : true,
-                isBarActive: player_state.isBarActive !== undefined ? player_state.isBarActive : false, // Add new property
+                isBarActive: player_state.isBarActive !== undefined ? player_state.isBarActive : false,
                 zoomFactor: player_state.zoomFactor !== undefined ? player_state.zoomFactor : 46.13
             });
             ui.setCurrentThemeIndex(player_state.theme || 0);
@@ -1375,20 +1384,20 @@ async function initializeApp() {
             updateWinnerButtonsBound();
             updateFlameButtonBound();
             ui.updateWaveformVisibility(brackets.getPlayerState().isWaveformActive);
-            ui.updateVUMeterState(); // Update call
+            ui.updateVUMeterState();
         } else {
             window.logmsg("Initializing with default player state due to invalid or missing saved state", 1);
             brackets.updatePlayerState({
                 isWaveformActive: true,
                 isVUActive: true,
-                isBarActive: false, // Add new property
+                isBarActive: false,
                 zoomFactor: 46.13
             });
             ui.setCurrentThemeIndex(0);
             brackets.updateBracketDropdown();
             brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateFlameButtonBound);
             ui.updateWaveformVisibility(true);
-            ui.updateVUMeterState(); // Update call
+            ui.updateVUMeterState();
         }
     } catch (error) {
         window.logmsg(`Error loading data: ${error}`, 1);
@@ -1464,7 +1473,6 @@ async function initializeApp() {
     } else {
         window.logmsg('Color toggle button not found in the DOM', 1);
     }
-
 }
     
 const authOverlay = document.getElementById('authOverlay');

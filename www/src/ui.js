@@ -243,7 +243,7 @@ export function updateRoundInfo(playerState) {
         roundDiv.innerHTML = `<span class="flame-activated text--exterior">Flame Activated</span>`;
         blinkMessageTimeout = setTimeout(() => {
             if (playerState.isFlameActive) {
-                roundDiv.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="3">Click jAM to flame this contender or click Flame again to cancel...</marquee>`;
+                roundDiv.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="3">Click jAM to eliminate this contender or click Flame again to cancel...</marquee>`;
             }
             blinkMessageTimeout = null;
         }, 2000);

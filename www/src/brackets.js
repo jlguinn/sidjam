@@ -82,7 +82,7 @@ export function updatePlayerState(updates) {
 }
 
 export function isSpecialBracket(bracket) {
-    const specialBrackets = ["All", "Eliminated"];
+    const specialBrackets = ["All", "Eliminated", "Leaderboard"];
     return specialBrackets.includes(bracket) || getContenderCount(bracket) < 2 || playerState.currentMode !== "bout";
 }
 
@@ -94,6 +94,12 @@ export function getContenderCount(bracket) {
         count = window.sidJamData.sidFiles.filter(file => {
             let record = window.sidJamData.cachedResults[file] || { wins: 0, losses: 0 };
             return record.losses >= 2;
+        }).length;
+    } else if (bracket === "Leaderboard") {
+        // Leaderboard counts songs with global wins > 0
+        count = window.sidJamData.sidFiles.filter(file => {
+            let record = window.sidJamData.pathToRecord[file] || { wins: 0, losses: 0 };
+            return record.wins > 0;
         }).length;
     } else {
         let [wins, losses] = bracket.split(' - ').map(Number);
@@ -201,6 +207,11 @@ export function pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerBut
         filteredFiles = window.sidJamData.sidFiles.filter(file => {
             let record = window.sidJamData.cachedResults[file] || { wins: 0, losses: 0 };
             return record.losses >= 2;
+        });
+    } else if (playerState.peekBracket === "Leaderboard") {
+        filteredFiles = window.sidJamData.sidFiles.filter(file => {
+            let record = window.sidJamData.pathToRecord[file] || { wins: 0, losses: 0 };
+            return record.wins > 0;
         });
     } else {
         let [wins, losses] = playerState.peekBracket.split(' - ').map(Number);
@@ -682,6 +693,7 @@ export function updateBracketDropdown() {
     }
     let brackets = {};
     let eliminatedCount = 0;
+    let leaderboardCount = 0;
     if (!window.sidJamData.cachedResults || Object.keys(window.sidJamData.cachedResults).length === 0) {
         brackets["0 - 0"] = window.sidJamData.sidFiles.length;
     } else {
@@ -693,16 +705,28 @@ export function updateBracketDropdown() {
                 let key = `${record.wins} - ${record.losses}`;
                 brackets[key] = (brackets[key] || 0) + 1;
             }
+            // Count Leaderboard songs (wins > 0 from pathToRecord)
+            let globalRecord = window.sidJamData.pathToRecord[file] || { wins: 0, losses: 0 };
+            if (globalRecord.wins > 0) {
+                leaderboardCount++;
+            }
         });
     }
     brackets["All"] = window.sidJamData.sidFiles.length;
     brackets["Eliminated"] = eliminatedCount;
+    brackets["Leaderboard"] = leaderboardCount;
 
     let currentValue = select.value;
 
     select.innerHTML = "";
 
-    let sortedKeys = Object.keys(brackets).filter(key => key !== "All" && key !== "Eliminated").sort((a, b) => {
+    // Add Leaderboard at the top
+    let leaderboardOption = document.createElement("option");
+    leaderboardOption.value = "Leaderboard";
+    leaderboardOption.text = "Leaderboard (All Users)";
+    select.appendChild(leaderboardOption);
+
+    let sortedKeys = Object.keys(brackets).filter(key => key !== "All" && key !== "Eliminated" && key !== "Leaderboard").sort((a, b) => {
         let [aWins, aLosses] = a.split(" - ").map(Number);
         let [bWins, bLosses] = b.split(" - ").map(Number);
         if (aWins !== bWins) return bWins - aWins;
@@ -730,7 +754,7 @@ export function updateBracketDropdown() {
 
     let newValue = playerState.peekBracket.replace(" - ", "-");
     const bracketOptions = Object.fromEntries(
-        sortedKeys.map(key => [key.replace(" - ", "-"), key]).concat([["All", "All"], ["Eliminated", "Eliminated"]])
+        sortedKeys.map(key => [key.replace(" - ", "-"), key]).concat([["All", "All"], ["Eliminated", "Eliminated"], ["Leaderboard", "Leaderboard"]])
     );
     if (!(newValue in bracketOptions) || !brackets[playerState.peekBracket]) {
         newValue = sortedKeys[0]?.replace(" - ", "-") || "All";
