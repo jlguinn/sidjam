@@ -428,7 +428,7 @@ export function updateWinnerButtons(playerState, sidPlayer) {
         if (currentState !== expectedState) {
             renderWinnerButtonBitmap(index, playerState);
         } else {
-            window.logmsg(`Skipping render for ${id}: state already ${currentState}`, 2);
+            window.logmsg(`Skipping render for ${id}: state already ${currentState}`, 1);
         }
     });
 }

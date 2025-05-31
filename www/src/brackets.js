@@ -226,10 +226,10 @@ export function pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerBut
         activeContender: 0
     });
 
-    window.logmsg(`Bracket: ${playerState.peekBracket} (${filteredFiles.length} contenders)`, 1);
-    window.logmsg(`${window.sidJamData.pathToId[playerState.contenders[0]]} ${playerState.contenders[0]}`, 1);
-    window.logmsg("- vs -", 1);
-    window.logmsg(`${window.sidJamData.pathToId[playerState.contenders[1]]} ${playerState.contenders[1]}`, 1);
+    window.logmsg(`Bracket: ${playerState.peekBracket} (${filteredFiles.length} contenders)`);
+    window.logmsg(`${window.sidJamData.pathToId[playerState.contenders[0]]} ${playerState.contenders[0]}`);
+    window.logmsg("- vs -");
+    window.logmsg(`${window.sidJamData.pathToId[playerState.contenders[1]]} ${playerState.contenders[1]}`);
 
     updateRoundInfo(playerState);
     updateVsMatchup(playerState);
@@ -381,8 +381,8 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
         let flamedIndex = playerState.activeContender;
         let flamedFile = playerState.contenders[flamedIndex];
 
-        window.logmsg(`Flamed!: ${window.sidJamData.pathToId[flamedFile]}`, 1);
-        window.logmsg(`${flamedFile}`, 1);
+        window.logmsg(`Flamed!: ${window.sidJamData.pathToId[flamedFile]}`, 0);
+        window.logmsg(`${flamedFile}`, 0);
 
         let votes = [{ id: window.sidJamData.pathToId[flamedFile], increment: -2 }];
         try {
@@ -423,8 +423,8 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 }
             }
 
-            window.logmsg(`New contender: ${window.sidJamData.pathToId[newContender]}`, 1);
-            window.logmsg(`${newContender}`, 1);
+            window.logmsg(`New contender: ${window.sidJamData.pathToId[newContender]}`, 0);
+            window.logmsg(`${newContender}`, 0);
 
             updatePlayerState({
                 contenders: playerState.contenders.map((c, i) => i === flamedIndex ? newContender : c),
@@ -614,17 +614,17 @@ export async function logResult() {
     }
     
     if (playerState.bothContendersSelected) {
-        window.logmsg("Both contenders selected as winners:", 1);
-        window.logmsg(`${window.sidJamData.pathToId[playerState.contenders[0]]} ${playerState.contenders[0]}`, 1);
-        window.logmsg(`${window.sidJamData.pathToId[playerState.contenders[1]]} ${playerState.contenders[1]}`, 1);
+        window.logmsg("Both contenders selected as winners:");
+        window.logmsg(`${window.sidJamData.pathToId[playerState.contenders[0]]} ${playerState.contenders[0]}`);
+        window.logmsg(`${window.sidJamData.pathToId[playerState.contenders[1]]} ${playerState.contenders[1]}`);
     } else if (playerState.winner !== null) {
         let winnerPath = playerState.contenders[playerState.winner];
         let loserPath = playerState.contenders[1 - playerState.winner];
         let winnerId = window.sidJamData.pathToId[winnerPath];
         let loserId = window.sidJamData.pathToId[loserPath];
-        window.logmsg("Bout decided:", 1);
-        window.logmsg(`Winner: ${winnerId} ${winnerPath}`, 1);
-        window.logmsg(`Loser: ${loserId} ${loserPath}`, 1);
+        window.logmsg("Bout decided:");
+        window.logmsg(`Winner: ${winnerId} ${winnerPath}`);
+        window.logmsg(`Loser: ${loserId} ${loserPath}`);
     }
     
     if (votes.length && votes.every(vote => vote.id !== 0)) {

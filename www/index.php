@@ -1,7 +1,19 @@
 <?php
 // Define debug toggle (hardcoded for now)
 $debug_enabled = isset($_GET['debug']) && $_GET['debug'] === 'true'; // Set to true if ?debug=true is in the URL
-$log_level = 2; // 0 terse (default); 1 verbose; 2 debugging; -1 silent
+$log_level = 0; // Default: terse
+if (isset($_GET['logLevel'])) {
+    if (filter_var($_GET['logLevel'], FILTER_VALIDATE_INT) !== false) {
+        $input_log_level = (int)$_GET['logLevel'];
+        if ($input_log_level >= -1 && $input_log_level <= 2) {
+            $log_level = $input_log_level;
+        } else {
+            error_log("Invalid logLevel parameter: $input_log_level. Must be between -1 and 2. Using default: $log_level");
+        }
+    } else {
+        error_log("Invalid logLevel parameter: {$_GET['logLevel']}. Must be an integer. Using default: $log_level");
+    }
+}
 
 // Set session cookie lifetime to 30 days
 session_set_cookie_params(30 * 24 * 60 * 60);
@@ -193,8 +205,7 @@ $cxn->close();
             if (PLAYER_LOG_LEVEL >= msgLogLevel) console.log(msg);
         };
         console.log("sID JAm Version 2025.05.20 (Beta)");
-        window.logmsg("Hello world!");
-        window.logmsg(`Log Level: ${window.LOG_LEVEL === 1 ? "VERBOSE" : window.LOG_LEVEL === 2 ? "DEBUGGING" : window.LOG_LEVEL === 0 ? "TERSE" : window.LOG_LEVEL === -1 ? "SILENT" : window.LOG_LEVEL.toString()}`, 1);
+        window.logmsg(`Log Level: ${window.LOG_LEVEL === 1 ? "VERBOSE" : window.LOG_LEVEL === 2 ? "DEBUGGING" : window.LOG_LEVEL === 0 ? "TERSE" : window.LOG_LEVEL === -1 ? "SILENT" : window.LOG_LEVEL.toString()}`, 0);
     </script>
     <script type="module" src="src/script.js"></script>
     <script type="module" src="src/viz.js"></script>

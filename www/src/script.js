@@ -15,9 +15,6 @@ import { zoomWaveformIn, zoomWaveformOut, resetView } from './viz.js';
 
 function debug(message) { window.logmsg(`[DEBUG] ${message}`, 2); }
 
-window.logmsg("Default logMsg");
-window.logmsg("Verbose logMsg", 1);
-
 // Define bound functions at the top to ensure availability
 const updateTimerBound = () => player.updateTimer();
 const loadSongBound = (filename, trackNumber, autoPlay = true) => player.loadSong(
@@ -926,7 +923,7 @@ window.handleUpdateEmail = async function(event) {
     const newEmail = document.getElementById('newEmail');
     const errorElement = document.getElementById('updateEmailError');
     if (!newEmail || !errorElement) {
-        window.logmsg('Update email form elements not found in the DOM', 0);
+        window.logmsg('Update email form elements not found in the DOM', 1);
         return;
     }
     const newEmailValue = newEmail.value;
@@ -948,7 +945,7 @@ window.showUpdateEmailConfirmation = function() {
     const confirmPassword = document.getElementById('confirmPassword');
     const confirmEmailError = document.getElementById('confirmEmailError');
     if (!updateEmailSection || !updateEmailConfirmation || !confirmNewEmail || !confirmPassword || !confirmEmailError) {
-        window.logmsg('Update email confirmation elements not found in the DOM', 0);
+        window.logmsg('Update email confirmation elements not found in the DOM', 1);
         return;
     }
     updateEmailSection.style.display = 'none';
@@ -963,7 +960,7 @@ window.hideUpdateEmailConfirmation = function() {
     const updateEmailSection = document.getElementById('updateEmailSection');
     const updateEmailError = document.getElementById('updateEmailError');
     if (!updateEmailConfirmation || !updateEmailSection || !updateEmailError) {
-        window.logmsg('Update email confirmation elements not found in the DOM', 0);
+        window.logmsg('Update email confirmation elements not found in the DOM', 1);
         return;
     }
     updateEmailConfirmation.style.display = 'none';
@@ -979,7 +976,7 @@ window.confirmUpdateEmail = async function(event) {
     const updateEmailConfirmation = document.getElementById('updateEmailConfirmation');
     const updateEmailSuccess = document.getElementById('updateEmailSuccess');
     if (!confirmPassword || !errorElement || !currentEmail || !updateEmailConfirmation || !updateEmailSuccess) {
-        window.logmsg('Confirm email elements not found in the DOM', 0);
+        window.logmsg('Confirm email elements not found in the DOM', 1);
         return;
     }
     const confirmPasswordValue = confirmPassword.value;
@@ -1000,7 +997,7 @@ window.confirmUpdateEmail = async function(event) {
             errorElement.textContent = data.message;
         }
     } catch (error) {
-        window.logmsg(`Error in confirmUpdateEmail: ${error}`, 0);
+        window.logmsg(`Error in confirmUpdateEmail: ${error}`, 1);
         errorElement.textContent = 'An error occurred. Please try again.';
     }
 };
@@ -1015,7 +1012,7 @@ window.stopPlayer = function() {
         playButton.style.backgroundImage = "url('../image/play.png')";
         playButton.setAttribute('aria-label', 'Play');
     } else {
-        window.logmsg('Play/Pause button not found in the DOM', 0);
+        window.logmsg('Play/Pause button not found in the DOM', 1);
     }
 };
 
@@ -1029,7 +1026,7 @@ window.resetPlayer = function() {
     if (songInfo) {
         songInfo.textContent = 'Press Play';
     } else {
-        window.logmsg('Song info element not found in the DOM', 0);
+        window.logmsg('Song info element not found in the DOM', 1);
     }
 
     brackets.updatePlayerState({ hasPlayed: false, isFlameActive: false });
@@ -1069,7 +1066,7 @@ window.handleLogout = async function(event) {
             alert(data.message);
         }
     } catch (error) {
-        window.logmsg(`Error in handleLogout: ${error}`, 0);
+        window.logmsg(`Error in handleLogout: ${error}`, 1);
         alert('An error occurred. Please try again.');
     }
 };
@@ -1078,7 +1075,7 @@ window.showDeleteAccountConfirmation = function() {
     const deleteAccountSection = document.getElementById('deleteAccountSection');
     const deleteAccountConfirmation = document.getElementById('deleteAccountConfirmation');
     if (!deleteAccountSection || !deleteAccountConfirmation) {
-        window.logmsg('Delete account confirmation elements not found in the DOM', 0);
+        window.logmsg('Delete account confirmation elements not found in the DOM', 1);
         return;
     }
     deleteAccountSection.style.display = 'none';
@@ -1090,7 +1087,7 @@ window.hideDeleteAccountConfirmation = function() {
     const deleteAccountConfirmation = document.getElementById('deleteAccountConfirmation');
     const deleteAccountError = document.getElementById('deleteAccountError');
     if (!deleteAccountSection || !deleteAccountConfirmation || !deleteAccountError) {
-        window.logmsg('Delete account confirmation elements not found in the DOM', 0);
+        window.logmsg('Delete account confirmation elements not found in the DOM', 1);
         return;
     }
     deleteAccountSection.style.display = 'block';
@@ -1103,7 +1100,7 @@ window.handleDeleteAccount = async function(event) {
     const deletePassword = document.getElementById('deletePassword');
     const errorElement = document.getElementById('deleteAccountError');
     if (!deletePassword || !errorElement) {
-        window.logmsg('Delete account form elements not found in the DOM', 0);
+        window.logmsg('Delete account form elements not found in the DOM', 1);
         return;
     }
     const password = deletePassword.value;
@@ -1123,7 +1120,7 @@ window.handleDeleteAccount = async function(event) {
             errorElement.textContent = result.message || 'Failed to delete account';
         }
     } catch (error) {
-        window.logmsg(`Error in handleDeleteAccount: ${error}`, 0);
+        window.logmsg(`Error in handleDeleteAccount: ${error}`);
         errorElement.textContent = 'An error occurred. Please try again.';
     }
 };
@@ -1142,7 +1139,7 @@ function getComplementaryColor(hexColor) {
 window.flashProfileIcon = function() {
     const bitmapContainer = document.getElementById('profile-bitmap');
     if (!bitmapContainer) {
-        window.logmsg('Profile bitmap container not found for flashing', 0);
+        window.logmsg('Profile bitmap container not found for flashing', 1);
         return;
     }
 
@@ -1182,8 +1179,27 @@ window.flashProfileIcon = function() {
 };
 
 async function initializeApp() {
-    // Debug to confirm bound functions
+    // Existing debug and log messages
     debug(`Bound functions defined: updateRoundInfoBound=${typeof updateRoundInfoBound}, updateVsMatchupBound=${typeof updateVsMatchupBound}`);
+    window.logmsg('Preloading flame sprite sheet', 1);
+
+    // Add admin welcome message for user_id < 1100
+    if (window.isLoggedIn && window.user && window.user.id < 1100) {
+        try {
+            const response = await fetch('dbcontrol/get_registered_users.php');
+            if (!response.ok) {
+                throw new Error(`Failed to fetch registered users: ${response.statusText}`);
+            }
+            const data = await response.json();
+            if (data.success) {
+                window.logmsg(`Hello Admin!\nThere are ${data.user_count} registered users.`, 1);
+            } else {
+                window.logmsg(`Failed to fetch registered users: ${data.message}`, 1);
+            }
+        } catch (error) {
+            window.logmsg(`Error fetching registered users: ${error.message}`, 1);
+        }
+    }
 
     const authLink = document.getElementById('auth-link');
     const preferencesLink = document.getElementById('preferences-link');
@@ -1193,7 +1209,7 @@ async function initializeApp() {
     window.hasShownPrompt = false;
     window.showPromptMessage = false;
 
-    window.logmsg('Preloading flame sprite sheet', 2);
+    window.logmsg('Preloading flame sprite sheet', 1);
 
     if (authLink) {
         authLink.removeEventListener('click', window.toggleAuthPopUp);
@@ -1225,45 +1241,44 @@ async function initializeApp() {
     if (waveformToggleButton) {
         waveformToggleButton.addEventListener('click', window.toggleWaveform);
     } else {
-        window.logmsg('Waveform toggle button not found in the DOM', 0);
+        window.logmsg('Waveform toggle button not found in the DOM', 1);
     }
 
     const vuToggleButton = document.getElementById('vu-toggle-button');
     if (vuToggleButton) {
         vuToggleButton.addEventListener('click', window.toggleVUMeters);
     } else {
-        window.logmsg('VU toggle button not found in the DOM', 0);
+        window.logmsg('VU toggle button not found in the DOM', 1);
     }
 
     // Add zoom button event listeners and disable initially
-    window.logmsg('Adding zoom button listeners...');
     const zoomOutButton = document.getElementById('zoom-out-button');
     const zoomInButton = document.getElementById('zoom-in-button');
     const resetButton = document.getElementById('reset-view-button');
     if (zoomOutButton) {
-        window.logmsg('Adding zoom out listener', 2);
+        window.logmsg('Adding zoom out listener', 1);
         zoomOutButton.addEventListener('click', () => {
-            window.logmsg('[-]', 1);
+            window.logmsg('[-]',1);
             zoomWaveformOut();
             savePlayerState();
         });
         zoomOutButton.disabled = true;
     } else {
-        window.logmsg('Zoom out button not found in the DOM', 0);
+        window.logmsg('Zoom out button not found in the DOM', 1);
     }
     if (zoomInButton) {
-        window.logmsg('Adding zoom in listener', 2);
+        window.logmsg('Adding zoom in listener', 1);
         zoomInButton.addEventListener('click', () => {
-            window.logmsg('[+]', 1);
+            window.logmsg('[+]',1);
             zoomWaveformIn();
             savePlayerState();
         });
         zoomInButton.disabled = true;
     } else {
-        window.logmsg('Zoom in button not found in the DOM', 0);
+        window.logmsg('Zoom in button not found in the DOM', 1);
     }
     if (resetButton) {
-        window.logmsg('Adding reset view listener', 2);
+        window.logmsg('Adding reset view listener', 1);
         resetButton.addEventListener('click', () => {
             window.logmsg('[⭯]', 1);
             resetView();
@@ -1271,11 +1286,11 @@ async function initializeApp() {
         });
         resetButton.disabled = true;
     } else {
-        window.logmsg('Reset view button not found in the DOM', 0);
+        window.logmsg('Reset view button not found in the DOM', 1);
     }
 
     if (!window.user || !window.user.id) {
-        window.logmsg('window.user.id not defined on DOM load', 0);
+        window.logmsg('window.user.id not defined on DOM load', 1);
         return;
     }
 
@@ -1303,13 +1318,13 @@ async function initializeApp() {
             if (player_state.contenders) {
                 player_state.contenders.forEach((path, index) => {
                     if (path && !validPaths.has(path)) {
-                        window.logmsg(`Invalid contender path in saved state: ${path}`, 0);
+                        window.logmsg(`Invalid contender path in saved state: ${path}`, 1);
                         isValidState = false;
                     }
                 });
             }
             if (player_state.nowPlayingSong && !validPaths.has(player_state.nowPlayingSong)) {
-                window.logmsg(`Invalid nowPlayingSong path in saved state: ${player_state.nowPlayingSong}`, 0);
+                window.logmsg(`Invalid nowPlayingSong path in saved state: ${player_state.nowPlayingSong}`, 1);
                 isValidState = false;
             }
         }
@@ -1365,7 +1380,7 @@ async function initializeApp() {
             ui.updateWaveformVisibility(brackets.getPlayerState().isWaveformActive);
             ui.updateVUMeterState(); // Update call
         } else {
-            window.logmsg("Initializing with default player state due to invalid or missing saved state", 0);
+            window.logmsg("Initializing with default player state due to invalid or missing saved state", 1);
             brackets.updatePlayerState({
                 isWaveformActive: true,
                 isVUActive: true,
@@ -1379,7 +1394,7 @@ async function initializeApp() {
             ui.updateVUMeterState(); // Update call
         }
     } catch (error) {
-        window.logmsg(`Error loading data: ${error}`, 0);
+        window.logmsg(`Error loading data: ${error}`, 1);
         brackets.updatePlayerState({
             contenders: [],
             peekBracket: "0 - 0",
@@ -1409,7 +1424,7 @@ async function initializeApp() {
     if (playPauseButton) {
         playPauseButton.disabled = false;
     } else {
-        window.logmsg('Play/Pause button not found in the DOM', 0);
+        window.logmsg('Play/Pause button not found in the DOM', 1);
     }
 
     for (let i = 1; i <= 3; i++) {
@@ -1417,7 +1432,7 @@ async function initializeApp() {
         if (voiceButton) {
             voiceButton.addEventListener('click', () => player.toggleVoice(i));
         } else {
-            window.logmsg(`Voice button ${i} not found in the DOM`, 0);
+            window.logmsg(`Voice button ${i} not found in the DOM`, 1);
         }
     }
 
@@ -1433,7 +1448,7 @@ async function initializeApp() {
         winnerButtonLeft.disabled = true;
         winnerButtonRight.disabled = true;
     } else {
-        window.logmsg('Winner buttons not found in the DOM', 0);
+        window.logmsg('Winner buttons not found in the DOM', 1);
     }
 
     const button = document.getElementById("colorButton");
@@ -1446,11 +1461,11 @@ async function initializeApp() {
         if (icon) {
             icon.style.backgroundColor = nextTheme.interior;
         } else {
-            window.logmsg('Color toggle icon not found in #colorButton', 0);
+            window.logmsg('Color toggle icon not found in #colorButton', 1);
         }
         button.title = `Switch Theme \n  From: ${currentTheme.name}\n  To: ${nextTheme.name}`;
     } else {
-        window.logmsg('Color toggle button not found in the DOM', 0);
+        window.logmsg('Color toggle button not found in the DOM', 1);
     }
 
 }
@@ -1463,7 +1478,7 @@ if (authOverlay) {
         }
     });
 } else {
-    window.logmsg('Auth overlay not found in the DOM', 0);
+    window.logmsg('Auth overlay not found in the DOM', 1);
 }
 
 const preferencesOverlay = document.getElementById('preferencesOverlay');
@@ -1474,7 +1489,7 @@ if (preferencesOverlay) {
         }
     });
 } else {
-    window.logmsg('Preferences overlay not found in the DOM', 0);
+    window.logmsg('Preferences overlay not found in the DOM', 1);
 }
 
 if (document.readyState === 'loading') {
@@ -1488,8 +1503,6 @@ if (document.readyState === 'loading') {
 const logPlayerStateButton = document.getElementById('log-player-state');
 if (logPlayerStateButton) {
     logPlayerStateButton.addEventListener('click', () => {
-        debug(`Current playerState: ${JSON.stringify(brackets.getPlayerState())}`);
+        console.log(`Current playerState: ${JSON.stringify(brackets.getPlayerState())}`);
     });
-} else {
-    window.logmsg('Log player state button not found in the DOM', 0);
 }

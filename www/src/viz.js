@@ -54,14 +54,14 @@ vuLabelImage.onload = () => {
     renderStaticVUMeters();
 };
 vuLabelImage.onerror = () => {
-    window.logmsg('Failed to load VU label image', 0);
+    window.logmsg('Failed to load VU label image', 1);
 };
 vuFrameImage.onload = () => {
     isFrameImageLoaded = true;
     renderStaticVUMeters();
 };
 vuFrameImage.onerror = () => {
-    window.logmsg('Failed to load VU frame image', 0);
+    window.logmsg('Failed to load VU frame image', 1);
 };
 
 const vuLevels = new Float32Array(VU_METER_COUNT); // RMS amplitude
@@ -82,7 +82,7 @@ let zoomIntervalId = null;
 function drawStaticWaveform(canvasId) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) {
-        window.logmsg(`drawStaticWaveform: Canvas ${canvasId} not found`, 0);
+        window.logmsg(`drawStaticWaveform: Canvas ${canvasId} not found`, 1);
         return;
     }
     const ctx = canvas.getContext('2d');
@@ -106,7 +106,7 @@ function drawStaticWaveform(canvasId) {
 function drawStaticVUMeter(canvasId) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) {
-        window.logmsg(`drawStaticVUMeter: Canvas ${canvasId} not found`, 0);
+        window.logmsg(`drawStaticVUMeter: Canvas ${canvasId} not found`, 1);
         return;
     }
     const ctx = canvas.getContext('2d');
@@ -179,7 +179,7 @@ function renderStaticVUMeters() {
 function drawVoiceWaveform(canvasId, voiceIdx) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) {
-        window.logmsg(`drawVoiceWaveform: Canvas ${canvasId} not found`, 0);
+        window.logmsg(`drawVoiceWaveform: Canvas ${canvasId} not found`, 1);
         return;
     }
     const ctx = canvas.getContext('2d');
@@ -251,7 +251,7 @@ function drawVoiceWaveform(canvasId, voiceIdx) {
 function drawVUMeter(canvasId, voiceIdx) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) {
-        window.logmsg(`drawVUMeter: Canvas ${canvasId} not found`, 0);
+        window.logmsg(`drawVUMeter: Canvas ${canvasId} not found`, 1);
         return;
     }
     const ctx = canvas.getContext('2d');
@@ -294,7 +294,7 @@ function drawVUMeter(canvasId, voiceIdx) {
 function drawAmplitudeBar(canvasId, voiceIdx, amplitude) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) {
-        window.logmsg(`drawAmplitudeBar: Canvas ${canvasId} not found`, 0);
+        window.logmsg(`drawAmplitudeBar: Canvas ${canvasId} not found`, 1);
         return;
     }
     const ctx = canvas.getContext('2d');
@@ -359,7 +359,7 @@ function updateVoiceBuffers() {
 
     const adapter = player._backendAdapter;
     if (!adapter || !adapter.isAdapterReady()) {
-        window.logmsg('updateVoiceBuffers: SIDBackendAdapter not ready', 0);
+        window.logmsg('updateVoiceBuffers: SIDBackendAdapter not ready', 1);
         circularBuffers.forEach(buffer => buffer.fill(0));
         vuLevels.fill(0);
         peakRMS.fill(0);
@@ -368,9 +368,9 @@ function updateVoiceBuffers() {
     }
 
     if (!traceStreams || traceStreams.length < 3) {
-        window.logmsg('updateVoiceBuffers: Trace streams not initialized, attempting reinitialization', 0);
+        window.logmsg('updateVoiceBuffers: Trace streams not initialized, attempting reinitialization', 1);
         if (!initTraceStreams()) {
-            window.logmsg('updateVoiceBuffers: Failed to reinitialize trace streams', 0);
+            window.logmsg('updateVoiceBuffers: Failed to reinitialize trace streams', 1);
             circularBuffers.forEach(buffer => buffer.fill(0));
             vuLevels.fill(0);
             peakRMS.fill(0);
@@ -425,7 +425,7 @@ function updateVoiceBuffers() {
 
         writePosition = (writePosition + USABLE_SAMPLES) % CIRCULAR_BUFFER_SIZE;
     } catch (error) {
-        window.logmsg(`updateVoiceBuffers: Error fetching waveform data: ${error.message}`, 0);
+        window.logmsg(`updateVoiceBuffers: Error fetching waveform data: ${error.message}`, 1);
         traceStreams = null;
     }
 }
@@ -478,7 +478,7 @@ function updateNeedlePhysics() {
 function initTraceStreams() {
     const player = window.player;
     if (!player || !player._backendAdapter) {
-        window.logmsg('initTraceStreams: ScriptNodePlayer not ready', 0);
+        window.logmsg('initTraceStreams: ScriptNodePlayer not ready', 1);
         return false;
     }
     const Module = window.backend_SID.Module;
@@ -494,11 +494,11 @@ function initTraceStreams() {
             }
             return true;
         } else {
-            window.logmsg(`Insufficient trace streams: ${numStreams}`, 0);
+            window.logmsg(`Insufficient trace streams: ${numStreams}`, 1);
             return false;
         }
     } catch (error) {
-        window.logmsg(`initTraceStreams: Error initializing trace streams: ${error.message}`, 0);
+        window.logmsg(`initTraceStreams: Error initializing trace streams: ${error.message}`, 1);
         return false;
     }
 }
@@ -718,7 +718,7 @@ function stopContinuousZoom() {
 // Start visualizations
 function startVisualizations() {
     if (!window.player) {
-        window.logmsg('startVisualizations: window.player not defined, retrying', 0);
+        window.logmsg('startVisualizations: window.player not defined, retrying', 1);
         let retryCount = 0;
         const maxRetries = 5;
         const retryInterval = 500;
@@ -730,7 +730,7 @@ function startVisualizations() {
                 window.logmsg(`startVisualizations: window.player not ready, retrying in ${retryInterval}ms (${retryCount}/${maxRetries})`, 1);
                 setTimeout(retryInit, retryInterval);
             } else {
-                window.logmsg('startVisualizations: Max retries reached, visualizations disabled', 0);
+                window.logmsg('startVisualizations: Max retries reached, visualizations disabled', 1);
             }
         };
         retryInit();
@@ -738,12 +738,12 @@ function startVisualizations() {
     }
 
     if (!window.player._backendAdapter) {
-        window.logmsg('startVisualizations: ScriptNodePlayer backend adapter not ready', 0);
+        window.logmsg('startVisualizations: ScriptNodePlayer backend adapter not ready', 1);
         return;
     }
 
     if (!window.player._isSongReady) {
-        window.logmsg('startVisualizations: No song loaded, skipping trace stream initialization', 0);
+        window.logmsg('startVisualizations: No song loaded, skipping trace stream initialization', 1);
         return;
     }
 
@@ -777,7 +777,7 @@ function startVisualizations() {
             window.logmsg(`Trace streams not ready, retrying in ${retryInterval}ms (${retryCount}/${maxRetries})`, 1);
             setTimeout(attemptTraceStreamInit, retryInterval);
         } else {
-            window.logmsg('Max retries reached, visualizations disabled', 0);
+            window.logmsg('Max retries reached, visualizations disabled', 1);
         }
     }
 

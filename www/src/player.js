@@ -53,7 +53,7 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
 
     return ScriptNodePlayer.loadMusicFromURL(fullFilePath, options, onFail, onProgress).then(() => {
         // Log initial load info
-        window.logmsg(`Loading SID: ${fullFilePath}`, 0);
+        window.logmsg(`Loading SID: ${fullFilePath}`, 1);
 
         // Update UI and start playback
         updateSongInfo();
@@ -69,7 +69,7 @@ export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseB
         ui.updateFlameButton(brackets.getPlayerState());
         ui.updateRoundInfo(brackets.getPlayerState());
 
-        window.logmsg(`Playback Success: ${fullFilePath}, Loaded and playable`, 0);
+        window.logmsg(`Playback Success: ${fullFilePath}, Loaded and playable`, 1);
     }).catch(error => {
         window.logmsg(`Playback Failure: ${fullFilePath}, Error=${error}`, 0);
         onFail();
@@ -126,7 +126,7 @@ export async function initPlayer(getPlayerState, updateWinnerButtons, updateFlam
 export async function togglePlayPause(updateRoundInfo, updatePlayPauseButton, updateWinnerButtons, updateFlameButton, updateJamButton, initPlayerFn, updatePlayerState) {
     if (!sidPlayer) {
         await initPlayerFn();
-        console.log("Note: Please ignore ScriptNodePlayer Deprecation warning. We will not be remediating at this time.");
+        window.logmsg("Note: Please ignore ScriptNodePlayer Deprecation warning. We will not be remediating at this time.",1);
         window.logmsg("[>]", 1);
         if (isPlaying && updateJamButton) {
             updateJamButton(true);

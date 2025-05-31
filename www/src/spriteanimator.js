@@ -46,7 +46,7 @@ function preloadSpriteSheets() {
     const img = new Image();
     img.src = config.spriteSheetPath;
     img.onerror = () => {
-      window.logmsg(`Failed to load sprite sheet for ${animationId}: ${config.spriteSheetPath}`, 2);
+      window.logmsg(`Failed to load sprite sheet for ${animationId}: ${config.spriteSheetPath}`, 1);
     };
     img.onload = () => {
       window.logmsg(`Sprite sheet for ${animationId} loaded successfully`, 1);
@@ -59,7 +59,7 @@ function preloadSpriteSheets() {
 export function renderSpriteAnimation(targetElement, animationId, isActive) {
   // Validate animationId
   if (!ANIMATION_CONFIGS[animationId]) {
-    window.logmsg(`Invalid animationId: ${animationId}`, 2);
+    window.logmsg(`Invalid animationId: ${animationId}`, 1);
     targetElement.style.backgroundImage = `url(${ANIMATION_CONFIGS.flame.staticImagePath})`;
     targetElement.style.backgroundSize = 'contain';
     targetElement.style.backgroundRepeat = 'no-repeat';
@@ -73,7 +73,7 @@ export function renderSpriteAnimation(targetElement, animationId, isActive) {
 
   // Fallback to static image if sprite sheet not loaded
   if (!spriteSheet || !spriteSheet.complete || spriteSheet.naturalWidth === 0) {
-    window.logmsg(`Sprite sheet for ${animationId} not loaded, using static image`, 2);
+    window.logmsg(`Sprite sheet for ${animationId} not loaded, using static image`, 1);
     targetElement.style.backgroundImage = `url(${config.staticImagePath})`;
     targetElement.style.backgroundSize = 'contain';
     targetElement.style.backgroundRepeat = 'no-repeat';
