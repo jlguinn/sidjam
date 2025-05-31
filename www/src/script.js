@@ -51,8 +51,6 @@ function wildcardToSqlLike(pattern) {
     return sqlPattern;
 }
 
-
-
 export async function loadPlayerState() {
     try {
         const response = await fetch(`dbcontrol/get_player_state.php?user_id=${window.user.id}`);
@@ -344,8 +342,8 @@ function handleFilterInput() {
 }
 
 function handleEscapeKey(event) {
-    window.logmsg("[esc]", 1);
     if (event.key === "Escape") {
+        window.logmsg("[esc]", 1);
         toggleSongList();
     }
 }
