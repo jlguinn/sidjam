@@ -477,7 +477,8 @@ export function updateFlameButton(playerState, sidPlayer) {
         return;
     }
 
-    if (playerState.peekBracket === "0 - 0") {
+    // Use activeBracket to determine flame visibility
+    if (playerState.activeBracket === "0 - 0") {
         flameControls.classList.remove("hidden");
         flameButton.style.display = "block";
         reviveButton.style.display = "none";

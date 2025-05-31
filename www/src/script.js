@@ -409,6 +409,7 @@ function populateSongList(filter) {
                     const li = document.createElement("li");
                     const displayText = `(${file.wins} - ${file.losses}) ${file.fullpath.replace('/sid/C64Music', '')}`;
                     li.textContent = displayText;
+                    const relativePath = file.fullpath.replace('/sid/C64Music', '');
                     if (state.peekPlayingSong === file.fullpath) {
                         li.classList.add("playing");
                     }
@@ -462,7 +463,15 @@ function updatePlayingIndicator() {
     }
     songList.querySelectorAll("li").forEach(li => {
         const state = brackets.getPlayerState();
-        if (li.textContent === state.peekPlayingSong) {
+        // Split at " /" to get the relative path (e.g., "/DEMOS/0-9/1_45_Tune.sid")
+        const textParts = li.textContent.split(" /");
+        if (textParts.length < 2) {
+            window.logmsg(`Invalid li textContent: ${li.textContent}`, 0);
+            li.classList.remove("playing");
+            return;
+        }
+        const relativePath = "/" + textParts[1].trim();
+        if (state.peekPlayingSong === relativePath) {
             li.classList.add("playing");
         } else {
             li.classList.remove("playing");

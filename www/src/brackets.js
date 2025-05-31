@@ -256,6 +256,12 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
     let newBracket = null;
     let voteProcessed = false;
 
+    // If in a special bracket, revert peekBracket to activeBracket
+    if (isSpecialBracket(playerState.peekBracket)) {
+        updatePlayerState({ peekBracket: playerState.activeBracket });
+        shouldUpdateBracketDropdown = true;
+    }
+
     if (!window.isLoggedIn && window.showPromptMessage && !window.hasShownPrompt) {
         window.hasShownPrompt = true;
     }
@@ -568,25 +574,32 @@ export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, upda
     let newBracket = bracketSelect.value.replace('-', ' - ');
     if (newBracket === playerState.peekBracket) return;
 
-    if (!isSpecialBracket(playerState.peekBracket)) {
-        updatePlayerState({ activeBracket: playerState.peekBracket });
-    }
-    updatePlayerState({ peekBracket: newBracket });
-
-    if (playerState.currentMode === "nowPlaying") {
-        window.logmsg(`Staying in Now Playing mode, updating to ${newBracket}`, 1);
+    // If switching to a special bracket, just update peekBracket and refresh UI
+    if (isSpecialBracket(newBracket)) {
+        updatePlayerState({ peekBracket: newBracket });
         updateFlameButton(playerState, sidPlayer);
+        updateVsMatchup(playerState);
+        updateRoundInfo(playerState);
+        updateWinnerButtons(playerState, sidPlayer);
         return;
     }
 
-    const specialBrackets = ["All", "Eliminated"];
-    let contenderCount = getContenderCount(newBracket);
-    if (specialBrackets.includes(newBracket) || contenderCount === 1) {
+    // If returning to activeBracket, preserve current bout
+    if (newBracket === playerState.activeBracket) {
+        updatePlayerState({ peekBracket: newBracket });
+        updateFlameButton(playerState, sidPlayer);
+        updateVsMatchup(playerState);
+        updateRoundInfo(playerState);
+        updateWinnerButtons(playerState, sidPlayer);
         return;
     }
 
-    if (contenderCount < 1) {
-        window.logmsg(`No contenders in ${newBracket}, reverting to ${playerState.activeBracket}`, 0);
+    // Switching to a new bout-able bracket
+    updatePlayerState({ activeBracket: newBracket, peekBracket: newBracket });
+
+    const contenderCount = getContenderCount(newBracket);
+    if (contenderCount < 2) {
+        window.logmsg(`Not enough contenders in ${newBracket}, reverting to ${playerState.activeBracket}`, 0);
         updatePlayerState({ peekBracket: playerState.activeBracket });
         updateBracketDropdown();
         return;
@@ -605,9 +618,7 @@ export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, upda
         updateBracketDropdown();
         return;
     }
-    
-    updatePlayerState({ activeBracket: newBracket });
-    
+
     updateFlameButton(playerState, sidPlayer);
     if (loadSong) loadSong(playerState.contenders[playerState.activeContender], -1);
     renderWinnerButtonBitmap(0, playerState);
