@@ -37,18 +37,9 @@ const updateJamButtonBound = (isPlaying) => ui.updateJamButton(isPlaying, bracke
 
 
 function wildcardToSqlLike(pattern) {
-    if (!pattern) return '%'; // Empty input matches all
-    let sqlPattern = pattern
-        .toLowerCase() // Case-insensitive
-        .replace(/[\\%_]/g, '\\$&') // Escape SQL special chars
-        .replace(/\*/g, '%') // * -> %
-        .replace(/\?/g, '_'); // ? -> _
-    
-    if (!sqlPattern.startsWith('(')) {
-        sqlPattern = '%' + sqlPattern + '%';
-    }
-    window.logmsg(`Converted pattern '${pattern}' to SQL LIKE: '${sqlPattern}'`, 2);
-    return sqlPattern;
+    // No longer needed client-side, but kept for reference
+    if (!pattern) return '';
+    return pattern;
 }
 
 export async function loadPlayerState() {
@@ -336,8 +327,8 @@ function handleFilterInput() {
         window.logmsg('Filter input not found in the DOM', 0);
         return;
     }
-    const filterText = wildcardToSqlLike(filterInput.value.trim());
-    window.logmsg(`Applying filter: ${filterText}`, 2); // Debug log
+    const filterText = filterInput.value.trim();
+    window.logmsg(`Applying filter: ${filterText}`, 2);
     populateSongList(filterText);
 }
 
@@ -383,7 +374,8 @@ function populateSongList(filter) {
 
     isLoading = true;
 
-    let queryParams = `filter=${encodeURIComponent(wildcardToSqlLike(filter))}&offset=${currentOffset}&limit=${SONGS_PER_FETCH}&user_id=${window.user.id}`;
+    // Pass raw filter to backend
+    let queryParams = `filter=${encodeURIComponent(filter)}&offset=${currentOffset}&limit=${SONGS_PER_FETCH}&user_id=${window.user.id}`;
     if (state.peekBracket !== "All" && state.peekBracket !== "Eliminated") {
         let [wins, losses] = state.peekBracket.split(' - ').map(Number);
         queryParams += `&wins=${wins}&losses=${losses}`;
@@ -460,6 +452,7 @@ function populateSongList(filter) {
             songList.appendChild(li);
         });
 }
+
 
 function updatePlayingIndicator() {
     const songList = document.getElementById("songList");
@@ -1302,7 +1295,7 @@ async function initializeApp() {
         const songsResponse = await fetch('dbcontrol/get_sidtunes.php?full_list=true');
         if (!songsResponse.ok) throw new Error(`Failed to load sidtunes: ${songsResponse.statusText}`);
         const tunesData = await songsResponse.json();
-        window.sidJamData.sidFiles = tunesData.map(tune => tune.fullpath); // Already sorted by API
+        window.sidJamData.sidFiles = tunesData.map(tune => tune.fullpath);
         if (!window.sidJamData.sidFiles || window.sidJamData.sidFiles.length === 0) throw new Error('No songs loaded from sidtunes');
         window.sidJamData.pathToId = {};
         window.sidJamData.pathToRecord = {};
@@ -1310,7 +1303,7 @@ async function initializeApp() {
             window.sidJamData.pathToId[tune.fullpath] = tune.id;
             window.sidJamData.pathToRecord[tune.fullpath] = { wins: tune.wins, losses: tune.losses };
         });
-
+        
         const resultsResponse = await fetch(`dbcontrol/get_results.php?user_id=${window.user.id}`);
         if (!resultsResponse.ok) throw new Error(`Failed to load results: ${resultsResponse.statusText}`);
         window.sidJamData.cachedResults = await resultsResponse.json();

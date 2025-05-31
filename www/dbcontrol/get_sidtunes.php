@@ -23,13 +23,13 @@ $user_id = isset($_GET['user_id']) ? (int)$_GET['user_id'] : 0;
 // Log the request
 error_log("Request: " . json_encode($_GET));
 
-// Parse win/loss filter if present
-$win_loss_filter = '';
-$path_filter = $filter;
-if (preg_match('/^\((\d+)\s*-\s*(\d+)\)(.*)$/', $filter, $matches)) {
-    $win_loss_filter = $matches[1] . ' - ' . $matches[2];
-    $path_filter = trim($matches[3]);
-    error_log("Parsed win/loss filter: ($win_loss_filter), path filter: $path_filter");
+function wildcardToSqlLike($pattern) {
+    if ($pattern === '') return '%';
+    // Escape SQL special chars, convert wildcards
+    $pattern = str_replace(['%', '_'], ['\\%', '\\_'], $pattern);
+    $pattern = str_replace(['*', '?'], ['%', '_'], $pattern);
+    // Add implied wildcards
+    return '%' . $pattern . '%';
 }
 
 // Use prepared statements
@@ -44,19 +44,11 @@ if ($full_list) {
               ) s ON a.sid_id = s.sid_id";
     $params = [$user_id];
     $types = 'i';
-    if ($path_filter !== '') {
-        $query .= " WHERE a.fullpath LIKE ?";
-        $params[] = $path_filter;
+    if ($filter !== '') {
+        $query .= " WHERE LOWER(CONCAT('(', COALESCE(s.wins, 0), ' - ', COALESCE(s.losses, 0), ') ', REPLACE(a.fullpath, '/sid/C64Music', ''))) LIKE LOWER(?)";
+        $params[] = wildcardToSqlLike($filter);
         $types .= 's';
     }
-    if ($win_loss_filter !== '') {
-        $query .= $path_filter !== '' ? " AND" : " WHERE";
-        $query .= " COALESCE(s.wins, 0) = ? AND COALESCE(s.losses, 0) = ?";
-        $params[] = (int)$matches[1];
-        $params[] = (int)$matches[2];
-        $types .= 'ii';
-    }
-    // Updated sorting
     $query .= " ORDER BY COALESCE(s.wins, 0) DESC, COALESCE(s.losses, 0) ASC, a.fullpath ASC";
     if ($limit > 0) {
         $query .= " LIMIT ? OFFSET ?";
@@ -80,7 +72,6 @@ if ($full_list) {
     $params = [];
     $types = "";
 
-    // Always include user-specific results
     if ($user_id > 0) {
         $query .= " LEFT JOIN (
                       SELECT sid_id, SUM(win) as wins, SUM(loss) as losses 
@@ -92,22 +83,12 @@ if ($full_list) {
         $types .= "i";
     }
 
-    // Path filter
-    if ($path_filter !== '') {
-        $conditions[] = "a.fullpath LIKE ?";
-        $params[] = $path_filter;
+    if ($filter !== '') {
+        $conditions[] = "LOWER(CONCAT('(', COALESCE(s.wins, 0), ' - ', COALESCE(s.losses, 0), ') ', REPLACE(a.fullpath, '/sid/C64Music', ''))) LIKE LOWER(?)";
+        $params[] = wildcardToSqlLike($filter);
         $types .= "s";
     }
 
-    // Win/loss filter
-    if ($win_loss_filter !== '') {
-        $conditions[] = "COALESCE(s.wins, 0) = ? AND COALESCE(s.losses, 0) = ?";
-        $params[] = (int)$matches[1];
-        $params[] = (int)$matches[2];
-        $types .= "ii";
-    }
-
-    // Bracket filter
     if ($wins >= 0 && $losses >= 0 && $user_id > 0) {
         if ($wins == 0 && $losses == 0) {
             $conditions[] = "((s.wins = 0 AND s.losses = 0) OR (s.wins IS NULL AND s.losses IS NULL))";
@@ -124,7 +105,6 @@ if ($full_list) {
     if (!empty($conditions)) {
         $query .= " WHERE " . implode(" AND ", $conditions);
     }
-    // Updated sorting
     $query .= " ORDER BY COALESCE(s.wins, 0) DESC, COALESCE(s.losses, 0) ASC, a.fullpath ASC";
     if ($limit > 0) {
         $query .= " LIMIT ? OFFSET ?";
