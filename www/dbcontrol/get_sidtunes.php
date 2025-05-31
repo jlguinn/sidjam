@@ -56,7 +56,8 @@ if ($full_list) {
         $params[] = (int)$matches[2];
         $types .= 'ii';
     }
-    $query .= " ORDER BY a.fullpath";
+    // Updated sorting
+    $query .= " ORDER BY COALESCE(s.wins, 0) DESC, COALESCE(s.losses, 0) ASC, a.fullpath ASC";
     if ($limit > 0) {
         $query .= " LIMIT ? OFFSET ?";
         $params[] = $limit;
@@ -123,7 +124,8 @@ if ($full_list) {
     if (!empty($conditions)) {
         $query .= " WHERE " . implode(" AND ", $conditions);
     }
-    $query .= " ORDER BY a.fullpath";
+    // Updated sorting
+    $query .= " ORDER BY COALESCE(s.wins, 0) DESC, COALESCE(s.losses, 0) ASC, a.fullpath ASC";
     if ($limit > 0) {
         $query .= " LIMIT ? OFFSET ?";
         $params[] = $limit;

@@ -38,14 +38,12 @@ const updateJamButtonBound = (isPlaying) => ui.updateJamButton(isPlaying, bracke
 
 function wildcardToSqlLike(pattern) {
     if (!pattern) return '%'; // Empty input matches all
-    // Handle win/loss filter separately if present
     let sqlPattern = pattern
         .toLowerCase() // Case-insensitive
         .replace(/[\\%_]/g, '\\$&') // Escape SQL special chars
         .replace(/\*/g, '%') // * -> %
         .replace(/\?/g, '_'); // ? -> _
     
-    // If pattern starts with (w - l), preserve it for backend parsing
     if (!sqlPattern.startsWith('(')) {
         sqlPattern = '%' + sqlPattern + '%';
     }
@@ -417,7 +415,6 @@ function populateSongList(filter) {
             } else {
                 files.forEach(file => {
                     const li = document.createElement("li");
-                    // Display win/loss record before the path
                     const displayText = `(${file.wins} - ${file.losses}) ${file.fullpath.replace('/sid/C64Music', '')}`;
                     li.textContent = displayText;
                     if (state.peekPlayingSong === file.fullpath) {
@@ -1305,10 +1302,10 @@ async function initializeApp() {
         const songsResponse = await fetch('dbcontrol/get_sidtunes.php?full_list=true');
         if (!songsResponse.ok) throw new Error(`Failed to load sidtunes: ${songsResponse.statusText}`);
         const tunesData = await songsResponse.json();
-        window.sidJamData.sidFiles = tunesData.map(tune => tune.fullpath);
+        window.sidJamData.sidFiles = tunesData.map(tune => tune.fullpath); // Already sorted by API
         if (!window.sidJamData.sidFiles || window.sidJamData.sidFiles.length === 0) throw new Error('No songs loaded from sidtunes');
         window.sidJamData.pathToId = {};
-        window.sidJamData.pathToRecord = {}; // New mapping for win/loss
+        window.sidJamData.pathToRecord = {};
         tunesData.forEach(tune => {
             window.sidJamData.pathToId[tune.fullpath] = tune.id;
             window.sidJamData.pathToRecord[tune.fullpath] = { wins: tune.wins, losses: tune.losses };
@@ -1319,11 +1316,9 @@ async function initializeApp() {
         window.sidJamData.cachedResults = await resultsResponse.json();
 
         const player_state = await loadPlayerState();
-        // Validate player_state paths
         let isValidState = true;
         if (player_state) {
             const validPaths = new Set(window.sidJamData.sidFiles);
-            // Check contenders and nowPlayingSong
             if (player_state.contenders) {
                 player_state.contenders.forEach((path, index) => {
                     if (path && !validPaths.has(path)) {
