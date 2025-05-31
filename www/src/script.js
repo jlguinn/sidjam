@@ -37,14 +37,19 @@ const updateJamButtonBound = (isPlaying) => ui.updateJamButton(isPlaying, bracke
 
 
 function wildcardToSqlLike(pattern) {
-    if (!pattern) return ''; // Empty input matches all
-    // Prepend and append % for implied wildcards
-    let sqlPattern = '%' + pattern
-        .toLowerCase() // Ensure case-insensitive matching
+    if (!pattern) return '%'; // Empty input matches all
+    // Handle win/loss filter separately if present
+    let sqlPattern = pattern
+        .toLowerCase() // Case-insensitive
         .replace(/[\\%_]/g, '\\$&') // Escape SQL special chars
         .replace(/\*/g, '%') // * -> %
-        .replace(/\?/g, '_') + '%'; // ? -> _
-    window.logmsg(`Converted pattern '${pattern}' to SQL LIKE: '${sqlPattern}'`, 2); // Debug log
+        .replace(/\?/g, '_'); // ? -> _
+    
+    // If pattern starts with (w - l), preserve it for backend parsing
+    if (!sqlPattern.startsWith('(')) {
+        sqlPattern = '%' + sqlPattern + '%';
+    }
+    window.logmsg(`Converted pattern '${pattern}' to SQL LIKE: '${sqlPattern}'`, 2);
     return sqlPattern;
 }
 
@@ -380,7 +385,7 @@ function populateSongList(filter) {
 
     isLoading = true;
 
-    let queryParams = `filter=${encodeURIComponent(filter)}&offset=${currentOffset}&limit=${SONGS_PER_FETCH}&user_id=${window.user.id}`;
+    let queryParams = `filter=${encodeURIComponent(wildcardToSqlLike(filter))}&offset=${currentOffset}&limit=${SONGS_PER_FETCH}&user_id=${window.user.id}`;
     if (state.peekBracket !== "All" && state.peekBracket !== "Eliminated") {
         let [wins, losses] = state.peekBracket.split(' - ').map(Number);
         queryParams += `&wins=${wins}&losses=${losses}`;
@@ -412,13 +417,15 @@ function populateSongList(filter) {
             } else {
                 files.forEach(file => {
                     const li = document.createElement("li");
-                    li.textContent = file.replace('/sid/C64Music', '');
-                    if (state.peekPlayingSong === file) {
+                    // Display win/loss record before the path
+                    const displayText = `(${file.wins} - ${file.losses}) ${file.fullpath.replace('/sid/C64Music', '')}`;
+                    li.textContent = displayText;
+                    if (state.peekPlayingSong === file.fullpath) {
                         li.classList.add("playing");
                     }
                     li.onclick = () => {
-                        window.logmsg(`(>)\n ${file.replace('/sid/C64Music', '')}`, 1);
-                        playSongOnDemand(file);
+                        window.logmsg(`(>)\n ${displayText}`, 1);
+                        playSongOnDemand(file.fullpath);
                     };
                     songList.appendChild(li);
                 });
@@ -1301,8 +1308,10 @@ async function initializeApp() {
         window.sidJamData.sidFiles = tunesData.map(tune => tune.fullpath);
         if (!window.sidJamData.sidFiles || window.sidJamData.sidFiles.length === 0) throw new Error('No songs loaded from sidtunes');
         window.sidJamData.pathToId = {};
+        window.sidJamData.pathToRecord = {}; // New mapping for win/loss
         tunesData.forEach(tune => {
             window.sidJamData.pathToId[tune.fullpath] = tune.id;
+            window.sidJamData.pathToRecord[tune.fullpath] = { wins: tune.wins, losses: tune.losses };
         });
 
         const resultsResponse = await fetch(`dbcontrol/get_results.php?user_id=${window.user.id}`);
