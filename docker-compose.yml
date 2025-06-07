@@ -1,7 +1,7 @@
 services:
   sidjam-web:
     image: php:8.2-apache
-    container_name: sidjam-web-1
+    container_name: 
     ports:
       - "8080:80"
     volumes:

@@ -1,65 +1,101 @@
 <?php
-/*
-Production Readiness:
-For a live environment (e.g., sidjam.com), replace MailHog with a real SMTP server (e.g., Gmail, SendGrid):
-php
+// Mailer.php
+// Ensure this path is correct based on where your Composer vendor directory is relative to Mailer.php
+// If Mailer.php is in public_html, and vendor is in public_html:
+// require_once __DIR__ . '/vendor/autoload.php';
+// If Mailer.php is in a subfolder like 'classes', and vendor is in public_html:
+// require_once __DIR__ . '/../vendor/autoload.php';
+// Using a relative path from the script that calls Mailer.php is generally safer:
+require_once dirname(__DIR__, 1) . '/vendor/autoload.php'; // Adjust this path if your vendor is not in the parent of Mailer.php's directory
 
-$this->mail->Host = 'smtp.gmail.com';
-$this->mail->Port = 587;
-$this->mail->SMTPAuth = true;
-$this->mail->SMTPSecure = 'tls';
-$this->mail->Username = 'your-email@gmail.com';
-$this->mail->Password = 'your-app-password';
 
-*/
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
+use Aws\Ses\SesClient;
+use Aws\Exception\AwsException;
 
-require '/var/www/html/vendor/autoload.php';
+class Mailer
+{
+    private $sesClient;
+    private $senderEmail;
+    private $senderName;
 
-class Mailer {
-    private $mail;
+    // Constructor to initialize the SES client with credentials
+    public function __construct($awsAccessKeyId, $awsSecretAccessKey, $awsRegion, $senderEmail, $senderName)
+    {
+        $this->senderEmail = $senderEmail;
+        $this->senderName = $senderName;
 
-    public function __construct() {
-        $this->mail = new PHPMailer(true); // Enable exceptions
         try {
-            // Server settings
-            $this->mail->isSMTP();
-            $this->mail->Host = 'sidjam-mailhog-1'; // MailHog container name
-            $this->mail->Port = 1025; // MailHog SMTP port
-            $this->mail->SMTPAuth = false; // No authentication for MailHog
-            $this->mail->SMTPSecure = false; // No encryption for MailHog
-            $this->mail->SMTPAutoTLS = false; // Disable auto TLS
-
-            // Sender and reply-to
-            $this->mail->setFrom('noreply@sidjam.com', 'sID JAm');
-            $this->mail->addReplyTo('noreply@sidjam.com', 'sID JAm');
+            $this->sesClient = new SesClient([
+                'version' => 'latest',
+                'region' => $awsRegion,
+                'credentials' => [
+                    'key' => $awsAccessKeyId,
+                    'secret' => $awsSecretAccessKey,
+                ],
+                // Optional: Set a timeout for the API call (in seconds)
+                'http' => [
+                    'timeout' => 30,
+                    'connect_timeout' => 10
+                ]
+            ]);
+        } catch (AwsException $e) {
+            error_log("Mailer Initialization Error: " . $e->getMessage());
+            $this->sesClient = null; // Mark client as not initialized
         } catch (Exception $e) {
-            error_log("Mailer setup failed: {$this->mail->ErrorInfo}");
-            throw $e; // Re-throw to allow callers to handle
+            error_log("Mailer Initialization Unexpected Error: " . $e->getMessage());
+            $this->sesClient = null;
         }
     }
 
-    public function send($to, $subject, $body) {
-        try {
-            // Recipient
-            $this->mail->addAddress($to);
-
-            // Content
-            $this->mail->isHTML(false); // Plain text email
-            $this->mail->Subject = $subject;
-            $this->mail->Body = $body;
-
-            error_log("Mailer: Attempting to send email to $to with subject: $subject");
-            $this->mail->send();
-            error_log("Mailer: Successfully sent email to $to");
-            return true;
-        } catch (Exception $e) {
-            error_log("Mailer: Failed to send email to $to: {$this->mail->ErrorInfo}");
+    /**
+     * Sends an email using Amazon SES.
+     *
+     * @param string $toEmail The recipient's email address.
+     * @param string $subject The email subject.
+     * @param string $body The plain text or HTML body of the email.
+     * @param bool $isHtml Whether the body is HTML (true) or plain text (false).
+     * @return bool True on success, false on failure.
+     */
+    public function send($toEmail, $subject, $body, $isHtml = false)
+    {
+        if ($this->sesClient === null) {
+            error_log("Mailer: SES client not initialized. Cannot send email to $toEmail.");
             return false;
-        } finally {
-            $this->mail->clearAddresses(); // Reset recipients
+        }
+
+        try {
+            $messageBody = [];
+            if ($isHtml) {
+                $messageBody['Html'] = ['Charset' => 'UTF-8', 'Data' => $body];
+                $messageBody['Text'] = ['Charset' => 'UTF-8', 'Data' => strip_tags($body)]; // Generate plain text from HTML
+            } else {
+                $messageBody['Text'] = ['Charset' => 'UTF-8', 'Data' => $body];
+            }
+
+            $result = $this->sesClient->sendEmail([
+                'Destination' => [
+                    'ToAddresses' => [$toEmail],
+                ],
+                'Message' => [
+                    'Body' => $messageBody,
+                    'Subject' => [
+                        'Charset' => 'UTF-8',
+                        'Data' => $subject,
+                    ],
+                ],
+                'Source' => $this->senderName . ' <' . $this->senderEmail . '>', // Formatted sender
+                'ReplyToAddresses' => [$this->senderEmail], // Optional: Where replies go
+            ]);
+
+            error_log("Email sent successfully to $toEmail. Message ID: " . $result['MessageId']);
+            return true;
+
+        } catch (AwsException $e) {
+            error_log("Mailer Send Error (AWS SDK): Failed to send email to $toEmail. Error: " . $e->getMessage());
+            return false;
+        } catch (Exception $e) {
+            error_log("Mailer Send Error (Unexpected): Failed to send email to $toEmail. Error: " . $e->getMessage());
+            return false;
         }
     }
 }
-?>

@@ -22,9 +22,11 @@ export const baseColorSchemes = [
     { name: "Winter Cabin", interior: "#D9E4DD", exterior: "#2F4F4F", interiorTextColor: "#2F4F4F", exteriorTextColor: "#D9E4DD" },
     { name: "Gold Rush", interior: "#FFD700", exterior: "#FF00FF", interiorTextColor: "#000000", exteriorTextColor: "#FFD700" },
 
+
+
+
     { name: "Cyber Punk", interior: "#00FF7F", exterior: "#2F0047", interiorTextColor: "#000000", exteriorTextColor: "#00FF7F" },
     { name: "Midnight Neon", interior: "#00FF00", exterior: "#191970", interiorTextColor: "#000000", exteriorTextColor: "#00FF00" },
-
     { name: "Saffron Dawn", interior: "#FFFACD", exterior: "#FF8247", interiorTextColor: "#8B4513", exteriorTextColor: "#FFFACD" },
     { name: "Teal Tempest", interior: "#008080", exterior: "#FF6347", interiorTextColor: "#FFFFFF", exteriorTextColor: "#008080" },
     { name: "Solar Flare", interior: "#FFFF00", exterior: "#FF4500", interiorTextColor: "#000000", exteriorTextColor: "#FFFFFF" },    
@@ -34,9 +36,6 @@ export const baseColorSchemes = [
     { name: "Birch Whisper", interior: "#F8F8FF", exterior: "#D2B48C", interiorTextColor: "#5C4033", exteriorTextColor: "#F8F8FF" },
     { name: "Stone Hearth", interior: "#F8F8FF", exterior: "#2F4F4F", interiorTextColor: "#2F4F4F", exteriorTextColor: "#F8F8FF" },
     { name: "Chai Latte", interior: "#FAEBD7", exterior: "#8B5A2B", interiorTextColor: "#5C4033", exteriorTextColor: "#FAEBD7" },
-
-    { name: "Frosty Mint", interior: "#F5FFFA", exterior: "#3CB371", interiorTextColor: "#2F4F4F", exteriorTextColor: "#F5FFFA" },
-    { name: "Ashen Pine", interior: "#F5F5F5", exterior: "#2E8B57", interiorTextColor: "#355E3B", exteriorTextColor: "#F5F5F5" },
     { name: "Cedar Wood", interior: "#F5F0E1", exterior: "#5C4033", interiorTextColor: "#3C2F2F", exteriorTextColor: "#F5F0E1" },
     { name: "Butterscotch Glow", interior: "#FFF8DC", exterior: "#FFA54F", interiorTextColor: "#8B5A2B", exteriorTextColor: "#FFF8DC" },
 
