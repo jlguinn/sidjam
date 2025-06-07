@@ -1,11 +1,21 @@
 <?php
 session_start();
-$sidconPath = file_exists(__DIR__ . '/../../../dbcontrol_sidjam/sidcon.php')
-    ? __DIR__ . '/../../../dbcontrol_sidjam/sidcon.php'
-    : __DIR__ . '/sidcon.php';
 
+// Paths to sidcon.php and vendor/autoload.php
+// Assuming sidcon.php is truly one level above public_html (e.g., in /home/youruser/dbcontrol_sidjam/sidcon.php)
+$sidconPath = __DIR__ . '/../../../dbcontrol_sidjam/sidcon.php'; // Adjust if path is different
+if (!file_exists($sidconPath)) {
+    // Fallback for local dev or if sidcon.php is in the same directory for testing
+    $sidconPath = __DIR__ . '/sidcon.php';
+}
 require_once $sidconPath;
-require_once "Mailer.php";
+
+// This require_once for autoload.php should ideally be at the main entry point,
+// but if this script is standalone, it's fine here.
+// Adjust path relative to THIS script. If vendor is in www, and this script is in www, it's like this:
+require_once __DIR__ . '/../vendor/autoload.php'; // Make sure this path is correct!
+
+require_once "Mailer.php"; // Load your updated Mailer class
 header('Content-Type: application/json');
 
 ini_set('display_errors', 0);
@@ -69,13 +79,28 @@ $stmt->bind_param("si", $hashedPassword, $_SESSION['user_id']);
 $stmt->execute();
 $stmt->close();
 
-$email = $result['email'];
+// --- SES Email Sending for Password Update Notification ---
+$email = $result['email']; // The user's email address from the database query
 $subject = "sID JAm - Password Updated";
-$body = "Your password has been updated. If you did not request this change, please contact support.";
-$mailer = new Mailer();
+$bodyHtml = "
+    <p>Hello,</p>
+    <p>The password for the sID JAm account registered to this e-mail address has been successfully updated.</p>
+    <p>You can click the profile image on https://sidjam.com to access additional sign in and user registration settings.</p>
+    <p>Thank you for using sID JAm!</p>
+";
+$bodyText = "Hello,\n\nThe password for the sID JAm account registered to this e-mail address has been successfully updated.\n\nYou can click the profile image on https://sidjam.com to access additional sign in and user registration settings.\n\nThank you for using sID JAm!";
+
+
+// Initialize Mailer with SES credentials from sidcon.php
+// These variables are loaded from require_once $sidconPath;
+$mailer = new Mailer($awsAccessKeyId, $awsSecretAccessKey, $awsRegion, $sesSenderEmail, $sesSenderName);
+
 error_log("Update Password: Sending email notification to $email");
-if (!$mailer->send($email, $subject, $body)) {
+// Use the updated bodyHtml for sending, and indicate it's HTML
+if (!$mailer->send($email, $subject, $bodyHtml, true)) {
     error_log("Update Password: Email notification failed for password update to $email");
+} else {
+    error_log("Update Password: Successfully sent password update notification to $email");
 }
 
 $cxn->close();
