@@ -5,7 +5,10 @@ $sidconPath = file_exists(__DIR__ . '/../../../dbcontrol_sidjam/sidcon.php')
     : __DIR__ . '/sidcon.php';
 
 require_once $sidconPath;
-require_once "Mailer.php"; // Use Mailer.php with PHPMailer
+// Correctly include autoload.php if not already done by a main entry script
+require_once __DIR__ . '/../vendor/autoload.php'; // Adjust this path if your vendor is located elsewhere
+
+require_once "Mailer.php"; // Load your updated Mailer class
 header('Content-Type: application/json');
 
 ini_set('display_errors', 0); // Disable display_errors
@@ -65,7 +68,7 @@ if (!$stmt) {
 $stmt->bind_param("i", $_SESSION['user_id']);
 $stmt->execute();
 $result = $stmt->get_result()->fetch_assoc();
-$email = $result['email'];
+$email = $result['email']; // Get the user's email before updating the username
 $stmt->close();
 
 $stmt = $cxn->prepare("UPDATE siduser SET UserName = ? WHERE user_id = ?");
@@ -78,12 +81,26 @@ $stmt->bind_param("si", $newUsername, $_SESSION['user_id']);
 $stmt->execute();
 $stmt->close();
 
-$subject = "sID JAm - Username Updated";
-$body = "Your username has been updated to $newUsername. If you did not request this change, please contact support.";
-$mailer = new Mailer();
+// --- SES Email Sending for Username Update Notification ---
+$subject = "sID JAm - User Name Updated";
+$bodyHtml = "
+    <p>Hello,</p>
+    <p>The user name for the sID JAm account registered to this e-mail address has been successfully updated.</p>
+    <p>You can click the profile image on <a href=\"https://sidjam.com\">https://sidjam.com</a> to access additional sign in and user registration settings.</p>
+    <p>Thank you for using sID JAm!</p>
+";
+$bodyText = "Hello,\n\nThe user name for the sID JAm account registered to this e-mail address has been successfully updated.\nYou can click the profile image on https://sidjam.com to access additional sign in and user registration settings.\nThank you for using sID JAm!";
+
+// Initialize Mailer with SES credentials from sidcon.php
+// These variables ($awsAccessKeyId, etc.) are loaded from require_once $sidconPath;
+$mailer = new Mailer($awsAccessKeyId, $awsSecretAccessKey, $awsRegion, $sesSenderEmail, $sesSenderName);
+
 error_log("Update Username: Sending email notification to $email");
-if (!$mailer->send($email, $subject, $body)) {
+// Use the updated bodyHtml for sending, and indicate it's HTML
+if (!$mailer->send($email, $subject, $bodyHtml, true)) {
     error_log("Update Username: Email notification failed for username update to $email");
+} else {
+    error_log("Update Username: Successfully sent username update notification to $email");
 }
 
 $cxn->close();

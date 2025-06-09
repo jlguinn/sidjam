@@ -71,9 +71,18 @@ $stmt->close();
 $cxn->close();
 
 // Send email notification
-$mailer = new Mailer();
+$mailer = new Mailer($awsAccessKeyId, $awsSecretAccessKey, $awsRegion, $sesSenderEmail, $sesSenderName);
 $subject = "sID JAm - Account Deleted";
-$body = "Your sID JAm account has been deleted. If you did not request this, please contact support.";
+$bodyHtml = "
+    <p>Hello,</p>
+    <p>The sID JAm account registered to this e-mail address has been deleted.</p>
+    <p>Feel free to register a new account on <a href=\"https://sidjam.com\">https://sidjam.com</a> at any time.</p>
+    <p>Thank you for trying sID JAm!</p>
+";
+$body = "The sID JAm account registered to this e-mail address has been deleted. \nFeel free to register a new account on https://sidjam.com at any time.\nThank you for trying sID JAm!";
+
+
+
 error_log("Delete Account: Sending email notification to $email");
 if (!$mailer->send($email, $subject, $body)) {
     error_log("Delete Account: Email notification failed for account deletion to $email");

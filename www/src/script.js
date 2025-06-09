@@ -1484,6 +1484,7 @@ async function initializeApp() {
     }
 }
     
+/* Remove click-away lisener
 const authOverlay = document.getElementById('authOverlay');
 if (authOverlay) {
     authOverlay.addEventListener('click', function(event) {
@@ -1495,6 +1496,7 @@ if (authOverlay) {
     window.logmsg('Auth overlay not found in the DOM', 1);
 }
 
+
 const preferencesOverlay = document.getElementById('preferencesOverlay');
 if (preferencesOverlay) {
     preferencesOverlay.addEventListener('click', function(event) {
@@ -1505,6 +1507,7 @@ if (preferencesOverlay) {
 } else {
     window.logmsg('Preferences overlay not found in the DOM', 1);
 }
+*/
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {

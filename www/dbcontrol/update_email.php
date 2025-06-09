@@ -99,18 +99,18 @@ $stmt->close();
 $_SESSION['email'] = $newEmail;
 
 // Send email notifications to both old and new email addresses
-$mailer = new Mailer();
+$mailer = new Mailer($awsAccessKeyId, $awsSecretAccessKey, $awsRegion, $sesSenderEmail, $sesSenderName);
 
 // Notify the old email
 $subject = "sID JAm - Email Address Changed";
-$body = "Your email address has been changed to $newEmail. If you did not request this change, please contact support.";
+$body = "Your email address has been changed to $newEmail. You can click the profile image on https://sidjam.com to access additional sign in and user registration settings.\nThank you for using sID JAm!";
 error_log("Update Email: Sending email notification to old email $oldEmail");
 if (!$mailer->send($oldEmail, $subject, $body)) {
     error_log("Update Email: Email notification failed for old email $oldEmail");
 }
 
 // Notify the new email
-$body = "Your email address has been updated to $newEmail. Welcome to sID JAm! If you did not request this change, please contact support.";
+$body = "Your email address has been updated to $newEmail. You can click the profile image on https://sidjam.com to access additional sign in and user registration settings.\nThank you for using sID JAm!";
 error_log("Update Email: Sending email notification to new email $newEmail");
 if (!$mailer->send($newEmail, $subject, $body)) {
     error_log("Update Email: Email notification failed for new email $newEmail");
