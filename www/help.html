@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sID JAm Help</title>
+    <style>
+        body {
+            background-color: #d9c2a7;
+            font-family: 'Courier New', Courier, monospace;
+            color: #0a1a0a; /* Darker green for body text */
+            font-weight: 700; /* Heavier text */
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #f5e8d7;
+            padding: 20px;
+            border: 2px solid #4a704a;
+            border-radius: 10px;
+        }
+        h1 {
+            color: #1a3c5a; /* Darkish blue for h1 */
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        h2 {
+            color: #1a3c5a; /* Darkish blue for h2 */
+            font-size: 1.5em;
+            margin-top: 20px;
+        }
+        p, ul {
+            line-height: 1.6;
+            color: #0a1a0a; /* Darker green for body text */
+            font-weight: 700; /* Heavier text */
+        }
+        .image-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .highlight {
+            color: #0800ff; /* Blue for highlighted text */
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>sID JAm Help</h1>
+        <div class="image-container">
+            <img src="image/sidjam_help_legend.jpg" alt="sID JAm Interface" width="1922" height="1397">
+        </div>
+
+        <div class="section">
+            <h2>Help</h2>
+            <p>Contents:</p>
+            <ol>
+                <li><span class="highlight">Song Info</span></li>
+                <li><span class="highlight">jAM</span></li>
+                <li><span class="highlight">Winner</span></li>
+                <li><span class="highlight">Flame</span></li>
+                <li><span class="highlight">Brackets / Peek</span></li>
+                <li><span class="highlight">Visualizations</span></li>
+                <li><span class="highlight">Voice Mute Buttons</span></li>
+                <li><span class="highlight">Theme Button</span></li>
+                <li><span class="highlight">Profile</span></li>
+                <li><span class="highlight">Help</span></li>
+            </ol>
+
+            <p>Welcome to sID JAm!</p>
+            <p>sID JAm is a battle of the bands style C64 / SID music player that allows you to choose winners and losers from the HVSC collection in a double-elimination tournament controlled by you.</p>
+        </div>
+
+        <div class="section">
+            <h2>Bout Mode</h2>
+            <p><span class="highlight">1. Player controls and Song Info:</span> Click Play in the song info section (1) to start. Two SID files (contenders) will load, and the first contender will begin playing. You can pause, play and advance to next and previous tracks for songs that support multiple tracks. Clicking previous on track 1 will restart the song.</p>
+            <p><span class="highlight">2. jAM Button:</span> Click jAM (2) to switch between contenders. You can listen to contenders for as long as you like and switch between them as many times as you like.</p>
+            <p><span class="highlight">3. Winner Buttons:</span> Choose the contender you like best by clicking one of the two winner buttons (3). Clicking a winner button will indicate your preference, however the round is not over until you click jAM again to confirm your choice. You can click the winner button again if you change your mind.</p>
+            <p>In the 0 - 0 bracket you can choose both contenders as winners. This is to save you from having to make the heartbreaking decision of sending a legendary track to the obscurity of a 0 - 1 win/loss record. This feature is only available in the 0 - 0 bracket. In all other brackets you must choose a winner and a loser.</p>
+            <p>Click jAM with a winner selected to commit your decision and start a new bout.</p>
+            <p><span class="highlight">4. Flame Button:</span> Click Flame (4) to remove a defective, offensive or otherwise terrible song from play. Like the Winner buttons, your decision to flame a song does not take effect until you click jAM to confirm. The current bout will resume with a new contender in place of the eliminated track. Like the multiple winners option, the flame is only available in the 0 - 0 bracket.</p>
+            <p><span class="highlight">5. Bracket Selector and Peek [...] button:</span> The bracket selector (5) displays the current bracket you're in by win-loss record. You can click the dropdown to view and select other brackets. Selecting another eligible bracket immediately abandons your current bout and loads two new contenders from the bracket you select.</p>
+            <p>The bracket selector also provides these special brackets:</p>
+            <ul>
+                <li>All - All tracks, regardless of record, including eliminated</li>
+                <li>Eliminated - Tracks with two losses, regardless of number of wins</li>
+                <li>Leaderboard - Songs by win-loss records across all registered sID JAm users</li>
+                <li>Ineligible Brackets - Any standard bracket with not enough contenders for a bout (i.e. 1 contender)</li>
+            </ul>
+            <p>Special brackets are provided for your convenience and are not eligible for bouts. Clicking an special bracket has no effect on the bout in progress. Any song playing will continue. Any winner or flame choices you make will apply to the bracket you were in when you started the bout. An ineligible bracket can become eligible when additional contenders join it.</p>
+            <p>Peek Mode:</p>
+            <p>You can view the contenders in any selected bracket with the peek button [...] (5).</p>
+            <p>Peek mode allows you to navigate and filter songs in the selected bracket, including wildcards (* and ?). Clicking a song in the list will play that song in "Peek Mode". "Peek Mode" has no bearing on any win-loss selections. Closing the bracket list will return you to your previous bout.</p>
+            <p>Clicking a second time on a song playing in peek mode will take you into</p>
+            <p>Now Playing Mode:</p>
+            <p>Now Playing Mode looks and behaves similarly to bout mode with the following exceptions:</p>
+            <ul>
+                <li>Only one song plays, starting with the song you explicitly clicked from peek mode.</li>
+                <li>No winners or losers can be selected, since only one song is playing on-demand</li>
+            </ul>
+            <p>From Now Playing Mode you can freely select other brackets to peek and play additional songs on-demand.</p>
+            <p>Revive: Playing an eliminated song in now playing mode will provide a revive button in place of the flame.</p>
+            <p>While the goal of sID JAm is to judge songs in a battle of the bands style tournament structure, these extra accommodations for flame, revive and multiple winners in the 0 - 0 bracket are there to help make your curation experience casual and fun.</p>
+            <p>Clicking jAM in Now Playing mode will return you to bout mode.</p>
+        </div>
+
+        <div class="section">
+            <h2>Other controls (hopefully, mostly self-explanatory):</h2>
+            <ul>
+                <li><span class="highlight">6. Visualizations</span> - Toggle visualizations on and off</li>
+                <li><span class="highlight">7. Voice Mute Buttons</span> - Toggle voice mute on and off</li>
+                <li><span class="highlight">8. Theme Button</span> - Toggle between predefined color themes</li>
+                <li><span class="highlight">9. Profile</span> - Sign in and account settings</li>
+                <li><span class="highlight">0. Help</span> - Access this document.</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Data Collection / Privacy Policy:</h2>
+            <p>sID JAm is a free to use passion project for SID music enthusiasts. Registration requires only a valid e-mail address. A simple browser signature is used to help persist your experience prior to registration, for a low barrier to entry, and to simplify sign in for quick and easy future access. You can opt-out from this in the profile settings.</p>
+            <p>sID JAm does not conduct browser tracking across any other applications or sites. Apart from the optional browser signature, your e-mail, chosen username, win/loss song selections and other application preferences, no data is collected nor used in any way outside of the sID JAm experience.</p>
+            <p>sID JAm encrypts user passwords and stores all data securely.</p>
+            <p>You can delete your account at any time.</p>
+        </div>
+
+        <div class="section">
+            <h2>Credits:</h2>
+            <p>sID JAm uses the webSID emulator by Juergen Wothke (https://www.wothke.ch/websid/).</p>
+            <p>sID JAm was created with a ton of help from large language AI models including Grok 3, Meta.ai (Llama 3.1) and Gemini (2.5 Flash and Pro).</p>
+        </div>
+
+        <div class="section">
+            <h2>Other notes:</h2>
+            <p>sID JAm uses the HVSC Music collection (version #82). Since BASIC SID files are unplayable by this version of sID JAm, they have been removed for convenience.</p>
+            <p>Contact: admin@sidjam</p>
+        </div>
+
+        <p>We hope you enjoy sID JAm!</p>
+    </div>
+</body>
+</html>
