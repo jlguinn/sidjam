@@ -180,19 +180,16 @@ if ($is_update_guest) {
 // --- SES Email Sending for Registration Confirmation ---
 // These variables ($awsAccessKeyId, etc.) are loaded from require_once $sidconPath;
 // Make sure sidcon.php defines these: awsAccessKeyId, awsSecretAccessKey, awsRegion, sesSenderEmail, sesSenderName
-require_once "Mailer.php"; // Load Mailer after sidconPath for credential access
 $mailer = new Mailer($awsAccessKeyId, $awsSecretAccessKey, $awsRegion, $sesSenderEmail, $sesSenderName);
 
 $subject = "Welcome to sID JAm!";
 $bodyHtml = "
     <p>Thank you for registering to sID JAm!</p>
-    <p>We're excited to have you as part of our community.</p>
-    <p>You can now sign in and enjoy all the features.</p>
-    <p>Visit <a href=\"https://sidjam.com\">https://sidjam.com</a> to get started.</p>
+    <p>Visit <a href=\"https://sidjam.com\">https://sidjam.com</a> to access sID JAm.</p>
+    <p>See also: <a href=\"https://sidjam.com/help.html\">https://sidjam.com/help.html</a> for help.</p>
     <p>Thank you!</p>
-    <p>The sID JAm Team</p>
 ";
-$bodyText = "Thank you for registering to sID JAm!\n\nWe're excited to have you as part of our community.\nYou can now sign in and enjoy all the features.\n\nVisit https://sidjam.com to get started.\n\nThank you!\nThe sID JAm Team";
+$bodyText = "Thank you for registering to sID JAm!\n\nVisit https://sidjam.com to access sID JAm.\nSee also: https://sidjam.com/help.html for help.\n\nVisit https://sidjam.com to get started.\n\nThank you!\n";
 
 error_log("Register: Attempting to send welcome email to $email");
 if (!$mailer->send($email, $subject, $bodyHtml, true)) { // Pass true for HTML body
