@@ -1484,30 +1484,18 @@ async function initializeApp() {
     }
 }
     
-/* Remove click-away lisener
-const authOverlay = document.getElementById('authOverlay');
-if (authOverlay) {
-    authOverlay.addEventListener('click', function(event) {
-        if (event.target === this) {
-            window.toggleAuthPopUp();
-        }
-    });
-} else {
-    window.logmsg('Auth overlay not found in the DOM', 1);
-}
+document.addEventListener('DOMContentLoaded', () => {
+    const helpButton = document.getElementById('help-button'); // This is the button that *opens* the help
+    if (helpButton) {
+        helpButton.addEventListener('click', () => {
+            window.logmsg('Help button clicked, opening help.html in new tab', 1);
+            window.open('help.html', '_blank'); // Opens help.html in a new tab
+        });
+    } else {
+        window.logmsg('Help button with ID "help-button" not found in the DOM.', 0);
+    }
+});
 
-
-const preferencesOverlay = document.getElementById('preferencesOverlay');
-if (preferencesOverlay) {
-    preferencesOverlay.addEventListener('click', function(event) {
-        if (event.target === this) {
-            window.togglePreferencesPopUp();
-        }
-    });
-} else {
-    window.logmsg('Preferences overlay not found in the DOM', 1);
-}
-*/
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
