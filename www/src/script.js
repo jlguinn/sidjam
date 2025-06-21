@@ -73,8 +73,8 @@ async function savePlayerState() {
         isWaveformActive: playerState.isWaveformActive,
         isVUActive: playerState.isVUActive,
         isBarActive: playerState.isBarActive,
-        zoomFactor: playerState.zoomFactor,
-        vuMetrics: playerState.vuMetrics // New: Include metrics
+        zoomFactor: playerState.zoomFactor
+        // vuMetrics: playerState.vuMetrics
     };
 
     try {
