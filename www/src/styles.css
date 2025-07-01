@@ -636,8 +636,8 @@ body {
 #voice1-canvas,
 #voice2-canvas,
 #voice3-canvas {
-    width: 250px;
-    height: 100px;
+    width: 300px;
+    height: 70px;
     border: 1px solid var(--background-alt);
     background-color: #444;
 }
