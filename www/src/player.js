@@ -1,10 +1,10 @@
-// player.js
 import * as brackets from './brackets.js';
 import * as ui from './ui.js';
 import * as ROM_DATA from './rom.js';
 
 export let sidPlayer = null;
 export let isPlaying = false;
+export let streamer = null; // 1. DECLARE STREAMER
 let timerInterval;
 
 export function debug(message) {
@@ -97,9 +97,16 @@ export async function initPlayer(getPlayerState, updateWinnerButtons, updateFlam
     window.backend = new SIDBackendAdapter(BASIC_ROM, CHAR_ROM, KERNAL_ROM);
     let onTrackEnd = () => window.logmsg("Track ended - stopping music");
 
-    await ScriptNodePlayer.initialize(window.backend, onTrackEnd);
+    // 2. INITIALIZE STREAMER AND PASS IT TO THE PLAYER
+    // True for digi-channel support
+    streamer = new ChannelStreamer(3, true); 
+
+    // The third argument to initialize() is for trace streams.
+    // We pass our streamer object here.
+    await ScriptNodePlayer.initialize(window.backend, onTrackEnd, [], false, streamer);
+
     sidPlayer = ScriptNodePlayer.getInstance();
-    window.player = sidPlayer; // Ensure viz.js access
+    window.player = sidPlayer;
 
     // Load song based on state
     let songLoaded = false;
