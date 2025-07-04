@@ -125,18 +125,15 @@ function drawVoiceWaveform(canvasId, voiceIdx) {
         ctx.stroke();
         return;
     }
-
-    const visibleSamples = Math.floor(data.length / zoomFactor);
+    
+    const visibleSamples = Math.floor(data.length / (getPlayerState().zoomFactor || 46.13));
     const step = width / visibleSamples;
 
-    let maxAmplitude = 0;
-    for (let i = 0; i < visibleSamples; i++) {
-        maxAmplitude = Math.max(maxAmplitude, Math.abs(data[i]));
-    }
-    const scale = maxAmplitude > 0 ? (height / 2) * 0.9 / maxAmplitude : 1;
+    const scale = (height / 2) * 0.9;
 
-    ctx.moveTo(0, midY);
-    for (let i = 0; i < visibleSamples; i++) {
+ 
+    ctx.moveTo(0, midY - data[0] * scale); // Start from the first sample
+    for (let i = 1; i < visibleSamples; i++) {
         const y = midY - data[i] * scale;
         ctx.lineTo(i * step, y);
     }
