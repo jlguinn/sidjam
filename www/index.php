@@ -307,6 +307,9 @@ $cxn->close();
             <canvas id="voice3-canvas" width="250" height="100" aria-label="Voice 3 Waveform">
                 Voice 3 Waveform (visualization not supported)
             </canvas>
+            <canvas id="digi-canvas" width="250" height="100" aria-label="Digi Channel Waveform">
+                Digi Channel Waveform (visualization not supported)
+            </canvas>
         </div>
 <div id="waveform-zoom-controls">
     <button id="zoom-out-button" class="zoom-button" onclick="zoomWaveformOut()" aria-label="Zoom Out Waveform"><b>-</b></button>

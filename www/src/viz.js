@@ -23,7 +23,7 @@ let isVisualizationActive = false;
 let animationFrameId;
 let lastRenderTime = 0;
 let lastDataUpdateTime = 0;
-let waveformData = [new Float32Array(0), new Float32Array(0), new Float32Array(0)];
+let waveformData = [new Float32Array(0), new Float32Array(0), new Float32Array(0), new Float32Array(0)]; // Increase array size to 4
 let needleAngles = new Float32Array(VU_METER_COUNT).fill(ANGLE_RANGE[0]);
 let zoomFactor = 46.13; // Default zoom
 
@@ -51,6 +51,7 @@ function animationLoop(timestamp) {
         drawVoiceWaveform('voice1-canvas', 0);
         drawVoiceWaveform('voice2-canvas', 1);
         drawVoiceWaveform('voice3-canvas', 2);
+        drawVoiceWaveform('digi-canvas', 3, '#FFA500'); // Pass an optional color
     }
     if (playerState.isVUActive) {
         drawVUMeter('vu1-canvas', 0);
@@ -69,10 +70,12 @@ function animationLoop(timestamp) {
 // --- Data Fetching and Processing ---
 function updateWaveformData() {
     if (!streamer || !window.player || window.player.isPaused()) {
-        waveformData = [new Float32Array(0), new Float32Array(0), new Float32Array(0)];
+        // Reset all 4 channels
+        waveformData = [new Float32Array(0), new Float32Array(0), new Float32Array(0), new Float32Array(0)];
         return;
     }
-    for (let i = 0; i < 3; i++) {
+    // Fetch data for all 4 channels
+    for (let i = 0; i < 4; i++) {
         waveformData[i] = streamer.getData(i);
     }
 }
@@ -89,23 +92,21 @@ function calculateRMS(data) {
 function updateVUMeterPhysics() {
     for (let i = 0; i < VU_METER_COUNT; i++) {
         const rms = calculateRMS(waveformData[i]);
-        const level = Math.min(rms * 2.0, 1.0); // Apply scaling factor
+        // REMOVE the "* 2.0" multiplier for a more accurate level
+        const level = Math.min(rms, 1.0); 
         const db = level > 0 ? 20 * Math.log10(level) : -100;
         
-        // Map dB to angle
+        // ... (rest of function is the same) ...
         let targetAngle = ANGLE_RANGE[0] + ((db + 100) / 130) * (ANGLE_RANGE[1] - ANGLE_RANGE[0]);
         targetAngle = Math.max(ANGLE_RANGE[0], Math.min(ANGLE_RANGE[1], targetAngle));
-
-        // Simple exponential smoothing for needle movement
-        const smoothing = needleAngles[i] < targetAngle ? 0.9 : 0.07; // Fast attack, slow decay
+        const smoothing = needleAngles[i] < targetAngle ? 0.9 : 0.07;
         needleAngles[i] += (targetAngle - needleAngles[i]) * smoothing;
     }
 }
 
-
 // --- Drawing Functions ---
 
-function drawVoiceWaveform(canvasId, voiceIdx) {
+function drawVoiceWaveform(canvasId, voiceIdx, color = WAVEFORM_STROKE_COLOR) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -115,7 +116,7 @@ function drawVoiceWaveform(canvasId, voiceIdx) {
 
     ctx.fillStyle = WAVEFORM_BG_COLOR;
     ctx.fillRect(0, 0, width, height);
-    ctx.strokeStyle = WAVEFORM_STROKE_COLOR;
+    ctx.strokeStyle = color; 
     ctx.lineWidth = 2;
     ctx.beginPath();
     
@@ -171,14 +172,15 @@ function drawAmplitudeBar(canvasId, voiceIdx) {
     const ctx = canvas.getContext('2d');
     const { width, height } = canvas;
     const rms = calculateRMS(waveformData[voiceIdx]);
-    const level = Math.min(rms * 2.0, 1.0);
+    // REMOVE the "* 2.0" multiplier here as well
+    const level = Math.min(rms, 1.0);
     const db = level > 0 ? 20 * Math.log10(level) : -100;
     const normalizedLevel = Math.max(0, (db + 100) / 110);
     const barHeight = normalizedLevel * height;
 
+    // ... (rest of function is the same) ...
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, width, height);
-
     const gradient = ctx.createLinearGradient(0, height, 0, 0);
     gradient.addColorStop(0, '#00FF00');
     gradient.addColorStop(0.5, '#FFFF00');
