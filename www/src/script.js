@@ -1209,6 +1209,19 @@ window.flashProfileIcon = function() {
 async function initializeApp() {
     // This function now ONLY prepares data and UI. It does NOT touch the player.
     window.logmsg('sID JAm application initializing...');
+    const profileIcon = document.getElementById('profile-icon');
+    if (profileIcon) {
+        profileIcon.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (window.isLoggedIn) {
+                // If the user is logged in, show the preferences popup.
+                window.togglePreferencesPopUp();
+            } else {
+                // If the user is a guest, show the authentication popup.
+                window.toggleAuthPopUp();
+            }
+        });
+    }
 
     try {
         // Fetch all necessary data (sidtunes, results, etc.)
