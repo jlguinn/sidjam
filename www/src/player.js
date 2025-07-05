@@ -23,7 +23,7 @@ export async function initPlayer() {
     sidPlayer = ScriptNodePlayer.getInstance();
     window.player = sidPlayer;
     window.backend = backend; // Make backend global for timer access
-    console.log("Player initialized successfully.");
+    console.log("Player object created.");
 }
 
 /**
@@ -63,6 +63,7 @@ export async function loadSong(filename, trackNumber, callbacks) {
             window.startVisualizations();
         }
 
+        // This block now contains the correct logic.
         if (callbacks.autoPlay) {
             sidPlayer.play();
             isPlaying = true;
@@ -89,7 +90,7 @@ export function resetVoiceStates() {
             const button = document.getElementById(`voice${i}`);
             const canvas = document.getElementById(`vu${i}-canvas`);
             if (button) button.setAttribute('data-state', 'on');
-            if(canvas) canvas.setAttribute('data-state', 'on');
+            if (canvas) canvas.setAttribute('data-state', 'on');
             window.backend.enableVoice(0, i - 1, true);
         }
     }

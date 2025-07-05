@@ -138,28 +138,52 @@ window.toggleVUMeters = () => {
     savePlayerState();
 };
 
-window.togglePlayPause = async () => {
-    if (!player.sidPlayer) return; // Safety check
+// script.js
 
-    const wasPlaying = player.isPlaying;
-    
+window.togglePlayPause = async () => {
+    // If the player object doesn't even exist yet, this is the first click ever.
+    if (!player.sidPlayer) {
+        console.log("First play click: Initializing player and loading first song...");
+        
+        // 1. Initialize the player and create the audio context.
+        await player.initPlayer();
+        
+        // 2. Load the FIRST contender and tell it to autoplay.
+        const state = brackets.getPlayerState();
+        // Since loadSongBound was causing issues, we call player.loadSong directly.
+        await player.loadSong(state.contenders[0], -1, {
+            autoPlay: true,
+            updateSongInfo: () => ui.updateSongInfo(player.sidPlayer),
+            updatePlayPauseButton: () => ui.updatePlayPauseButton(player.isPlaying),
+            resetVoiceStates: player.resetVoiceStates,
+            updateNavigationButtons: () => ui.updateNavigationButtons(player.sidPlayer),
+            updateVsMatchup: updateVsMatchupBound,
+            updateJamButton: updateJamButtonBound,
+            updateRoundInfo: updateRoundInfoBound
+        });
+
+        // 3. Update state and enable all controls.
+        brackets.updatePlayerState({ hasPlayed: true });
+        document.getElementById('prevButton').disabled = false;
+        document.getElementById('nextButton').disabled = false;
+        document.getElementById('jamButton').disabled = false;
+        document.getElementById('ellipsis-button').disabled = false;
+        ui.updateNavigationButtons(player.sidPlayer);
+        updateWinnerButtonsBound();
+        return; // End the function here for the first play.
+    }
+
+    // --- If player already exists, this is a NORMAL play/pause toggle ---
     if (player.isPlaying) {
         player.sidPlayer.pause();
         player.setIsPlaying(false);
         player.stopTimer(updateJamButtonBound);
     } else {
-        player.sidPlayer.play(); // Use play(), not resume() for simplicity and broader compatibility
+        player.sidPlayer.play();
         player.setIsPlaying(true);
         player.startTimer(player.updateTimer, updateJamButtonBound);
     }
-    
-    // UI updates
-    brackets.updatePlayerState({ hasPlayed: true });
     ui.updatePlayPauseButton(player.isPlaying);
-    updateWinnerButtonsBound();
-
-    if (player.isPlaying && !wasPlaying) window.logmsg("[>]", 1);
-    else if (!player.isPlaying && wasPlaying) window.logmsg("[||]", 1);
 };
 
 window.jamToggle = () => {
@@ -1183,61 +1207,11 @@ window.flashProfileIcon = function() {
 };
 
 async function initializeApp() {
-    // 1. Initialize the player a single time.
-    await player.initPlayer();
-
-    debug(`Bound functions defined: updateRoundInfoBound=${typeof updateRoundInfoBound}, updateVsMatchupBound=${typeof updateVsMatchupBound}`);
-    window.logmsg('Preloading flame sprite sheet', 2);
-
-    if (window.isLoggedIn && window.user && window.user.email === 'jguinn@bonevalleyfilms.com') {
-        try {
-            const response = await fetch('dbcontrol/get_registered_users.php');
-            if (!response.ok) {
-                throw new Error(`Failed to fetch registered users: ${response.statusText}`);
-            }
-            const data = await response.json();
-            if (data.success) {
-                window.logmsg(`Hello Admin!\nThere are ${data.user_count} registered users.`);
-            } else {
-                window.logmsg(`Failed to fetch registered users: ${data.message}`, 1);
-            }
-        } catch (error) {
-            window.logmsg(`Error fetching registered users: ${error.message}`, 1);
-        }
-    }
-
-    const profileIcon = document.getElementById('profile-icon');
-    const userInfo = document.getElementById('user-info');
-
-    window.hasShownPrompt = false;
-    window.showPromptMessage = false;
-
-    if (profileIcon) {
-        profileIcon.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (window.isLoggedIn) {
-                window.togglePreferencesPopUp();
-            } else {
-                window.toggleAuthPopUp();
-            }
-        });
-    }
-
-    // Attach event listeners for visualization toggles and zoom
-    document.getElementById('wave-toggle-button')?.addEventListener('click', window.toggleWaveform);
-    document.getElementById('vu-toggle-button')?.addEventListener('click', window.toggleVUMeters);
-    document.getElementById('zoom-out-button')?.addEventListener('click', () => { zoomWaveformOut(); savePlayerState(); });
-    document.getElementById('zoom-in-button')?.addEventListener('click', () => { zoomWaveformIn(); savePlayerState(); });
-    document.getElementById('reset-view-button')?.addEventListener('click', () => { resetView(); savePlayerState(); });
-
-
-    if (!window.user || !window.user.id) {
-        window.logmsg('window.user.id not defined on DOM load', 1);
-        return;
-    }
+    // This function now ONLY prepares data and UI. It does NOT touch the player.
+    window.logmsg('sID JAm application initializing...');
 
     try {
-        // Fetch all necessary data
+        // Fetch all necessary data (sidtunes, results, etc.)
         const songsResponse = await fetch(`dbcontrol/get_sidtunes.php?full_list=true&user_id=${window.user.id}`);
         if (!songsResponse.ok) throw new Error(`Failed to load sidtunes: ${songsResponse.statusText}`);
         const tunesData = await songsResponse.json();
@@ -1260,79 +1234,67 @@ async function initializeApp() {
         if (!resultsResponse.ok) throw new Error(`Failed to load results: ${resultsResponse.statusText}`);
         window.sidJamData.cachedResults = await resultsResponse.json();
 
-        // Determine initial state and song to load
+        // Determine initial state.
         const player_state = await loadPlayerState();
-        let songToLoad = null;
+        
+        // --- START: CORRECTED VALIDATION LOGIC ---
         let isValidState = true;
-
         if (player_state) {
-            // Validate paths in saved state
             const validPaths = new Set(window.sidJamData.sidFiles);
-            if (player_state.contenders?.some(path => !validPaths.has(path))) isValidState = false;
-            if (player_state.nowPlayingSong && !validPaths.has(player_state.nowPlayingSong)) isValidState = false;
+            // Check if any contender path is no longer valid
+            if (player_state.contenders?.some(path => path && !validPaths.has(path))) {
+                window.logmsg("Invalidating saved state due to missing contender path.", 1);
+                isValidState = false;
+            }
+            // Check if the nowPlayingSong path is no longer valid
+            if (player_state.nowPlayingSong && !validPaths.has(player_state.nowPlayingSong)) {
+                window.logmsg("Invalidating saved state due to missing nowPlayingSong path.", 1);
+                isValidState = false;
+            }
         }
+        // --- END: CORRECTED VALIDATION LOGIC ---
 
-        if (player_state && isValidState && player_state.currentMode === "bout" && player_state.contenders?.[0]) {
-            // Restore from a saved "bout"
+        // Use the validation result to decide whether to restore the state or start fresh.
+        if (player_state && isValidState) {
             brackets.updatePlayerState({ ...player_state });
-            ui.setCurrentThemeIndex(player_state.theme || 0);
-            brackets.updateBracketDropdown();
-            document.getElementById("bracket-select").value = player_state.activeBracket.replace(" - ", "-");
-            songToLoad = player_state.contenders[0];
-        } else if (player_state && isValidState && player_state.currentMode === "nowPlaying" && player_state.nowPlayingSong) {
-            // Restore from a saved "nowPlaying" mode
-            brackets.updatePlayerState({ ...player_state });
-            ui.setCurrentThemeIndex(player_state.theme || 0);
-            brackets.updateBracketDropdown();
-            document.getElementById("bracket-select").value = player_state.peekBracket.replace(" - ", "-");
-            songToLoad = player_state.nowPlayingSong;
         } else {
-            // Default: Start a new bout
-            window.logmsg("Initializing with default player state.", 1);
-            brackets.updatePlayerState({ isWaveformActive: true, isVUActive: true, isBarActive: false, zoomFactor: 46.13 });
-            ui.setCurrentThemeIndex(0);
-            brackets.updateBracketDropdown();
+            if (!player_state || !isValidState) {
+                window.logmsg("No valid saved state found. Starting a new bout.", 1);
+            }
             brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateFlameButtonBound);
-            songToLoad = brackets.getPlayerState().contenders[0];
         }
 
-        // 2. Load the determined first song, but with autoPlay set to false.
-        if (songToLoad) {
-            await loadSongBound(songToLoad, -1, false);
-        }
-
-    } catch (error) {
-        window.logmsg(`Error during initializeApp data loading: ${error}`, 0);
-        // Fallback state
-        brackets.updatePlayerState({ isWaveformActive: true, isVUActive: true, zoomFactor: 46.13 });
-        ui.setCurrentThemeIndex(0);
+        // After determining contenders, immediately update the UI.
+        updateVsMatchupBound(); // This displays the contender filenames.
+        updateRoundInfoBound(); // This displays "Press Play".
         brackets.updateBracketDropdown();
+        
+    } catch (error) {
+        window.logmsg(`Error during data initialization: ${error}`, 0);
         brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateFlameButtonBound);
-        const songToLoad = brackets.getPlayerState().contenders[0];
-        if (songToLoad) {
-           await loadSongBound(songToLoad, -1, false);
-        }
+        updateVsMatchupBound();
+        updateRoundInfoBound();
     }
 
-    // Enable the main play button now that everything is ready.
-    const playPauseButton = document.getElementById("playPauseButton");
-    if (playPauseButton) {
-        playPauseButton.disabled = false;
-    }
-
+    // SET INITIAL UI STATE (NO SONG LOADED)
+    document.getElementById('playPauseButton').disabled = false;
+    document.getElementById('prevButton').disabled = true;
+    document.getElementById('nextButton').disabled = true;
+    document.getElementById('jamButton').disabled = true;
+    document.getElementById('ellipsis-button').disabled = true;
+    const winnerLeft = document.getElementById('winner-left');
+    const winnerRight = document.getElementById('winner-right');
+    if (winnerLeft) winnerLeft.classList.add('disabled');
+    if (winnerRight) winnerRight.classList.add('disabled');
+    
     // Final UI updates
     ui.applyTheme(brackets.getPlayerState().currentMode);
-    updateVsMatchupBound();
-    updateRoundInfoBound();
     updateWinnerButtonsBound();
     updateFlameButtonBound();
     renderWinnerButtonBitmap(0, brackets.getPlayerState());
     renderWinnerButtonBitmap(1, brackets.getPlayerState());
     
-    document.getElementById('help-button')?.addEventListener('click', () => {
-        window.logmsg('Help button clicked, opening help.html in new tab', 1);
-        window.open('help.html', '_blank');
-    });
+    console.log("Application ready. Waiting for user to press Play.");
 }
     
 document.addEventListener('DOMContentLoaded', () => {
