@@ -51,7 +51,7 @@ function animationLoop(timestamp) {
         drawVoiceWaveform('voice1-canvas', 0);
         drawVoiceWaveform('voice2-canvas', 1);
         drawVoiceWaveform('voice3-canvas', 2);
-        drawVoiceWaveform('digi-canvas', 3, '#FFA500'); // Pass an optional color
+        drawVoiceWaveform('digi-canvas', 3, '#B22222');
     }
     if (playerState.isVUActive) {
         drawVUMeter('vu1-canvas', 0);
@@ -122,7 +122,11 @@ function drawVoiceWaveform(canvasId, voiceIdx, color = WAVEFORM_STROKE_COLOR) {
     const midY = height / 2;
     const data = waveformData[voiceIdx];
 
-    ctx.fillStyle = WAVEFORM_BG_COLOR;
+    if (canvasId === 'digi-canvas') {
+        ctx.fillStyle = '#808080'; // Medium Grey
+    } else {
+        ctx.fillStyle = WAVEFORM_BG_COLOR;
+    }
     ctx.fillRect(0, 0, width, height);
     ctx.strokeStyle = color; 
     ctx.lineWidth = 2;
@@ -233,12 +237,13 @@ export function stopVisualizations() {
 
 export function resetVisualizationState() {
     stopVisualizations();
-    waveformData = [new Float32Array(0), new Float32Array(0), new Float32Array(0)];
+    waveformData = [new Float32Array(0), new Float32Array(0), new Float32Array(0), new Float32Array(0)]; // UPDATED: Ensure 4 channels are reset
     needleAngles.fill(ANGLE_RANGE[0]);
     // Redraw static state
     drawVoiceWaveform('voice1-canvas', 0);
     drawVoiceWaveform('voice2-canvas', 1);
     drawVoiceWaveform('voice3-canvas', 2);
+    drawVoiceWaveform('digi-canvas', 3, '#B22222'); // ADDED: Draw digi canvas on init with brick-red flatline
     drawVUMeter('vu1-canvas', 0);
     drawVUMeter('vu2-canvas', 1);
     drawVUMeter('vu3-canvas', 2);

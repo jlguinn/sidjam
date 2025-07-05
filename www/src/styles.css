@@ -522,7 +522,7 @@ body {
 #voice-visualizations {
     position: absolute;
     top: 0px;
-    left: -90px;
+    left: -140px;
     display: flex;
     flex-direction: column;
     gap: var(--spacing-sm);
@@ -540,7 +540,7 @@ body {
 #waveform-zoom-controls {
     position: absolute;
     top: 335px; /* Below voice3-canvas: 3 canvases * 100px + 2 gaps * 10px + 15px offset */
-    left: -90px; /* Align with #voice-visualizations */
+    left: -140px; /* Align with #voice-visualizations */
     width: 250px; /* Match canvas width */
     display: flex;
     justify-content: center;
@@ -640,6 +640,12 @@ body {
     height: 70px;
     border: 1px solid var(--background-alt);
     background-color: #444;
+}
+#digi-canvas {
+    width: 300px;
+    height: 70px;
+    border: 1px solid var(--background-alt);
+    background-color: #444; /* Note: JS fillRect will override this, which is intended */
 }
 
 /* Bracket and Flame Controls */
