@@ -18,15 +18,20 @@ function debug(message) { window.logmsg(`[DEBUG] ${message}`, 2); }
 // Define bound functions at the top to ensure availability
 const updateTimerBound = () => player.updateTimer();
 const loadSongBound = (filename, trackNumber, autoPlay = true) => player.loadSong(
-    filename, trackNumber,
-    () => ui.updateSongInfo(player.sidPlayer),
-    () => ui.updatePlayPauseButton(player.isPlaying),
-    player.resetVoiceStates,
-    () => ui.updateNavigationButtons(player.sidPlayer),
-    updateVsMatchupBound,
-    updateJamButtonBound,
-    autoPlay
+    filename, 
+    trackNumber,
+    {
+        updateSongInfo: () => ui.updateSongInfo(player.sidPlayer),
+        updatePlayPauseButton: () => ui.updatePlayPauseButton(player.isPlaying),
+        resetVoiceStates: player.resetVoiceStates,
+        updateNavigationButtons: () => ui.updateNavigationButtons(player.sidPlayer),
+        updateVsMatchup: updateVsMatchupBound,
+        updateJamButton: updateJamButtonBound,
+        updateRoundInfo: updateRoundInfoBound,
+        autoPlay: autoPlay
+    }
 );
+
 const updateVsMatchupBound = () => {
     ui.updateVsMatchup(brackets.getPlayerState());
 };
@@ -134,34 +139,27 @@ window.toggleVUMeters = () => {
 };
 
 window.togglePlayPause = async () => {
+    if (!player.sidPlayer) return; // Safety check
+
     const wasPlaying = player.isPlaying;
-    await player.togglePlayPause(
-        updateRoundInfoBound,
-        () => ui.updatePlayPauseButton(player.isPlaying),
-        updateWinnerButtonsBound,
-        updateFlameButtonBound,
-        updateJamButtonBound,
-        () => player.initPlayer(
-            brackets.getPlayerState,
-            updateWinnerButtonsBound,
-            updateFlameButtonBound,
-            updateJamButtonBound,
-            loadSongBound
-        ),
-        brackets.updatePlayerState
-    );
-    if (player.isPlaying && !wasPlaying) {
-        window.logmsg("[>]", 1);
-    } else if (!player.isPlaying && wasPlaying) {
-        window.logmsg("[||]", 1);
-    }
-    const ellipsisButton = document.getElementById("ellipsis-button");
-    if (ellipsisButton) {
-        ellipsisButton.disabled = false;
+    
+    if (player.isPlaying) {
+        player.sidPlayer.pause();
+        player.setIsPlaying(false);
+        player.stopTimer(updateJamButtonBound);
     } else {
-        window.logmsg('Ellipsis button not found in the DOM', 0);
+        player.sidPlayer.play(); // Use play(), not resume() for simplicity and broader compatibility
+        player.setIsPlaying(true);
+        player.startTimer(player.updateTimer, updateJamButtonBound);
     }
-    updateVsMatchupBound();
+    
+    // UI updates
+    brackets.updatePlayerState({ hasPlayed: true });
+    ui.updatePlayPauseButton(player.isPlaying);
+    updateWinnerButtonsBound();
+
+    if (player.isPlaying && !wasPlaying) window.logmsg("[>]", 1);
+    else if (!player.isPlaying && wasPlaying) window.logmsg("[||]", 1);
 };
 
 window.jamToggle = () => {
@@ -1185,10 +1183,12 @@ window.flashProfileIcon = function() {
 };
 
 async function initializeApp() {
-    debug(`Bound functions defined: updateRoundInfoBound=${typeof updateRoundInfoBound}, updateVsMatchupBound=${typeof updateVsMatchupBound}`);
-    window.logmsg('Preloading flame sprite sheet', 1);
+    // 1. Initialize the player a single time.
+    await player.initPlayer();
 
-    // Add admin welcome message for user_id < 1100
+    debug(`Bound functions defined: updateRoundInfoBound=${typeof updateRoundInfoBound}, updateVsMatchupBound=${typeof updateVsMatchupBound}`);
+    window.logmsg('Preloading flame sprite sheet', 2);
+
     if (window.isLoggedIn && window.user && window.user.email === 'jguinn@bonevalleyfilms.com') {
         try {
             const response = await fetch('dbcontrol/get_registered_users.php');
@@ -1206,24 +1206,11 @@ async function initializeApp() {
         }
     }
 
-    const authLink = document.getElementById('auth-link');
-    const preferencesLink = document.getElementById('preferences-link');
     const profileIcon = document.getElementById('profile-icon');
     const userInfo = document.getElementById('user-info');
 
     window.hasShownPrompt = false;
     window.showPromptMessage = false;
-
-    window.logmsg('Preloading flame sprite sheet', 1);
-
-    if (authLink) {
-        authLink.removeEventListener('click', window.toggleAuthPopUp);
-        authLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            window.toggleAuthPopUp();
-        });
-    }
 
     if (profileIcon) {
         profileIcon.addEventListener('click', (e) => {
@@ -1236,62 +1223,13 @@ async function initializeApp() {
         });
     }
 
-    if (userInfo) {
-        userInfo.addEventListener('click', (e) => {
-            window.logmsg(`user-info clicked, target: ${e.target.id}`);
-        });
-    }
+    // Attach event listeners for visualization toggles and zoom
+    document.getElementById('wave-toggle-button')?.addEventListener('click', window.toggleWaveform);
+    document.getElementById('vu-toggle-button')?.addEventListener('click', window.toggleVUMeters);
+    document.getElementById('zoom-out-button')?.addEventListener('click', () => { zoomWaveformOut(); savePlayerState(); });
+    document.getElementById('zoom-in-button')?.addEventListener('click', () => { zoomWaveformIn(); savePlayerState(); });
+    document.getElementById('reset-view-button')?.addEventListener('click', () => { resetView(); savePlayerState(); });
 
-    const waveformToggleButton = document.getElementById('wave-toggle-button');
-    if (waveformToggleButton) {
-        waveformToggleButton.addEventListener('click', window.toggleWaveform);
-    } else {
-        window.logmsg('Waveform toggle button not found in the DOM', 1);
-    }
-
-    const vuToggleButton = document.getElementById('vu-toggle-button');
-    if (vuToggleButton) {
-        vuToggleButton.addEventListener('click', window.toggleVUMeters);
-    } else {
-        window.logmsg('VU toggle button not found in the DOM', 1);
-    }
-
-    const zoomOutButton = document.getElementById('zoom-out-button');
-    const zoomInButton = document.getElementById('zoom-in-button');
-    const resetButton = document.getElementById('reset-view-button');
-    if (zoomOutButton) {
-        window.logmsg('Adding zoom out listener', 1);
-        zoomOutButton.addEventListener('click', () => {
-            window.logmsg('[-]',1);
-            zoomWaveformOut();
-            savePlayerState();
-        });
-        zoomOutButton.disabled = true;
-    } else {
-        window.logmsg('Zoom out button not found in the DOM', 1);
-    }
-    if (zoomInButton) {
-        window.logmsg('Adding zoom in listener', 1);
-        zoomInButton.addEventListener('click', () => {
-            window.logmsg('[+]',1);
-            zoomWaveformIn();
-            savePlayerState();
-        });
-        zoomInButton.disabled = true;
-    } else {
-        window.logmsg('Zoom in button not found in the DOM', 1);
-    }
-    if (resetButton) {
-        window.logmsg('Adding reset view listener', 1);
-        resetButton.addEventListener('click', () => {
-            window.logmsg('[⭯]', 1);
-            resetView();
-            savePlayerState();
-        });
-        resetButton.disabled = true;
-    } else {
-        window.logmsg('Reset view button not found in the DOM', 1);
-    }
 
     if (!window.user || !window.user.id) {
         window.logmsg('window.user.id not defined on DOM load', 1);
@@ -1299,26 +1237,22 @@ async function initializeApp() {
     }
 
     try {
-        // Fetch user-specific tunes
+        // Fetch all necessary data
         const songsResponse = await fetch(`dbcontrol/get_sidtunes.php?full_list=true&user_id=${window.user.id}`);
         if (!songsResponse.ok) throw new Error(`Failed to load sidtunes: ${songsResponse.statusText}`);
         const tunesData = await songsResponse.json();
         window.sidJamData.sidFiles = tunesData.map(tune => tune.fullpath);
-        if (!window.sidJamData.sidFiles || window.sidJamData.sidFiles.length === 0) throw new Error('No songs loaded from sidtunes');
         window.sidJamData.pathToId = {};
         window.sidJamData.pathToRecord = {};
         tunesData.forEach(tune => {
             window.sidJamData.pathToId[tune.fullpath] = tune.id;
-            // Initialize pathToRecord with user-specific data
             window.sidJamData.pathToRecord[tune.fullpath] = { wins: tune.wins, losses: tune.losses };
         });
 
-        // Fetch Leaderboard tunes (global data)
         const leaderboardResponse = await fetch('dbcontrol/get_sidtunes.php?full_list=true&bracket=Leaderboard');
         if (!leaderboardResponse.ok) throw new Error(`Failed to load Leaderboard tunes: ${leaderboardResponse.statusText}`);
         const leaderboardData = await leaderboardResponse.json();
         leaderboardData.forEach(tune => {
-            // Update pathToRecord with global wins/losses for Leaderboard
             window.sidJamData.pathToRecord[tune.fullpath] = { wins: tune.wins, losses: tune.losses };
         });
 
@@ -1326,162 +1260,79 @@ async function initializeApp() {
         if (!resultsResponse.ok) throw new Error(`Failed to load results: ${resultsResponse.statusText}`);
         window.sidJamData.cachedResults = await resultsResponse.json();
 
+        // Determine initial state and song to load
         const player_state = await loadPlayerState();
+        let songToLoad = null;
         let isValidState = true;
+
         if (player_state) {
+            // Validate paths in saved state
             const validPaths = new Set(window.sidJamData.sidFiles);
-            if (player_state.contenders) {
-                player_state.contenders.forEach((path, index) => {
-                    if (path && !validPaths.has(path)) {
-                        window.logmsg(`Invalid contender path in saved state: ${path}`, 1);
-                        isValidState = false;
-                    }
-                });
-            }
-            if (player_state.nowPlayingSong && !validPaths.has(player_state.nowPlayingSong)) {
-                window.logmsg(`Invalid nowPlayingSong path in saved state: ${player_state.nowPlayingSong}`, 1);
-                isValidState = false;
-            }
+            if (player_state.contenders?.some(path => !validPaths.has(path))) isValidState = false;
+            if (player_state.nowPlayingSong && !validPaths.has(player_state.nowPlayingSong)) isValidState = false;
         }
 
-        if (player_state && isValidState && player_state.contenders && player_state.currentMode === "bout" && player_state.contenders[0] && player_state.contenders[1]) {
-            brackets.updatePlayerState({
-                contenders: player_state.contenders,
-                peekBracket: player_state.peekBracket,
-                activeBracket: player_state.activeBracket,
-                currentMode: player_state.currentMode,
-                nowPlayingSong: player_state.nowPlayingSong,
-                isWaveformActive: player_state.isWaveformActive !== undefined ? player_state.isWaveformActive : true,
-                isVUActive: player_state.isVUActive !== undefined ? player_state.isVUActive : true,
-                isBarActive: player_state.isBarActive !== undefined ? player_state.isBarActive : false,
-                zoomFactor: player_state.zoomFactor !== undefined ? player_state.zoomFactor : 46.13
-            });
+        if (player_state && isValidState && player_state.currentMode === "bout" && player_state.contenders?.[0]) {
+            // Restore from a saved "bout"
+            brackets.updatePlayerState({ ...player_state });
             ui.setCurrentThemeIndex(player_state.theme || 0);
             brackets.updateBracketDropdown();
-            const bracketSelect = document.getElementById("bracket-select");
-            if (bracketSelect) {
-                bracketSelect.value = player_state.activeBracket.replace(" - ", "-");
-            }
-            updateVsMatchupBound();
-            updateRoundInfoBound();
-            updateWinnerButtonsBound();
-            updateFlameButtonBound();
-            ui.updateWaveformVisibility(brackets.getPlayerState().isWaveformActive);
-            ui.updateVUMeterState();
+            document.getElementById("bracket-select").value = player_state.activeBracket.replace(" - ", "-");
+            songToLoad = player_state.contenders[0];
         } else if (player_state && isValidState && player_state.currentMode === "nowPlaying" && player_state.nowPlayingSong) {
-            const nowPlayingSongBracket = brackets.getSongBracket(player_state.nowPlayingSong);
-            brackets.updatePlayerState({
-                nowPlayingSong: player_state.nowPlayingSong,
-                nowPlayingSongBracket,
-                peekBracket: player_state.peekBracket,
-                activeBracket: player_state.activeBracket,
-                currentMode: player_state.currentMode,
-                isWaveformActive: player_state.isWaveformActive !== undefined ? player_state.isWaveformActive : true,
-                isVUActive: player_state.isVUActive !== undefined ? player_state.isVUActive : true,
-                isBarActive: player_state.isBarActive !== undefined ? player_state.isBarActive : false,
-                zoomFactor: player_state.zoomFactor !== undefined ? player_state.zoomFactor : 46.13
-            });
+            // Restore from a saved "nowPlaying" mode
+            brackets.updatePlayerState({ ...player_state });
             ui.setCurrentThemeIndex(player_state.theme || 0);
-            loadSongBound(player_state.nowPlayingSong, -1, false);
             brackets.updateBracketDropdown();
-            const bracketSelect = document.getElementById("bracket-select");
-            if (bracketSelect) {
-                bracketSelect.value = player_state.peekBracket.replace(" - ", "-");
-            }
-            updateVsMatchupBound();
-            updateRoundInfoBound();
-            updateWinnerButtonsBound();
-            updateFlameButtonBound();
-            ui.updateWaveformVisibility(brackets.getPlayerState().isWaveformActive);
-            ui.updateVUMeterState();
+            document.getElementById("bracket-select").value = player_state.peekBracket.replace(" - ", "-");
+            songToLoad = player_state.nowPlayingSong;
         } else {
-            window.logmsg("Initializing with default player state due to invalid or missing saved state", 1);
-            brackets.updatePlayerState({
-                isWaveformActive: true,
-                isVUActive: true,
-                isBarActive: false,
-                zoomFactor: 46.13
-            });
+            // Default: Start a new bout
+            window.logmsg("Initializing with default player state.", 1);
+            brackets.updatePlayerState({ isWaveformActive: true, isVUActive: true, isBarActive: false, zoomFactor: 46.13 });
             ui.setCurrentThemeIndex(0);
             brackets.updateBracketDropdown();
             brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateFlameButtonBound);
-            ui.updateWaveformVisibility(true);
-            ui.updateVUMeterState();
+            songToLoad = brackets.getPlayerState().contenders[0];
         }
+
+        // 2. Load the determined first song, but with autoPlay set to false.
+        if (songToLoad) {
+            await loadSongBound(songToLoad, -1, false);
+        }
+
     } catch (error) {
-        window.logmsg(`Error loading data: ${error}`, 1);
-        brackets.updatePlayerState({
-            contenders: [],
-            peekBracket: "0 - 0",
-            activeBracket: "0 - 0",
-            currentMode: "bout",
-            activeContender: 0,
-            roundCount: 1,
-            winner: null,
-            hasPlayed: false,
-            hasJammed: false,
-            bothContendersSelected: false,
-            isFlameActive: false,
-            nowPlayingSong: null,
-            nowPlayingSongBracket: null,
-            isWaveformActive: true,
-            isVUActive: true,
-            zoomFactor: 46.13
-        });
+        window.logmsg(`Error during initializeApp data loading: ${error}`, 0);
+        // Fallback state
+        brackets.updatePlayerState({ isWaveformActive: true, isVUActive: true, zoomFactor: 46.13 });
         ui.setCurrentThemeIndex(0);
         brackets.updateBracketDropdown();
         brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateFlameButtonBound);
-        ui.updateWaveformVisibility(true);
-        ui.updateVUMeterVisibility(true);
+        const songToLoad = brackets.getPlayerState().contenders[0];
+        if (songToLoad) {
+           await loadSongBound(songToLoad, -1, false);
+        }
     }
 
+    // Enable the main play button now that everything is ready.
     const playPauseButton = document.getElementById("playPauseButton");
     if (playPauseButton) {
         playPauseButton.disabled = false;
-    } else {
-        window.logmsg('Play/Pause button not found in the DOM', 1);
     }
 
-    for (let i = 1; i <= 3; i++) {
-        const voiceButton = document.getElementById(`voice${i}`);
-        if (voiceButton) {
-            voiceButton.addEventListener('click', () => player.toggleVoice(i));
-        } else {
-            window.logmsg(`Voice button ${i} not found in the DOM`, 1);
-        }
-    }
-
+    // Final UI updates
     ui.applyTheme(brackets.getPlayerState().currentMode);
-    const theme = baseColorSchemes[ui.getCurrentThemeIndex()];
-    const playerState = brackets.getPlayerState();
-    renderWinnerButtonBitmap(0, playerState);
-    renderWinnerButtonBitmap(1, playerState);
-
-    const winnerButtonLeft = document.getElementById('winner-left');
-    const winnerButtonRight = document.getElementById('winner-right');
-    if (winnerButtonLeft && winnerButtonRight) {
-        winnerButtonLeft.disabled = true;
-        winnerButtonRight.disabled = true;
-    } else {
-        window.logmsg('Winner buttons not found in the DOM', 1);
-    }
-
-    const button = document.getElementById("colorButton");
-    if (button) {
-        const currentTheme = baseColorSchemes[ui.getCurrentThemeIndex()];
-        const nextIndex = (ui.getCurrentThemeIndex() + 1) % baseColorSchemes.length;
-        const nextTheme = baseColorSchemes[nextIndex];
-        button.style.backgroundColor = nextTheme.exterior;
-        const icon = button.querySelector('.color-toggle__icon');
-        if (icon) {
-            icon.style.backgroundColor = nextTheme.interior;
-        } else {
-            window.logmsg('Color toggle icon not found in #colorButton', 1);
-        }
-        button.title = `Switch Theme \n  From: ${currentTheme.name}\n  To: ${nextTheme.name}`;
-    } else {
-        window.logmsg('Color toggle button not found in the DOM', 1);
-    }
+    updateVsMatchupBound();
+    updateRoundInfoBound();
+    updateWinnerButtonsBound();
+    updateFlameButtonBound();
+    renderWinnerButtonBitmap(0, brackets.getPlayerState());
+    renderWinnerButtonBitmap(1, brackets.getPlayerState());
+    
+    document.getElementById('help-button')?.addEventListener('click', () => {
+        window.logmsg('Help button clicked, opening help.html in new tab', 1);
+        window.open('help.html', '_blank');
+    });
 }
     
 document.addEventListener('DOMContentLoaded', () => {

@@ -91,14 +91,22 @@ function calculateRMS(data) {
 
 function updateVUMeterPhysics() {
     for (let i = 0; i < VU_METER_COUNT; i++) {
-        const rms = calculateRMS(waveformData[i]);
-        // REMOVE the "* 2.0" multiplier for a more accurate level
-        const level = Math.min(rms, 1.0); 
-        const db = level > 0 ? 20 * Math.log10(level) : -100;
-        
-        // ... (rest of function is the same) ...
-        let targetAngle = ANGLE_RANGE[0] + ((db + 100) / 130) * (ANGLE_RANGE[1] - ANGLE_RANGE[0]);
-        targetAngle = Math.max(ANGLE_RANGE[0], Math.min(ANGLE_RANGE[1], targetAngle));
+        // --- START: PAUSE BEHAVIOR MODIFICATION ---
+        let targetAngle;
+
+        // If the player is paused, force the target to the resting position.
+        if (!window.player || window.player.isPaused()) {
+            targetAngle = ANGLE_RANGE[0];
+        } else {
+            // Otherwise, calculate the angle from the audio data as normal.
+            const rms = calculateRMS(waveformData[i]);
+            const level = Math.min(rms, 1.0); // Using the corrected gain from last time
+            const db = level > 0 ? 20 * Math.log10(level) : -100;
+            targetAngle = ANGLE_RANGE[0] + ((db + 100) / 130) * (ANGLE_RANGE[1] - ANGLE_RANGE[0]);
+            targetAngle = Math.max(ANGLE_RANGE[0], Math.min(ANGLE_RANGE[1], targetAngle));
+        }
+         
+        // make needle fall back gracefully.
         const smoothing = needleAngles[i] < targetAngle ? 0.9 : 0.07;
         needleAngles[i] += (targetAngle - needleAngles[i]) * smoothing;
     }
@@ -171,16 +179,24 @@ function drawAmplitudeBar(canvasId, voiceIdx) {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const { width, height } = canvas;
-    const rms = calculateRMS(waveformData[voiceIdx]);
-    // REMOVE the "* 2.0" multiplier here as well
+    
+    // --- START: PAUSE BEHAVIOR MODIFICATION ---
+    let rms = 0; // Default to 0
+
+    // Only calculate RMS if the player is active and not paused.
+    if (window.player && !window.player.isPaused()) {
+        rms = calculateRMS(waveformData[voiceIdx]);
+    }
+    // --- END: PAUSE BEHAVIOR MODIFICATION ---
+
     const level = Math.min(rms, 1.0);
     const db = level > 0 ? 20 * Math.log10(level) : -100;
     const normalizedLevel = Math.max(0, (db + 100) / 110);
     const barHeight = normalizedLevel * height;
 
-    // ... (rest of function is the same) ...
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, width, height);
+
     const gradient = ctx.createLinearGradient(0, height, 0, 0);
     gradient.addColorStop(0, '#00FF00');
     gradient.addColorStop(0.5, '#FFFF00');
@@ -188,7 +204,6 @@ function drawAmplitudeBar(canvasId, voiceIdx) {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, height - barHeight, width, barHeight);
 }
-
 // --- Public Control Functions ---
 
 export function startVisualizations() {

@@ -1,278 +1,86 @@
+// player.js
 import * as brackets from './brackets.js';
 import * as ui from './ui.js';
 import * as ROM_DATA from './rom.js';
 
 export let sidPlayer = null;
+export let streamer = null;
 export let isPlaying = false;
-export let streamer = null; // 1. DECLARE STREAMER
 let timerInterval;
 
-export function debug(message) {
-    window.logmsg(`[DEBUG] ${message}`, 2);
+/**
+ * Creates the single, persistent player instance. Called only once.
+ */
+export async function initPlayer() {
+    if (sidPlayer) return; // Already initialized
+
+    const { BASIC_ROM, KERNAL_ROM, CHAR_ROM } = ROM_DATA.ROM;
+    const backend = new SIDBackendAdapter(BASIC_ROM, CHAR_ROM, KERNAL_ROM);
+    streamer = new ChannelStreamer(3, true);
+
+    await ScriptNodePlayer.initialize(backend, () => {}, [], false, streamer);
+    
+    sidPlayer = ScriptNodePlayer.getInstance();
+    window.player = sidPlayer;
+    window.backend = backend; // Make backend global for timer access
+    console.log("Player initialized successfully.");
 }
 
-export function setIsPlaying(value) {
-    isPlaying = value;
-}
+/**
+ * Loads a new song into the EXISTING player.
+ */
+export async function loadSong(filename, trackNumber, callbacks) {
+    if (!sidPlayer) {
+        console.error("loadSong called before player was initialized.");
+        return;
+    }
 
-export function resetVisualizationState() {
+    // Always pause before loading.
+    sidPlayer.pause();
+    isPlaying = false;
+    stopTimer(callbacks.updateJamButton);
+
     if (window.viz && window.viz.resetVisualizationState) {
         window.viz.resetVisualizationState();
-    } else {
-        window.logmsg('resetVisualizationState: window.viz.resetVisualizationState not defined', 0);
     }
-}
 
-export function loadSong(filename, trackNumber, updateSongInfo, updatePlayPauseButton, resetVoiceStates, updateNavigationButtons, updateVsMatchup, updateJamButton, autoPlay = true) {
-    if (!filename) return Promise.resolve();
-
-    // Prepend the new root path to the filename
     const rootPath = 'sid/HVSC_82-all-of-them/C64Music/';
     const fullFilePath = `${rootPath}${filename.startsWith('/') ? filename.slice(1) : filename}`;
 
-    let onFail = () => window.logmsg(`Failed to load song: ${fullFilePath}`, 0);
-    let onProgress = (total, loaded) => {};
-    let options = { track: trackNumber, timeout: -1, traceSID: true };
-
-    // Reset visualization state before loading new song
-    resetVisualizationState();
-
-    if (sidPlayer && isPlaying) {
-        sidPlayer.pause();
-        setIsPlaying(false);
-        stopTimer(updateJamButton);
-    }
-
-    if (!sidPlayer) {
-        updateSongInfo();
-        updateVsMatchup();
-        updateNavigationButtons();
-        updatePlayPauseButton();
-        resetVoiceStates();
-        return Promise.resolve();
-    }
-
-    return ScriptNodePlayer.loadMusicFromURL(fullFilePath, options, onFail, onProgress).then(() => {
-        // Log initial load info
-        window.logmsg(`Loading SID: ${fullFilePath}`, 1);
-
-        // Update UI and start playback
-        updateSongInfo();
-        if (autoPlay && !isPlaying) {
-            sidPlayer.play();
-            setIsPlaying(true);
-            startTimer(updateTimer, updateJamButton);
-        }
-        updatePlayPauseButton();
-        resetVoiceStates();
-        updateNavigationButtons();
-        updateVsMatchup();
+    try {
+        await ScriptNodePlayer.loadMusicFromURL(fullFilePath, { track: trackNumber, timeout: -1, traceSID: true });
+        
+        // Success: Update UI
+        callbacks.updateSongInfo();
+        callbacks.resetVoiceStates();
+        callbacks.updateNavigationButtons();
+        callbacks.updateVsMatchup();
         ui.updateFlameButton(brackets.getPlayerState());
-        ui.updateRoundInfo(brackets.getPlayerState());
+        callbacks.updateRoundInfo();
+        
+        // Start visualizations now that a song is loaded and ready.
+        if (window.startVisualizations) {
+            window.startVisualizations();
+        }
 
-        window.logmsg(`Playback Success: ${fullFilePath}, Loaded and playable`, 1);
-    }).catch(error => {
+        if (callbacks.autoPlay) {
+            sidPlayer.play();
+            isPlaying = true;
+            startTimer(updateTimer, callbacks.updateJamButton);
+        }
+        
+        callbacks.updatePlayPauseButton();
+        window.logmsg(`Playback Success: ${fullFilePath}`, 1);
+
+    } catch (error) {
         window.logmsg(`Playback Failure: ${fullFilePath}, Error=${error}`, 0);
-        onFail();
-    }).finally(() => {
-        if (!autoPlay && isPlaying) {
-            sidPlayer.pause();
-            setIsPlaying(false);
-            stopTimer(updateJamButton);
-            updatePlayPauseButton(false);
-        }
-    });
-}
-
-
-
-
-export async function initPlayer(getPlayerState, updateWinnerButtons, updateFlameButton, updateJamButton, loadSongBound) {
-    const state = getPlayerState();
-
-    let BASIC_ROM = ROM_DATA.ROM.BASIC_ROM;
-    let KERNAL_ROM = ROM_DATA.ROM.KERNAL_ROM;
-    let CHAR_ROM = ROM_DATA.ROM.CHAR_ROM;
-    
-    window.backend = new SIDBackendAdapter(BASIC_ROM, CHAR_ROM, KERNAL_ROM);
-    let onTrackEnd = () => window.logmsg("Track ended - stopping music");
-
-    // 2. INITIALIZE STREAMER AND PASS IT TO THE PLAYER
-    // True for digi-channel support
-    streamer = new ChannelStreamer(3, true); 
-
-    // The third argument to initialize() is for trace streams.
-    // We pass our streamer object here.
-    await ScriptNodePlayer.initialize(window.backend, onTrackEnd, [], false, streamer);
-
-    sidPlayer = ScriptNodePlayer.getInstance();
-    window.player = sidPlayer;
-
-    // Load song based on state
-    let songLoaded = false;
-    if (state.contenders.length > 0 && state.currentMode === "bout") {
-        await loadSongBound(state.contenders[state.activeContender], -1);
-        songLoaded = true;
-    } else if (state.nowPlayingSong && state.currentMode === "nowPlaying") {
-        await loadSongBound(state.nowPlayingSong, -1);
-        songLoaded = true;
-    } else if (state.peekPlayingSong) {
-        await loadSongBound(state.peekPlayingSong, -1);
-        songLoaded = true;
-    } else {
-        window.logmsg("No contenders or songs available to load", 0);
-    }
-
-    // Start visualizations only if a song was loaded
-    if (songLoaded && window.startVisualizations) {
-        window.startVisualizations();
-    } else if (!songLoaded) {
-        window.logmsg('initPlayer: No song loaded, skipping visualizations', 0);
-    } else {
-        window.logmsg('startVisualizations function not found on window object', 0);
-    }
-
-    updateWinnerButtons();
-    updateFlameButton();
-    updateJamButton();
-}
-
-export async function togglePlayPause(updateRoundInfo, updatePlayPauseButton, updateWinnerButtons, updateFlameButton, updateJamButton, initPlayerFn, updatePlayerState) {
-    if (!sidPlayer) {
-        await initPlayerFn();
-        window.logmsg("Note: Please ignore ScriptNodePlayer Deprecation warning. We will not be remediating at this time.",1);
-        window.logmsg("[>]", 1);
-        if (isPlaying && updateJamButton) {
-            updateJamButton(true);
-        }
-    } else if (isPlaying) {
-        sidPlayer.pause();
-        setIsPlaying(false);
-        stopTimer(updateJamButton);
-    } else {
-        sidPlayer.resume();
-        setIsPlaying(true);
-        startTimer(updateTimer, updateJamButton);
-    }
-
-    updatePlayerState({ hasPlayed: true });
-    updateRoundInfo();
-    updatePlayPauseButton();
-    updateWinnerButtons();
-
-    const jamButton = document.getElementById("jamButton");
-    const flameButton = document.getElementById("flameButton");
-    const reviveButton = document.getElementById("reviveButton");
-
-    if (jamButton) {
-        jamButton.disabled = false;
-    } else {
-        window.logmsg('Jam button not found in the DOM', 0);
-    }
-
-    if (flameButton) {
-        flameButton.disabled = false;
-    } else {
-        window.logmsg('Flame button not found in the DOM', 0);
-    }
-
-    if (reviveButton) {
-        reviveButton.classList.remove("disabled");
-    } else {
-        window.logmsg('Revive button not found in the DOM', 0);
-    }
-
-    // Enable zoom buttons
-    const zoomOutButton = document.getElementById('zoom-out-button');
-    const zoomInButton = document.getElementById('zoom-in-button');
-    if (zoomOutButton) {
-        zoomOutButton.disabled = false;
-    } else {
-        window.logmsg('Zoom out button not found in the DOM', 0);
-    }
-    if (zoomInButton) {
-        zoomInButton.disabled = false;
-    } else {
-        window.logmsg('Zoom in button not found in the DOM', 0);
-    }
-
-
-    updateFlameButton();
-    ui.updateNavigationButtons(sidPlayer);
-}
-
-export function nextTrack(getPlayerState, loadSongFn) {
-    const state = getPlayerState();
-    if (sidPlayer) {
-        const songInfo = sidPlayer.getSongInfo();
-        if (songInfo.actualSubsong < songInfo.maxSubsong - 1) {
-            const filename = state.currentMode === "nowPlaying" ? state.nowPlayingSong :
-                            state.peekPlayingSong ? state.peekPlayingSong :
-                            state.contenders[state.activeContender];
-            loadSongFn(filename, songInfo.actualSubsong + 1);
-        }
     }
 }
 
-export function prevTrack(getPlayerState, loadSongFn) {
-    const state = getPlayerState();
-    if (sidPlayer) {
-        const songInfo = sidPlayer.getSongInfo();
-        const filename = state.currentMode === "nowPlaying" ? state.nowPlayingSong :
-                        state.peekPlayingSong ? state.peekPlayingSong :
-                        state.contenders[state.activeContender];
-        loadSongFn(filename, songInfo.actualSubsong > 0 ? songInfo.actualSubsong - 1 : 0);
-    }
-}
+// --- Utility functions ---
 
-export function startTimer(updateTimer, updateJamButton) {
-    window.logmsg("startTimer: Starting timer and animation", 2);
-    updateTimer();
-    timerInterval = setInterval(updateTimer, 1000);
-    if (updateJamButton) {
-        updateJamButton(true);
-    }
-}
-
-export function stopTimer(updateJamButton) {
-    window.logmsg("stopTimer: Stopping timer and animation", 2);
-    clearInterval(timerInterval);
-    timerInterval = null;
-    if (updateJamButton) {
-        updateJamButton(false);
-    }
-}
-
-export function updateTimer() {
-    if (window.backend) {
-        const currentTime = Math.floor(window.backend.getCurrentPlaytime());
-        const minutes = Math.floor(currentTime / 60);
-        const seconds = currentTime % 60;
-        const timerElement = document.getElementById("timer");
-        if (timerElement) {
-            timerElement.textContent = "Time: " +
-                (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
-        } else {
-            window.logmsg('Timer element not found in the DOM', 0);
-        }
-    }
-}
-
-export function toggleVoice(voiceNum) {
-    if (window.backend) {
-        const button = document.getElementById(`voice${voiceNum}`);
-        const canvas = document.getElementById(`vu${voiceNum}-canvas`);
-        if (!button || !canvas) {
-            window.logmsg(`Voice ${voiceNum} button or canvas not found in the DOM`, 0);
-            return;
-        }
-        const isOn = button.getAttribute('data-state') === 'on';
-        const newState = !isOn;
-        const stateAttr = newState ? 'on' : 'off';
-        button.setAttribute('data-state', stateAttr);
-        canvas.setAttribute('data-state', stateAttr);
-        window.backend.enableVoice(0, voiceNum - 1, newState);
-    }
+export function setIsPlaying(value) {
+    isPlaying = value;
 }
 
 export function resetVoiceStates() {
@@ -280,13 +88,48 @@ export function resetVoiceStates() {
         for (let i = 1; i <= 3; i++) {
             const button = document.getElementById(`voice${i}`);
             const canvas = document.getElementById(`vu${i}-canvas`);
-            if (!button || !canvas) {
-                window.logmsg(`Voice ${i} button or canvas not found in the DOM`, 0);
-                continue;
-            }
-            button.setAttribute('data-state', 'on');
-            canvas.setAttribute('data-state', 'on');
+            if (button) button.setAttribute('data-state', 'on');
+            if(canvas) canvas.setAttribute('data-state', 'on');
             window.backend.enableVoice(0, i - 1, true);
         }
+    }
+}
+
+export function startTimer(updateTimer, updateJamButton) {
+    stopTimer(updateJamButton);
+    updateTimer();
+    timerInterval = setInterval(updateTimer, 1000);
+    if (updateJamButton) updateJamButton(true);
+}
+
+export function stopTimer(updateJamButton) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    if (updateJamButton) updateJamButton(false);
+}
+
+export function updateTimer() {
+    if (window.backend && sidPlayer && !sidPlayer.isPaused()) {
+        const currentTime = Math.floor(window.backend.getCurrentPlaytime());
+        const minutes = Math.floor(currentTime / 60);
+        const seconds = currentTime % 60;
+        const timerElement = document.getElementById("timer");
+        if (timerElement) {
+            timerElement.textContent = "Time: " +
+                (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+        }
+    }
+}
+
+export function toggleVoice(voiceNum) {
+    if (window.backend) {
+        const button = document.getElementById(`voice${voiceNum}`);
+        if (!button) return;
+        const isOn = button.getAttribute('data-state') === 'on';
+        window.backend.enableVoice(0, voiceNum - 1, !isOn);
+        
+        const canvas = document.getElementById(`vu${voiceNum}-canvas`);
+        button.setAttribute('data-state', !isOn ? 'on' : 'off');
+        if (canvas) canvas.setAttribute('data-state', !isOn ? 'on' : 'off');
     }
 }

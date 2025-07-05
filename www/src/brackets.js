@@ -4,6 +4,7 @@ import { applyTheme, updateRoundInfo, getCurrentThemeIndex, updateSongTitleHighl
 import { baseColorSchemes } from './themes.js';
 import { renderWinnerButtonBitmap } from './bitmap.js';
 
+// ... (The top part of the file, including SeededRandom and playerState, remains unchanged) ...
 const USE_DETERMINISTIC_RANDOM = false;
 if (USE_DETERMINISTIC_RANDOM) {
     window.logmsg("Using deterministic draws...", 1);
@@ -256,7 +257,6 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
     let newBracket = null;
     let voteProcessed = false;
 
-    // If in a special bracket, revert peekBracket to activeBracket
     if (isSpecialBracket(playerState.peekBracket)) {
         updatePlayerState({ peekBracket: playerState.activeBracket });
         shouldUpdateBracketDropdown = true;
@@ -316,7 +316,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 });
 
                 applyTheme("bout");
-                loadSong(playerState.nowPlayingSong, -1);
+                loadSong(playerState.nowPlayingSong, -1, true); // UPDATED CALL
                 updatePlayerState({ hasPlayed: true });
                 updateVsMatchup(playerState);
                 updateRoundInfo(playerState);
@@ -327,8 +327,6 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 const bracketSelect = document.getElementById("bracket-select");
                 if (bracketSelect) {
                     bracketSelect.value = newBracket.replace(' - ', '-');
-                } else {
-                    window.logmsg("jamToggle: bracket-select element not found", 0);
                 }
                 renderWinnerButtonBitmap(0, playerState);
                 renderWinnerButtonBitmap(1, playerState);
@@ -353,7 +351,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
             if (playerState.contenders.length === 2 && 
                 playerState.contenders.every(c => window.sidJamData.sidFiles.includes(c)) &&
                 getContenderCount(playerState.activeBracket) >= 2) {
-                loadSong(playerState.contenders[0], -1);
+                loadSong(playerState.contenders[0], -1, true); // UPDATED CALL
                 updatePlayerState({ hasPlayed: true });
             } else {
                 let success = pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
@@ -383,8 +381,6 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
             const bracketSelect = document.getElementById("bracket-select");
             if (bracketSelect) {
                 bracketSelect.value = playerState.peekBracket.replace(' - ', '-');
-            } else {
-                window.logmsg("jamToggle: bracket-select element not found", 0);
             }
         }
         return;
@@ -435,8 +431,6 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 const bracketSelect = document.getElementById("bracket-select");
                 if (bracketSelect) {
                     bracketSelect.value = newBracket.replace(' - ', '-');
-                } else {
-                    window.logmsg("jamToggle: bracket-select element not found", 0);
                 }
             }
 
@@ -447,7 +441,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 contenders: playerState.contenders.map((c, i) => i === flamedIndex ? newContender : c),
                 isFlameActive: false
             });
-            loadSong(newContender, -1);
+            loadSong(newContender, -1, true); // UPDATED CALL
             updatePlayerState({ hasPlayed: true });
             updateVsMatchup(playerState);
             updateRoundInfo(playerState);
@@ -480,7 +474,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                     return;
                 }
             }
-            loadSong(playerState.contenders[playerState.activeContender], -1);
+            loadSong(playerState.contenders[playerState.activeContender], -1, true); // UPDATED CALL
             updatePlayerState({ hasPlayed: true });
             updateVsMatchup(playerState);
             updateRoundInfo(playerState);
@@ -499,7 +493,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
             updateRoundInfo(playerState);
         }
         updatePlayerState({ hasJammed: true });
-        loadSong(playerState.contenders[playerState.activeContender], -1);
+        loadSong(playerState.contenders[playerState.activeContender], -1, true); // UPDATED CALL
         updatePlayerState({ hasPlayed: true });
         updateVsMatchup(playerState);
         updateRoundInfo(playerState);
@@ -518,8 +512,6 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
             } else {
                 bracketSelect.value = playerState.peekBracket.replace(' - ', '-');
             }
-        } else {
-            window.logmsg("jamToggle: bracket-select element not found", 0);
         }
     }
 }
@@ -568,13 +560,11 @@ export function toggleRevive(updateReviveButton, updateSongTitleHighlight) {
 export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, updateVsMatchup, updateWinnerButtons) {
     const bracketSelect = document.getElementById("bracket-select");
     if (!bracketSelect) {
-        window.logmsg("changeBracket: bracket-select element not found", 0);
         return;
     }
     let newBracket = bracketSelect.value.replace('-', ' - ');
     if (newBracket === playerState.peekBracket) return;
 
-    // If switching to a special bracket, just update peekBracket and refresh UI
     if (isSpecialBracket(newBracket)) {
         updatePlayerState({ peekBracket: newBracket });
         updateFlameButton(playerState, sidPlayer);
@@ -584,7 +574,6 @@ export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, upda
         return;
     }
 
-    // If returning to activeBracket, preserve current bout
     if (newBracket === playerState.activeBracket) {
         updatePlayerState({ peekBracket: newBracket });
         updateFlameButton(playerState, sidPlayer);
@@ -594,7 +583,6 @@ export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, upda
         return;
     }
 
-    // Switching to a new bout-able bracket
     updatePlayerState({ activeBracket: newBracket, peekBracket: newBracket });
 
     const contenderCount = getContenderCount(newBracket);
@@ -620,11 +608,12 @@ export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, upda
     }
 
     updateFlameButton(playerState, sidPlayer);
-    if (loadSong) loadSong(playerState.contenders[playerState.activeContender], -1);
+    if (loadSong) loadSong(playerState.contenders[playerState.activeContender], -1, true); // UPDATED CALL
     renderWinnerButtonBitmap(0, playerState);
     renderWinnerButtonBitmap(1, playerState);
 }
 
+// ... (logResult and updateBracketDropdown remain unchanged) ...
 export async function logResult() {
     let votes = [];
     if (playerState.bothContendersSelected) {
@@ -699,7 +688,6 @@ export async function logResult() {
 export function updateBracketDropdown() {
     const select = document.getElementById("bracket-select");
     if (!select) {
-        window.logmsg("updateBracketDropdown: bracket-select element not found", 0);
         return;
     }
     let brackets = {};
@@ -716,7 +704,6 @@ export function updateBracketDropdown() {
                 let key = `${record.wins} - ${record.losses}`;
                 brackets[key] = (brackets[key] || 0) + 1;
             }
-            // Count Leaderboard songs (wins > 0 from pathToRecord)
             let globalRecord = window.sidJamData.pathToRecord[file] || { wins: 0, losses: 0 };
             if (globalRecord.wins > 0) {
                 leaderboardCount++;
@@ -731,7 +718,6 @@ export function updateBracketDropdown() {
 
     select.innerHTML = "";
 
-    // Add Leaderboard at the top
     let leaderboardOption = document.createElement("option");
     leaderboardOption.value = "Leaderboard";
     leaderboardOption.text = "Leaderboard (All Users)";
