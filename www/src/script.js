@@ -229,18 +229,41 @@ window.toggleRevive = () => {
 
 window.nextTrack = () => {
     window.logmsg("[>|]", 1);
-    player.nextTrack(
-        brackets.getPlayerState,
-        loadSongBound
-    );
+    // ADDED: Check if the player exists
+    if (!player.sidPlayer) return;
+
+    const songInfo = player.sidPlayer.getSongInfo();
+    // ADDED: Check if there is a next track
+    if (songInfo.actualSubsong < songInfo.maxSubsong - 1) {
+        const state = brackets.getPlayerState();
+        // ADDED: Determine the current song's filename from the player state
+        const currentSongFilename = state.currentMode === 'nowPlaying'
+            ? state.nowPlayingSong
+            : state.contenders[state.activeContender];
+        
+        if (currentSongFilename) {
+            // REPLACED: Call the existing load function with the new track number
+            loadSongBound(currentSongFilename, songInfo.actualSubsong + 1, true);
+        }
+    }
 };
 
 window.prevTrack = () => {
     window.logmsg("[|<]", 1);
-    player.prevTrack(
-        brackets.getPlayerState,
-        loadSongBound
-    );
+    if (!player.sidPlayer) return;
+
+    const songInfo = player.sidPlayer.getSongInfo();
+    const state = brackets.getPlayerState();
+    const currentSongFilename = state.currentMode === 'nowPlaying'
+        ? state.nowPlayingSong
+        : state.contenders[state.activeContender];
+
+    if (currentSongFilename) {
+        // MODIFIED: If on the first track (index 0), target track becomes 0 (restarting it).
+        // Otherwise, target track is the previous track's index.
+        const targetTrack = songInfo.actualSubsong > 0 ? songInfo.actualSubsong - 1 : 0;
+        loadSongBound(currentSongFilename, targetTrack, true);
+    }
 };
 
 window.changeBracket = () => {
