@@ -141,35 +141,46 @@ window.toggleVUMeters = () => {
 // script.js
 
 window.togglePlayPause = async () => {
-    // If the player object doesn't even exist yet, this is the first click ever.
+    // If the player object doesn't exist yet, this is the first play click.
     if (!player.sidPlayer) {
-        console.log("First play click: Initializing player and loading first song...");
+        console.log("First play click: Initializing player and loading song...");
         
-        // 1. Initialize the player and create the audio context.
+        // 1. Initialize the player and create the audio context from a user gesture.
         await player.initPlayer();
         
-        // 2. Load the FIRST contender and tell it to autoplay.
+        // 2. Determine which song to play based on the current mode.
         const state = brackets.getPlayerState();
-        // Since loadSongBound was causing issues, we call player.loadSong directly.
-        await player.loadSong(state.contenders[0], -1, {
-            autoPlay: true,
-            updateSongInfo: () => ui.updateSongInfo(player.sidPlayer),
-            updatePlayPauseButton: () => ui.updatePlayPauseButton(player.isPlaying),
-            resetVoiceStates: player.resetVoiceStates,
-            updateNavigationButtons: () => ui.updateNavigationButtons(player.sidPlayer),
-            updateVsMatchup: updateVsMatchupBound,
-            updateJamButton: updateJamButtonBound,
-            updateRoundInfo: updateRoundInfoBound
-        });
+        let songToPlay = null;
 
-        // 3. Update state and enable all controls.
-        brackets.updatePlayerState({ hasPlayed: true });
-        document.getElementById('prevButton').disabled = false;
-        document.getElementById('nextButton').disabled = false;
-        document.getElementById('jamButton').disabled = false;
-        document.getElementById('ellipsis-button').disabled = false;
-        ui.updateNavigationButtons(player.sidPlayer);
-        updateWinnerButtonsBound();
+        if (state.currentMode === 'nowPlaying' && state.nowPlayingSong) {
+            songToPlay = state.nowPlayingSong;
+        } else {
+            // Default to the first contender if not in "Now Playing" or if song is missing.
+            songToPlay = state.contenders[0];
+        }
+
+        if (songToPlay) {
+            // 3. Load the CORRECT song and tell it to autoplay.
+            await player.loadSong(songToPlay, -1, {
+                autoPlay: true,
+                updateSongInfo: () => ui.updateSongInfo(player.sidPlayer),
+                updatePlayPauseButton: () => ui.updatePlayPauseButton(player.isPlaying),
+                resetVoiceStates: player.resetVoiceStates,
+                updateNavigationButtons: () => ui.updateNavigationButtons(player.sidPlayer),
+                updateVsMatchup: updateVsMatchupBound,
+                updateJamButton: updateJamButtonBound,
+                updateRoundInfo: updateRoundInfoBound
+            });
+
+            // 4. Update state and enable all controls.
+            brackets.updatePlayerState({ hasPlayed: true });
+            document.getElementById('prevButton').disabled = false;
+            document.getElementById('nextButton').disabled = false;
+            document.getElementById('jamButton').disabled = false;
+            document.getElementById('ellipsis-button').disabled = false;
+            ui.updateNavigationButtons(player.sidPlayer);
+            updateWinnerButtonsBound();
+        }
         return; // End the function here for the first play.
     }
 
@@ -1230,23 +1241,22 @@ window.flashProfileIcon = function() {
 };
 
 async function initializeApp() {
-    // This function now ONLY prepares data and UI. It does NOT touch the player.
     window.logmsg('sID JAm application initializing...');
     const profileIcon = document.getElementById('profile-icon');
     if (profileIcon) {
         profileIcon.addEventListener('click', (e) => {
             e.stopPropagation();
             if (window.isLoggedIn) {
-                // If the user is logged in, show the preferences popup.
                 window.togglePreferencesPopUp();
             } else {
-                // If the user is a guest, show the authentication popup.
                 window.toggleAuthPopUp();
             }
         });
     }
 
     try {
+        // Player is NOT initialized here. We wait for the user's click.
+        
         // Fetch all necessary data (sidtunes, results, etc.)
         const songsResponse = await fetch(`dbcontrol/get_sidtunes.php?full_list=true&user_id=${window.user.id}`);
         if (!songsResponse.ok) throw new Error(`Failed to load sidtunes: ${songsResponse.statusText}`);
@@ -1273,24 +1283,19 @@ async function initializeApp() {
         // Determine initial state.
         const player_state = await loadPlayerState();
         
-        // --- START: CORRECTED VALIDATION LOGIC ---
         let isValidState = true;
         if (player_state) {
             const validPaths = new Set(window.sidJamData.sidFiles);
-            // Check if any contender path is no longer valid
             if (player_state.contenders?.some(path => path && !validPaths.has(path))) {
                 window.logmsg("Invalidating saved state due to missing contender path.", 1);
                 isValidState = false;
             }
-            // Check if the nowPlayingSong path is no longer valid
             if (player_state.nowPlayingSong && !validPaths.has(player_state.nowPlayingSong)) {
                 window.logmsg("Invalidating saved state due to missing nowPlayingSong path.", 1);
                 isValidState = false;
             }
         }
-        // --- END: CORRECTED VALIDATION LOGIC ---
 
-        // Use the validation result to decide whether to restore the state or start fresh.
         if (player_state && isValidState) {
             brackets.updatePlayerState({ ...player_state });
         } else {
@@ -1300,9 +1305,8 @@ async function initializeApp() {
             brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateFlameButtonBound);
         }
 
-        // After determining contenders, immediately update the UI.
-        updateVsMatchupBound(); // This displays the contender filenames.
-        updateRoundInfoBound(); // This displays "Press Play".
+        updateVsMatchupBound();
+        updateRoundInfoBound();
         brackets.updateBracketDropdown();
         
     } catch (error) {
@@ -1323,7 +1327,6 @@ async function initializeApp() {
     if (winnerLeft) winnerLeft.classList.add('disabled');
     if (winnerRight) winnerRight.classList.add('disabled');
     
-    // Final UI updates
     ui.applyTheme(brackets.getPlayerState().currentMode);
     updateWinnerButtonsBound();
     updateFlameButtonBound();
