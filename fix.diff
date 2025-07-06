@@ -1,0 +1,14 @@
+--- a/styles.css
++++ b/styles.css
+@@ -499,6 +499,11 @@
+     box-shadow: none;
+ }
+ 
++.voice-button-placeholder {
++    width: 20px;
++    height: 20px;
++}
++
+ .voice-button:hover {
+     filter: brightness(1.2);
+ }

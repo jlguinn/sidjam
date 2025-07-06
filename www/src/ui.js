@@ -321,12 +321,14 @@ export function updateVUMeterVisibility(isVUActive, isBarActive) {
     const vuCanvases = [
         document.getElementById("vu1-canvas"),
         document.getElementById("vu2-canvas"),
-        document.getElementById("vu3-canvas")
+        document.getElementById("vu3-canvas"),
+        document.getElementById("vu4-canvas")
     ];
     const barCanvases = [
         document.getElementById("amp1-canvas"),
         document.getElementById("amp2-canvas"),
-        document.getElementById("amp3-canvas")
+        document.getElementById("amp3-canvas"),
+        document.getElementById("amp4-canvas")
     ];
 
     if (vuContainer) {
