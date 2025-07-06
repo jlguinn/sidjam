@@ -1346,6 +1346,15 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         window.logmsg('Help button with ID "help-button" not found in the DOM.', 0);
     }
+        document.querySelectorAll('.voice-button').forEach(button => {
+        button.addEventListener('click', (event) => {
+            // Extract the voice number (1, 2, or 3) from the button's ID
+            const voiceNum = event.currentTarget.id.replace('voice', '');
+            if (voiceNum) {
+                player.toggleVoice(voiceNum);
+            }
+        });
+    });
 });
 
 

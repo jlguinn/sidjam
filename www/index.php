@@ -238,7 +238,7 @@ $cxn->close();
 
     <div id="round-info">Press Play</div>
 
-    <section id="player-section">
+<section id="player-section">
         <div id="player-info">
             <div id="song-title">-</div>
             <div id="track-details">
@@ -262,7 +262,7 @@ $cxn->close();
         </div>
 
         <div id="vu-controls">
-            <button id="vu-toggle-button" class="viz-toggle-button viz-toggle-button--vu" title="Toggle VU Meters" aria-label="Toggle VU Meters"></button>
+            <button id="vu-toggle-button" class="viz-toggle-button viz-toggle-button--vu" title="Toggle VU Meters" aria-label="Toggle VU Meters" onclick="window.toggleVUMeters()"></button>
         </div>
         <div id="voice-controls-container">
             <div class="voice-control-row" data-voice="1">
@@ -295,7 +295,7 @@ $cxn->close();
         </div>
 
         <div id="waveform-controls">
-            <button id="wave-toggle-button" class="viz-toggle-button viz-toggle-button--wave" title="Toggle Waveforms" aria-label="Toggle Waveforms"></button>
+            <button id="wave-toggle-button" class="viz-toggle-button viz-toggle-button--wave" title="Toggle Waveforms" aria-label="Toggle Waveforms" onclick="window.toggleWaveform()"></button>
         </div>
         <div id="voice-visualizations">
             <canvas id="voice1-canvas" width="250" height="100" aria-label="Voice 1 Waveform">
@@ -311,11 +311,11 @@ $cxn->close();
                 Digi Channel Waveform (visualization not supported)
             </canvas>
         </div>
-<div id="waveform-zoom-controls">
-    <button id="zoom-out-button" class="zoom-button" onclick="zoomWaveformOut()" aria-label="Zoom Out Waveform"><b>-</b></button>
-    <button id="reset-view-button" class="zoom-button" onclick="resetView()" aria-label="Reset Waveform View">⭯</button>
-    <button id="zoom-in-button" class="zoom-button" onclick="zoomWaveformIn()" aria-label="Zoom In Waveform"><b>+</b></button>
-</div>
+        <div id="waveform-zoom-controls">
+            <button id="zoom-out-button" class="zoom-button" onclick="zoomWaveformOut()" aria-label="Zoom Out Waveform"><b>-</b></button>
+            <button id="reset-view-button" class="zoom-button" onclick="resetView()" aria-label="Reset Waveform View">⭯</button>
+            <button id="zoom-in-button" class="zoom-button" onclick="zoomWaveformIn()" aria-label="Zoom In Waveform"><b>+</b></button>
+        </div>
     </section>
 
     <div id="jam-controls">
