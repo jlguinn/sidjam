@@ -102,14 +102,17 @@ function updateVUMeterPhysics() {
         } else {
             // Otherwise, calculate the angle from the audio data as normal.
             const rms = calculateRMS(waveformData[i]);
-            const level = Math.min(rms, 1.0); // Using the corrected gain from last time
+            const level = Math.min(rms, 1.0);
             const db = level > 0 ? 20 * Math.log10(level) : -100;
-            targetAngle = ANGLE_RANGE[0] + ((db + 100) / 130) * (ANGLE_RANGE[1] - ANGLE_RANGE[0]);
+
+            // The scaling factor below was changed from 130 to 110 to give the needle a fuller swing.
+            targetAngle = ANGLE_RANGE[0] + ((db + 100) / 110) * (ANGLE_RANGE[1] - ANGLE_RANGE[0]);
             targetAngle = Math.max(ANGLE_RANGE[0], Math.min(ANGLE_RANGE[1], targetAngle));
         }
          
         // make needle fall back gracefully.
-        const smoothing = needleAngles[i] < targetAngle ? 0.9 : 0.07;
+        // The second value (the decay) has been increased from 0.07 to 0.35 for a more lively needle.
+        const smoothing = needleAngles[i] < targetAngle ? 0.9 : 0.35;
         needleAngles[i] += (targetAngle - needleAngles[i]) * smoothing;
     }
 }
@@ -287,7 +290,6 @@ function updateZoomButtonStates() {
     resetButton.disabled = Math.abs(zoomFactor - 46.13) < 0.01;
 }
 
-// --- Initialization ---
 function initialize() {
     // Expose functions to global scope for HTML onclick handlers
     window.zoomWaveformIn = zoomWaveformIn;
@@ -298,9 +300,16 @@ function initialize() {
     // Expose for player.js
     window.viz = { resetVisualizationState };
 
-    // Initial draw of static elements
-    resetVisualizationState(); 
-    updateZoomButtonStates();
+    // Wait for critical images to load before performing the initial draw.
+    // This prevents the VU meters from being blank on page load.
+    Promise.all([
+        VU_LABEL_IMG.decode().catch(() => {}),
+        VU_FRAME_IMG.decode().catch(() => {})
+    ]).then(() => {
+        // Initial draw of static elements, now guaranteed to have images ready.
+        resetVisualizationState();
+        updateZoomButtonStates();
+    });
 }
 
 initialize();
