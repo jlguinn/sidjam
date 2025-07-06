@@ -59,13 +59,11 @@ function animationLoop(timestamp) {
         drawVUMeter('vu1-canvas', 0);
         drawVUMeter('vu2-canvas', 1);
         drawVUMeter('vu3-canvas', 2);
-        drawVUMeter('vu4-canvas', 3, '#B22222'); // Brick-red needle
     }
     if (playerState.isBarActive) {
         drawAmplitudeBar('amp1-canvas', 0);
         drawAmplitudeBar('amp2-canvas', 1);
         drawAmplitudeBar('amp3-canvas', 2);
-        drawAmplitudeBar('amp4-canvas', 3);
     }
 
     lastRenderTime = timestamp;
@@ -157,7 +155,7 @@ function drawVoiceWaveform(canvasId, voiceIdx, color = WAVEFORM_STROKE_COLOR) {
     ctx.stroke();
 }
 
-function drawVUMeter(canvasId, voiceIdx, needleColor = '#000000') {
+function drawVUMeter(canvasId, voiceIdx) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -166,11 +164,7 @@ function drawVUMeter(canvasId, voiceIdx, needleColor = '#000000') {
     const pivotY = height * 0.9;
 
     ctx.clearRect(0, 0, width, height);
-
-    const labelImg = voiceIdx === 3 ? VU_LABEL_DARK_IMG : VU_LABEL_IMG;
-    if (labelImg.complete) {
-        ctx.drawImage(labelImg, 0, 0, width, height);
-    }
+    if (VU_LABEL_IMG.complete) ctx.drawImage(VU_LABEL_IMG, 0, 0, width, height);
 
     const angleRad = (needleAngles[voiceIdx] * Math.PI) / 180;
     const endX = pivotX + NEEDLE_LENGTH * Math.sin(angleRad);
@@ -179,7 +173,7 @@ function drawVUMeter(canvasId, voiceIdx, needleColor = '#000000') {
     ctx.beginPath();
     ctx.moveTo(pivotX, pivotY);
     ctx.lineTo(endX, endY);
-    ctx.strokeStyle = needleColor;
+    ctx.strokeStyle = '#000000';
     ctx.lineWidth = 1;
     ctx.stroke();
 
@@ -252,16 +246,12 @@ export function resetVisualizationState() {
     drawVoiceWaveform('voice2-canvas', 1);
     drawVoiceWaveform('voice3-canvas', 2);
     drawVoiceWaveform('digi-canvas', 3, '#B22222'); // ADDED: Draw digi canvas on init with brick-red flatline
-    // Pass needle colors for consistency
-    drawVUMeter('vu1-canvas', 0, '#000000');
-    drawVUMeter('vu2-canvas', 1, '#000000');
-    drawVUMeter('vu3-canvas', 2, '#000000');
-    drawVUMeter('vu4-canvas', 3, '#B22222');
+    drawVUMeter('vu1-canvas', 0);
+    drawVUMeter('vu2-canvas', 1);
+    drawVUMeter('vu3-canvas', 2);
     drawAmplitudeBar('amp1-canvas', 0);
     drawAmplitudeBar('amp2-canvas', 1);
     drawAmplitudeBar('amp3-canvas', 2);
-    drawAmplitudeBar('amp4-canvas', 3);
-
     window.logmsg('Visualization state reset.', 2);
 }
 

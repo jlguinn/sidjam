@@ -292,14 +292,6 @@ $cxn->close();
                     Voice 3 Amplitude Bar (visualization not supported)
                 </canvas>
             </div>
-            <div class="voice-control-row" data-voice="4">
-                <div class="voice-button-placeholder"></div> <canvas id="vu4-canvas" width="120" height="70" title="Digi Channel VU Meter" data-state="on" aria-label="Digi Channel VU Meter">
-                    Digi Channel VU Meter (visualization not supported)
-                </canvas>
-                <canvas id="amp4-canvas" width="20" height="70" title="Digi Channel Amplitude Bar" aria-label="Digi Channel Amplitude Bar">
-                    Digi Channel Amplitude Bar (visualization not supported)
-                </canvas>
-            </div>
         </div>
         <div id="waveform-controls">
             <button id="wave-toggle-button" class="viz-toggle-button viz-toggle-button--wave" title="Toggle Waveforms" aria-label="Toggle Waveforms" onclick="window.toggleWaveform()"></button>
