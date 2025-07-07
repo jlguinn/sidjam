@@ -1,10 +1,9 @@
 // viz.js
-import { getPlayerState, updatePlayerState } from './brackets.js';
+import { getPlayerState } from './brackets.js';
 import { streamer } from './player.js'; // Import the streamer instance
 
 // --- Configuration ---
 const WAVEFORM_BG_COLOR = '#333333';
-const WAVEFORM_STROKE_COLOR = '#00FF00';
 const TARGET_FPS = 60;
 const FRAME_TIME_LIMIT = 1000 / TARGET_FPS; // ~16.67ms
 const DATA_UPDATE_INTERVAL = 50; // Update waveform data every 50ms (20Hz)
@@ -14,11 +13,9 @@ const VU_LABEL_IMG = new Image();
 VU_LABEL_IMG.src = '../image/vu_label.png';
 const VU_FRAME_IMG = new Image();
 VU_FRAME_IMG.src = '../image/vu_frame.png';
-const VU_LABEL_DARK_IMG = new Image();
-VU_LABEL_DARK_IMG.src = '../image/vu_label_dark.jpg';
 const ANGLE_RANGE = [-50, 43]; // In degrees
 const NEEDLE_LENGTH = 50;
-const VU_METER_COUNT = 4;
+const VU_METER_COUNT = 3;
 
 // --- State Variables ---
 let isVisualizationActive = false;
@@ -27,7 +24,9 @@ let lastRenderTime = 0;
 let lastDataUpdateTime = 0;
 let waveformData = [new Float32Array(0), new Float32Array(0), new Float32Array(0), new Float32Array(0)]; // Increase array size to 4
 let needleAngles = new Float32Array(VU_METER_COUNT).fill(ANGLE_RANGE[0]);
-let zoomFactor = 46.13; // Default zoom
+
+// --- VoiceDisplay Instances ---
+let voiceDisplay1, voiceDisplay2, voiceDisplay3, digiDisplay;
 
 // --- Core Animation Loop ---
 function animationLoop(timestamp) {
@@ -44,17 +43,12 @@ function animationLoop(timestamp) {
     // Throttle data fetching to reduce processing load
     if (now - lastDataUpdateTime > DATA_UPDATE_INTERVAL) {
         updateWaveformData();
-        updateVUMeterPhysics(playerState);
+        updateVUMeterPhysics();
         lastDataUpdateTime = now;
     }
 
     // Render visualizations if they are active
-    if (playerState.isWaveformActive) {
-        drawVoiceWaveform('voice1-canvas', 0);
-        drawVoiceWaveform('voice2-canvas', 1);
-        drawVoiceWaveform('voice3-canvas', 2);
-        drawVoiceWaveform('digi-canvas', 3, '#B22222');
-    }
+    // Waveform drawing is now handled by the VoiceDisplay instances themselves.
     if (playerState.isVUActive) {
         drawVUMeter('vu1-canvas', 0);
         drawVUMeter('vu2-canvas', 1);
@@ -93,7 +87,6 @@ function calculateRMS(data) {
 
 function updateVUMeterPhysics() {
     for (let i = 0; i < VU_METER_COUNT; i++) {
-        // --- START: PAUSE BEHAVIOR MODIFICATION ---
         let targetAngle;
 
         // If the player is paused, force the target to the resting position.
@@ -118,45 +111,6 @@ function updateVUMeterPhysics() {
 }
 
 // --- Drawing Functions ---
-
-function drawVoiceWaveform(canvasId, voiceIdx, color = WAVEFORM_STROKE_COLOR) {
-    const canvas = document.getElementById(canvasId);
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const { width, height } = canvas;
-    const midY = height / 2;
-    const data = waveformData[voiceIdx];
-
-    if (canvasId === 'digi-canvas') {
-        ctx.fillStyle = '#808080'; // Medium Grey
-    } else {
-        ctx.fillStyle = WAVEFORM_BG_COLOR;
-    }
-    ctx.fillRect(0, 0, width, height);
-    ctx.strokeStyle = color; 
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    
-    if (!data || data.length === 0) {
-        ctx.moveTo(0, midY);
-        ctx.lineTo(width, midY);
-        ctx.stroke();
-        return;
-    }
-    
-    const visibleSamples = Math.floor(data.length / (getPlayerState().zoomFactor || 46.13));
-    const step = width / visibleSamples;
-
-    const scale = (height / 2) * 0.9;
-
- 
-    ctx.moveTo(0, midY - data[0] * scale); // Start from the first sample
-    for (let i = 1; i < visibleSamples; i++) {
-        const y = midY - data[i] * scale;
-        ctx.lineTo(i * step, y);
-    }
-    ctx.stroke();
-}
 
 function drawVUMeter(canvasId, voiceIdx) {
     const canvas = document.getElementById(canvasId);
@@ -189,14 +143,12 @@ function drawAmplitudeBar(canvasId, voiceIdx) {
     const ctx = canvas.getContext('2d');
     const { width, height } = canvas;
     
-    // --- START: PAUSE BEHAVIOR MODIFICATION ---
     let rms = 0; // Default to 0
 
     // Only calculate RMS if the player is active and not paused.
     if (window.player && !window.player.isPaused()) {
         rms = calculateRMS(waveformData[voiceIdx]);
     }
-    // --- END: PAUSE BEHAVIOR MODIFICATION ---
 
     const level = Math.min(rms, 1.0);
     const db = level > 0 ? 20 * Math.log10(level) : -100;
@@ -215,15 +167,23 @@ function drawAmplitudeBar(canvasId, voiceIdx) {
 }
 // --- Public Control Functions ---
 
+let hasWaveformRendererStarted = false;
+export function startWaveformRendering() {
+    if (hasWaveformRendererStarted || !voiceDisplay1) return; // Ensure it only runs once
+
+    voiceDisplay1.redraw();
+    voiceDisplay2.redraw();
+    voiceDisplay3.redraw();
+    digiDisplay.redraw();
+
+    hasWaveformRendererStarted = true;
+}
+
 export function startVisualizations() {
     if (isVisualizationActive) return;
     window.logmsg('Starting visualizations...', 2);
     isVisualizationActive = true;
     
-    const state = getPlayerState();
-    zoomFactor = state.zoomFactor || 46.13;
-    
-    // Ensure images are loaded before first draw
     Promise.all([
         VU_LABEL_IMG.decode().catch(() => {}),
         VU_FRAME_IMG.decode().catch(() => {})
@@ -242,13 +202,22 @@ export function stopVisualizations() {
 
 export function resetVisualizationState() {
     stopVisualizations();
-    waveformData = [new Float32Array(0), new Float32Array(0), new Float32Array(0), new Float32Array(0)]; // UPDATED: Ensure 4 channels are reset
+    waveformData = [new Float32Array(0), new Float32Array(0), new Float32Array(0), new Float32Array(0)];
     needleAngles.fill(ANGLE_RANGE[0]);
-    // Redraw static state
-    drawVoiceWaveform('voice1-canvas', 0);
-    drawVoiceWaveform('voice2-canvas', 1);
-    drawVoiceWaveform('voice3-canvas', 2);
-    drawVoiceWaveform('digi-canvas', 3, '#B22222'); // ADDED: Draw digi canvas on init with brick-red flatline
+
+    // Clear the waveform canvases
+    const canvases = ['voice1-canvas', 'voice2-canvas', 'voice3-canvas', 'digi-canvas'];
+    canvases.forEach(id => {
+        const canvas = document.getElementById(id);
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+			ctx.fillStyle = (id === 'digi-canvas') ? '#808080' : WAVEFORM_BG_COLOR;
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+    });
+
+    // Redraw static state for meters
     drawVUMeter('vu1-canvas', 0);
     drawVUMeter('vu2-canvas', 1);
     drawVUMeter('vu3-canvas', 2);
@@ -258,57 +227,40 @@ export function resetVisualizationState() {
     window.logmsg('Visualization state reset.', 2);
 }
 
-// --- Zoom Controls ---
-function updateZoom() {
-    updatePlayerState({ zoomFactor });
-    updateZoomButtonStates();
-}
-
-export function zoomWaveformIn() {
-    zoomFactor = Math.min(zoomFactor * 1.125, 8820);
-    updateZoom();
-}
-
-export function zoomWaveformOut() {
-    zoomFactor = Math.max(zoomFactor / 1.125, 1);
-    updateZoom();
-}
-
-export function resetView() {
-    zoomFactor = 46.13;
-    updateZoom();
-}
-
-function updateZoomButtonStates() {
-    const zoomOutButton = document.getElementById('zoom-out-button');
-    const zoomInButton = document.getElementById('zoom-in-button');
-    const resetButton = document.getElementById('reset-view-button');
-    if (!zoomOutButton || !zoomInButton || !resetButton) return;
-    
-    zoomOutButton.disabled = zoomFactor <= 1;
-    zoomInButton.disabled = zoomFactor >= 8820;
-    resetButton.disabled = Math.abs(zoomFactor - 46.13) < 0.01;
-}
-
+// --- Initialization ---
 function initialize() {
     // Expose functions to global scope for HTML onclick handlers
-    window.zoomWaveformIn = zoomWaveformIn;
-    window.zoomWaveformOut = zoomWaveformOut;
-    window.resetView = resetView;
     window.startVisualizations = startVisualizations;
 
     // Expose for player.js
     window.viz = { resetVisualizationState };
 
     // Wait for critical images to load before performing the initial draw.
-    // This prevents the VU meters from being blank on page load.
     Promise.all([
         VU_LABEL_IMG.decode().catch(() => {}),
         VU_FRAME_IMG.decode().catch(() => {})
     ]).then(() => {
-        // Initial draw of static elements, now guaranteed to have images ready.
+        // Initial draw of static elements.
         resetVisualizationState();
-        updateZoomButtonStates();
+
+        // --- Setup VoiceDisplay renderers ---
+        const useSyncMode = true; // This enables the stable waveform!
+
+        // Create an instance for each voice, telling it which canvas to use,
+        // how to get its data, and to run in sync mode.
+        voiceDisplay1 = new VoiceDisplay('voice1-canvas', streamer, () => streamer.getData(0), useSyncMode);
+        voiceDisplay2 = new VoiceDisplay('voice2-canvas', streamer, () => streamer.getData(1), useSyncMode);
+        voiceDisplay3 = new VoiceDisplay('voice3-canvas', streamer, () => streamer.getData(2), useSyncMode);
+        digiDisplay = new VoiceDisplay('digi-canvas', streamer, () => streamer.getData(3), useSyncMode);
+
+		// Customize colors
+		voiceDisplay1.setStrokeColor('#00FF00');
+		voiceDisplay2.setStrokeColor('#00FF00');
+		voiceDisplay3.setStrokeColor('#00FF00');
+		digiDisplay.setStrokeColor('#B22222');
+
+        // NOTE: We do NOT kick off the rendering loops here anymore.
+        // This will be done by startWaveformRendering() after the player is ready.
     });
 }
 
