@@ -16,6 +16,8 @@ VU_FRAME_IMG.src = '../image/vu_frame.png';
 const ANGLE_RANGE = [-50, 43]; // In degrees
 const NEEDLE_LENGTH = 50;
 const VU_METER_COUNT = 3;
+const PEAK_FALLOFF = 0.005; // How fast the peak falls per frame.
+let smoothedRms = new Float32Array(VU_METER_COUNT).fill(0);
 
 // --- State Variables ---
 let isVisualizationActive = false;
@@ -24,6 +26,9 @@ let lastRenderTime = 0;
 let lastDataUpdateTime = 0;
 let waveformData = [new Float32Array(0), new Float32Array(0), new Float32Array(0), new Float32Array(0)]; // Increase array size to 4
 let needleAngles = new Float32Array(VU_METER_COUNT).fill(ANGLE_RANGE[0]);
+let peakLevels = new Float32Array(VU_METER_COUNT).fill(0);
+let peakCounters = new Uint8Array(VU_METER_COUNT).fill(0);
+const PEAK_HOLD_FRAMES = 60; // How many frames the peak line should 'hold' (60fps = ~1s)
 
 // --- VoiceDisplay Instances ---
 let voiceDisplay1, voiceDisplay2, voiceDisplay3, digiDisplay;
@@ -150,22 +155,69 @@ function drawAmplitudeBar(canvasId, voiceIdx) {
         rms = calculateRMS(waveformData[voiceIdx]);
     }
 
-    const level = Math.min(rms, 1.0);
-    const db = level > 0 ? 20 * Math.log10(level) : -100;
+    const currentLevel = Math.min(rms, 1.0);
+    const db = currentLevel > 0 ? 20 * Math.log10(currentLevel) : -100;
     const normalizedLevel = Math.max(0, (db + 100) / 110);
     const barHeight = normalizedLevel * height;
 
+    // --- Peak Hold Logic ---
+    if (normalizedLevel >= peakLevels[voiceIdx]) {
+        // New peak reached
+        peakLevels[voiceIdx] = normalizedLevel;
+        peakCounters[voiceIdx] = PEAK_HOLD_FRAMES; // Reset hold timer
+    } else {
+        // No new peak, decrement hold timer
+        if (peakCounters[voiceIdx] > 0) {
+            peakCounters[voiceIdx]--;
+        } else {
+            // Timer expired, let the peak fall
+            peakLevels[voiceIdx] = normalizedLevel;
+        }
+    }
+    const peakY = height - (peakLevels[voiceIdx] * height);
+    // --- End Peak Hold Logic ---
+
+    // 1. Draw black background
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, width, height);
 
+    // 2. Draw main amplitude bar
     const gradient = ctx.createLinearGradient(0, height, 0, 0);
     gradient.addColorStop(0, '#00FF00');
     gradient.addColorStop(0.5, '#FFFF00');
     gradient.addColorStop(1, '#FF0000');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, height - barHeight, width, barHeight);
+    
+    // 3. Draw peak hold bar
+    if (peakLevels[voiceIdx] > 0) {
+        ctx.fillStyle = '#FFFFFF'; // White peak line
+        ctx.fillRect(0, peakY, width, 2); // 2px high line
+    }
 }
+
 // --- Public Control Functions ---
+export function toggleWaveformFreeze(shouldFreeze) {
+    const displays = [voiceDisplay1, voiceDisplay2, voiceDisplay3, digiDisplay];
+    
+    if (!displays[0]) return; // Not initialized yet
+
+    if (shouldFreeze) {
+        // Stop the redraw loop by replacing the redraw function with an empty one
+        displays.forEach(d => {
+            if (d) d.redraw = () => {};
+        });
+    } else {
+        // Restore the original redraw function from the prototype to restart the loop
+        displays.forEach(d => {
+            if (d) {
+                d.redraw = VoiceDisplay.prototype.redraw;
+                d.redraw(); // Kick it off again
+            }
+        });
+    }
+}
+
 
 let hasWaveformRendererStarted = false;
 export function startWaveformRendering() {
@@ -220,15 +272,30 @@ export function resetVisualizationState() {
     waveformData = [new Float32Array(0), new Float32Array(0), new Float32Array(0), new Float32Array(0)];
     needleAngles.fill(ANGLE_RANGE[0]);
 
-    // Clear the waveform canvases
+    // Clear the waveform canvases and draw initial flat lines
     const canvases = ['voice1-canvas', 'voice2-canvas', 'voice3-canvas', 'digi-canvas'];
     canvases.forEach(id => {
         const canvas = document.getElementById(id);
         if (canvas) {
             const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-			ctx.fillStyle = (id === 'digi-canvas') ? '#808080' : WAVEFORM_BG_COLOR;
-			ctx.fillRect(0, 0, canvas.width, canvas.height);
+            const { width, height } = canvas;
+
+            // 1. Set background color
+            ctx.fillStyle = (id === 'digi-canvas') ? '#808080' : WAVEFORM_BG_COLOR;
+            ctx.fillRect(0, 0, width, height);
+
+            // 2. Draw the initial flat line
+            const isDigi = (id === 'digi-canvas');
+            const midY = height / 2;
+            const lineY = isDigi ? 4 : midY; // Digi at top (4px from top), others in middle
+            const color = isDigi ? '#B22222' : '#00FF00'; // Brick-red for digi, green for others
+
+            ctx.beginPath();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.moveTo(0, lineY);
+            ctx.lineTo(width, lineY);
+            ctx.stroke();
         }
     });
 
@@ -242,7 +309,6 @@ export function resetVisualizationState() {
     window.logmsg('Visualization state reset.', 2);
 }
 
-// --- Initialization ---
 function initialize() {
     // Expose functions to global scope for HTML onclick handlers
     window.startVisualizations = startVisualizations;
@@ -257,6 +323,10 @@ function initialize() {
     ]).then(() => {
         // Initial draw of static elements.
         resetVisualizationState();
+
+        // Set the digi canvas background color. This was missed in the last update.
+        document.getElementById('digi-canvas').style.backgroundColor = '#808080';
+        
         // NOTE: The VoiceDisplay setup is now handled by startWaveformRendering().
     });
 }

@@ -192,7 +192,9 @@ window.togglePlayPause = async () => {
         player.sidPlayer.pause();
         player.setIsPlaying(false);
         player.stopTimer(updateJamButtonBound);
+        viz.toggleWaveformFreeze(true); // Freeze waveforms
     } else {
+        viz.toggleWaveformFreeze(false); // Un-freeze waveforms
         player.sidPlayer.play();
         player.setIsPlaying(true);
         player.startTimer(player.updateTimer, updateJamButtonBound);
