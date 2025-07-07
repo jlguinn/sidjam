@@ -11,7 +11,7 @@ import * as brackets from './brackets.js';
 import { baseColorSchemes } from './themes.js';
 import * as player from './player.js';
 import { renderSpriteAnimation } from './spriteAnimator.js';
-import { } from './viz.js';
+import * as viz from './viz.js';
 
 function debug(message) { window.logmsg(`[DEBUG] ${message}`, 2); }
 
@@ -173,7 +173,7 @@ window.togglePlayPause = async () => {
             });
 
             // Start the waveform rendering now that the player exists.
-            startWaveformRendering();
+            viz.startWaveformRendering();
 
             // 4. Update state and enable all controls.
             brackets.updatePlayerState({ hasPlayed: true });

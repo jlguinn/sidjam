@@ -169,8 +169,23 @@ function drawAmplitudeBar(canvasId, voiceIdx) {
 
 let hasWaveformRendererStarted = false;
 export function startWaveformRendering() {
-    if (hasWaveformRendererStarted || !voiceDisplay1) return; // Ensure it only runs once
+    if (hasWaveformRendererStarted) return; // Ensure it only runs once
 
+    // --- Create VoiceDisplay renderers NOW that the streamer is ready ---
+    const useSyncMode = true; // This enables the stable waveform!
+
+    voiceDisplay1 = new VoiceDisplay('voice1-canvas', streamer, () => streamer.getData(0), useSyncMode);
+    voiceDisplay2 = new VoiceDisplay('voice2-canvas', streamer, () => streamer.getData(1), useSyncMode);
+    voiceDisplay3 = new VoiceDisplay('voice3-canvas', streamer, () => streamer.getData(2), useSyncMode);
+    digiDisplay = new VoiceDisplay('digi-canvas', streamer, () => streamer.getData(3), useSyncMode);
+
+    // Customize colors
+    voiceDisplay1.setStrokeColor('#00FF00');
+    voiceDisplay2.setStrokeColor('#00FF00');
+    voiceDisplay3.setStrokeColor('#00FF00');
+    digiDisplay.setStrokeColor('#B22222');
+
+    // Kick off the rendering loops
     voiceDisplay1.redraw();
     voiceDisplay2.redraw();
     voiceDisplay3.redraw();
@@ -242,25 +257,7 @@ function initialize() {
     ]).then(() => {
         // Initial draw of static elements.
         resetVisualizationState();
-
-        // --- Setup VoiceDisplay renderers ---
-        const useSyncMode = true; // This enables the stable waveform!
-
-        // Create an instance for each voice, telling it which canvas to use,
-        // how to get its data, and to run in sync mode.
-        voiceDisplay1 = new VoiceDisplay('voice1-canvas', streamer, () => streamer.getData(0), useSyncMode);
-        voiceDisplay2 = new VoiceDisplay('voice2-canvas', streamer, () => streamer.getData(1), useSyncMode);
-        voiceDisplay3 = new VoiceDisplay('voice3-canvas', streamer, () => streamer.getData(2), useSyncMode);
-        digiDisplay = new VoiceDisplay('digi-canvas', streamer, () => streamer.getData(3), useSyncMode);
-
-		// Customize colors
-		voiceDisplay1.setStrokeColor('#00FF00');
-		voiceDisplay2.setStrokeColor('#00FF00');
-		voiceDisplay3.setStrokeColor('#00FF00');
-		digiDisplay.setStrokeColor('#B22222');
-
-        // NOTE: We do NOT kick off the rendering loops here anymore.
-        // This will be done by startWaveformRendering() after the player is ready.
+        // NOTE: The VoiceDisplay setup is now handled by startWaveformRendering().
     });
 }
 
