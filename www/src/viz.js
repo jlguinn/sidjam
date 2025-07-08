@@ -92,17 +92,29 @@ function calculateRMS(data) {
 function updateVUMeterPhysics() {
     for (let i = 0; i < VU_METER_COUNT; i++) {
         let targetAngle;
+        
+        // Get the mute button for the current voice (voices are 1-indexed in the DOM)
+        const voiceButton = document.getElementById(`voice${i + 1}`);
+        const isMuted = voiceButton && voiceButton.getAttribute('data-state') === 'off';
 
-        if (!window.player || window.player.isPaused()) {
-            targetAngle = ANGLE_RANGE[0];
+        if (!window.player || window.player.isPaused() || isMuted) { // Check if muted here
+            targetAngle = ANGLE_RANGE[0]; // Force to resting position
         } else {
             const rms = calculateRMS(waveformData[i]);
-            const level = Math.min(rms, 1.0);
-            const db = level > 0 ? 20 * Math.log10(level) : -100;
-            targetAngle = ANGLE_RANGE[0] + ((db + 100) / 110) * (ANGLE_RANGE[1] - ANGLE_RANGE[0]);
-            targetAngle = Math.max(ANGLE_RANGE[0], Math.min(ANGLE_RANGE[1], targetAngle));
+            
+            // Add a threshold to prevent blips from low-level noise during silence
+            const rmsThreshold = 0.005; 
+            if (rms < rmsThreshold) {
+                targetAngle = ANGLE_RANGE[0];
+            } else {
+                const level = Math.min(rms, 1.0);
+                const db = level > 0 ? 20 * Math.log10(level) : -100;
+                targetAngle = ANGLE_RANGE[0] + ((db + 100) / 110) * (ANGLE_RANGE[1] - ANGLE_RANGE[0]);
+                targetAngle = Math.max(ANGLE_RANGE[0], Math.min(ANGLE_RANGE[1], targetAngle));
+            }
         }
          
+        // Use a faster smoothing when needle is returning to rest
         const smoothing = needleAngles[i] < targetAngle ? 0.9 : 0.35;
         needleAngles[i] += (targetAngle - needleAngles[i]) * smoothing;
     }
@@ -141,16 +153,21 @@ function drawAmplitudeBar(canvasId, voiceIdx) {
     const ctx = canvas.getContext('2d');
     const { width, height } = canvas;
     
+    const voiceButton = document.getElementById(`voice${voiceIdx + 1}`);
+    const isMuted = voiceButton && voiceButton.getAttribute('data-state') === 'off';
+    
     let rms = 0;
-    if (window.player && !window.player.isPaused()) {
+    if (window.player && !window.player.isPaused() && !isMuted) {
         rms = calculateRMS(waveformData[voiceIdx]);
     } else {
         peakLevels[voiceIdx] = 0;
     }
 
-    const normalizedLevel = Math.max(0, (20 * Math.log10(Math.min(rms, 1.0)) + 100) / 110);
+    const rmsThreshold = 0.005;
+    const normalizedLevel = (rms < rmsThreshold) ? 0 : Math.max(0, (20 * Math.log10(Math.min(rms, 1.0)) + 100) / 110);
     const barHeight = normalizedLevel * height;
 
+    // ... (the rest of the function remains the same)
     if (normalizedLevel >= peakLevels[voiceIdx]) {
         peakLevels[voiceIdx] = normalizedLevel;
         peakCounters[voiceIdx] = PEAK_HOLD_FRAMES; 
