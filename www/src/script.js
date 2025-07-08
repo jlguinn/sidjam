@@ -172,9 +172,6 @@ window.togglePlayPause = async () => {
                 updateRoundInfo: updateRoundInfoBound
             });
 
-            // Start the waveform rendering now that the player exists.
-            viz.startWaveformRendering();
-
             // 4. Update state and enable all controls.
             brackets.updatePlayerState({ hasPlayed: true });
             document.getElementById('prevButton').disabled = false;
