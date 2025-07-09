@@ -197,7 +197,8 @@ $cxn->close();
     <script defer src="src/websid/htdocs/backend_websid.js"></script>
     <script defer src="src/webaudio-player/channelstreamer.js"></script> 
     <script>
-    window.user = <?php echo json_encode(['id' => $user_id, 'session_id' => $_SESSION['session_id'], 'email' => $_SESSION['email'] ?? '']); ?>;
+        window.user = <?php echo json_encode(['id' => $user_id, 'session_id' => $_SESSION['session_id'], 'email' => $_SESSION['email'] ?? '']); ?>;
+        window.isLoggedIn = <?php echo json_encode($is_logged_in); ?>;
         window.DEBUG_ENABLED = <?php echo json_encode($debug_enabled); ?>;
         window.LOG_LEVEL = <?php echo json_encode($log_level); ?>;
         window.logmsg = function(msg, msgLogLevel = 0) {
