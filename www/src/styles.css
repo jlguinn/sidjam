@@ -644,13 +644,15 @@ body {
     width: 300px;
     height: 70px;
     border: 1px solid var(--background-alt);
-    background-color: #444;
+    background-color: #000000; /* Pure black background */
+    image-rendering: pixelated; /* Disable antialiasing for sharp lines */
 }
 #digi-canvas {
     width: 300px;
     height: 70px;
     border: 1px solid var(--background-alt);
     background-color: #444; /* Note: JS fillRect will override this, which is intended */
+    image-rendering: pixelated; /* Disable antialiasing for sharp lines */
 }
 
 /* Bracket and Flame Controls */

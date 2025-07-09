@@ -3,7 +3,7 @@ import { getPlayerState } from './brackets.js';
 import { streamer } from './player.js'; // Import the streamer instance
 
 // --- Configuration ---
-const WAVEFORM_BG_COLOR = '#333333';
+const WAVEFORM_BG_COLOR = '#000000';
 const TARGET_FPS = 60;
 const FRAME_TIME_LIMIT = 1000 / TARGET_FPS; // ~16.67ms
 const DATA_UPDATE_INTERVAL = 50; // Update waveform data every 50ms (20Hz)
@@ -273,6 +273,8 @@ export function resetVisualizationState() {
             const { width, height } = canvas;
 
             ctx.fillStyle = (id === 'digi-canvas') ? '#808080' : WAVEFORM_BG_COLOR;
+            ctx.globalAlpha = 1.0; // Ensure no transparency
+            ctx.globalCompositeOperation = 'source-over'; // Standard drawing mode
             ctx.fillRect(0, 0, width, height);
 
             const isDigi = (id === 'digi-canvas');
@@ -282,6 +284,8 @@ export function resetVisualizationState() {
             ctx.beginPath();
             ctx.strokeStyle = color;
             ctx.lineWidth = 2;
+            ctx.globalAlpha = 1.0; // Ensure no transparency
+            ctx.globalCompositeOperation = 'source-over'; // Standard drawing mode
             ctx.moveTo(0, lineY);
             ctx.lineTo(width, lineY);
             ctx.stroke();
@@ -296,6 +300,7 @@ export function resetVisualizationState() {
     drawAmplitudeBar('amp3-canvas', 2);
     window.logmsg('Visualization state reset.', 2);
 }
+
 
 function initialize() {
     window.startVisualizations = startVisualizations;
