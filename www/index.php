@@ -299,16 +299,12 @@ $cxn->close();
         </div>
         <div id="voice-visualizations">
             <canvas id="voice1-canvas" width="250" height="100" aria-label="Voice 1 Waveform">
-                Voice 1 Waveform (visualization not supported)
             </canvas>
             <canvas id="voice2-canvas" width="250" height="100" aria-label="Voice 2 Waveform">
-                Voice 2 Waveform (visualization not supported)
             </canvas>
             <canvas id="voice3-canvas" width="250" height="100" aria-label="Voice 3 Waveform">
-                Voice 3 Waveform (visualization not supported)
             </canvas>
             <canvas id="digi-canvas" width="250" height="100" aria-label="Digi Channel Waveform">
-                Digi Channel Waveform (visualization not supported)
             </canvas>
         </div>
     </section>
