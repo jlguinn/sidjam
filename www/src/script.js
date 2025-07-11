@@ -180,6 +180,7 @@ window.togglePlayPause = async () => {
             document.getElementById('ellipsis-button').disabled = false;
             ui.updateNavigationButtons(player.sidPlayer);
             updateWinnerButtonsBound();
+            updateVsMatchupBound();
         }
         return; // End the function here for the first play.
     }
@@ -1244,6 +1245,7 @@ window.flashProfileIcon = function() {
 
 async function initializeApp() {
     window.logmsg('sID JAm application initializing...');
+    checkAdminAndShowUserCount();
     const profileIcon = document.getElementById('profile-icon');
     if (profileIcon) {
         profileIcon.addEventListener('click', (e) => {
@@ -1366,6 +1368,29 @@ if (document.readyState === 'loading') {
     });
 } else {
     initializeApp();
+}
+
+async function checkAdminAndShowUserCount() {
+  // Verify the user object and admin email exist
+  if (window.user && window.user.email === 'jguinn@bonevalleyfilms.com') {
+    try {
+      // Fetch the registered user count from the new endpoint
+      const response = await fetch('dbcontrol/get_registered_users.php');
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const data = await response.json();
+
+      // On success, log the welcome message to the console
+      if (data.success) {
+        console.log(`Hello Admin! There are ${data.user_count} registered users.`);
+      } else {
+        console.error("Admin check failed:", data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching registered user count:", error);
+    }
+  }
 }
 
 const logPlayerStateButton = document.getElementById('log-player-state');
