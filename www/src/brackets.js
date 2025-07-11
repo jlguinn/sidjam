@@ -66,8 +66,7 @@ export let playerState = {
     isWaveformActive: true,
     isVUActive: true,
     isBarActive: false,
-    zoomFactor: 46.13,
-    vuMetrics: []
+    theme:0
 };
 
 export function debug(message) {

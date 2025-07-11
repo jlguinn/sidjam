@@ -78,8 +78,6 @@ async function savePlayerState() {
         isWaveformActive: playerState.isWaveformActive,
         isVUActive: playerState.isVUActive,
         isBarActive: playerState.isBarActive,
-        zoomFactor: playerState.zoomFactor
-        // vuMetrics: playerState.vuMetrics
     };
 
     try {
@@ -1302,6 +1300,7 @@ async function initializeApp() {
 
         if (player_state && isValidState) {
             brackets.updatePlayerState({ ...player_state });
+            ui.setCurrentThemeIndex(brackets.getPlayerState().theme || 0);
         } else {
             if (!player_state || !isValidState) {
                 window.logmsg("No valid saved state found. Starting a new bout.", 1);
