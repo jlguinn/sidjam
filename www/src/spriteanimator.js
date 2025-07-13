@@ -1,21 +1,48 @@
 // Configuration map for animations
 const ANIMATION_CONFIGS = {
   flame: {
-    spriteSheetPath: '../image/flame-sprite.png',
-    staticImagePath: '../image/flame-static.png',
-    scaleFactor: 95 / 330,
-    frames: [
-      { x: 0, y: 0, width: 261, height: 330, offsetX: -10, offsetY: 0 },
-      { x: 261, y: 0, width: 261, height: 330, offsetX: 3, offsetY: 0 },
-      { x: 522, y: 0, width: 261, height: 330, offsetX: 21, offsetY: -5 },
-      { x: 0, y: 330, width: 261, height: 330, offsetX: 1, offsetY: 0 },
-      { x: 261, y: 330, width: 261, height: 330, offsetX: 8, offsetY: 0 },
-      { x: 522, y: 330, width: 261, height: 330, offsetX: 22, offsetY: 0 }
-    ],
-    globalOffsetX: -7,
-    globalOffsetY: 6,
-    delayMs: 128,
-    loop: true
+    spriteSheetPath: '../image/bomb_fuse_lit.png',
+    staticImagePath: '../image/bomb_at_rest.png',
+    scaleFactor:  0.55, //   128 / 235,
+  "frames": [
+    {
+      "x": 0, 
+      "y": 0,
+      "width": 235,
+      "height": 203,
+      "offsetX": -22,
+      "offsetY": -5
+    },
+    {
+      "x": 235,
+      "y": 0,
+      "width": 235,
+      "height": 203,
+      "offsetX": 7,
+      "offsetY": -11
+    },
+    {
+      "x": 0,
+      "y": 203,
+      "width": 235,
+      "height": 203,
+      "offsetX": -18,
+      "offsetY": 11
+    },
+    {
+      "x": 235,
+      "y": 203,
+      "width": 235,
+      "height": 203,
+      "offsetX": 15,
+      "offsetY": 9
+    }
+  ],
+  "globalOffsetX": -37,
+  "globalOffsetY": -27,
+  "delayMs": 225,
+  "loop": true
+
   },
   jam: {
     spriteSheetPath: '../image/jam-sprite.png',
