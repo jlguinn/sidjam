@@ -693,10 +693,13 @@ body {
 }
 
 #flameButton {
-    width: 75px;
-    height: 95px;
+    position: relative;  /* Anchor for absolute canvas */
+    overflow: visible;   /* Allow animation to extend beyond bounds */
+    top: 8px;
+    width: 100px;
+    height: 100px;
     border: none;
-    background: url('../image/flame-static.png');
+    background: url('../image/bomb_at_rest.png');
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
@@ -707,19 +710,26 @@ body {
     position: relative;
 }
 
+#flameButton canvas {
+    position: absolute;
+    top: -24px;
+    left: -19px;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
 #flameButton:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
 
-#flameButton canvas {
-    position: absolute;
-    top: 0;
+
+#flameButton canvas.animate {
+    top: -5px;  /* Fuse-specific */
     left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
 }
+
 
 #flame-wrapper {
     position: absolute;

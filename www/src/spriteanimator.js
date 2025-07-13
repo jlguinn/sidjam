@@ -3,7 +3,7 @@ const ANIMATION_CONFIGS = {
   flame: {
     spriteSheetPath: '../image/bomb_fuse_sheet.png',
     staticImagePath: '../image/bomb_at_rest.png',
-    scaleFactor:  0.55, //   128 / 235,
+    scaleFactor:  0.653, //   128 / 235,
   "frames": [
     {
       "x": 0, 
@@ -38,8 +38,8 @@ const ANIMATION_CONFIGS = {
       "offsetY": 9
     }
   ],
-  "globalOffsetX": -37,
-  "globalOffsetY": -27,
+  "globalOffsetX": 0, // -37,
+  "globalOffsetY": 0, // -27,
   "delayMs": 225,
   "loop": true
   },
@@ -47,7 +47,7 @@ const ANIMATION_CONFIGS = {
     spriteSheetPath: '../image/boom_sheet.png',
     staticImagePath: '../image/bomb_at_rest.png',
     soundTrack: '../image/fizz_boom.wav',
-    scaleFactor:  0.55, 
+    scaleFactor:  0.653,
     "frames": [
       {
         "x": 0,
@@ -146,9 +146,9 @@ const ANIMATION_CONFIGS = {
         "offsetY": 29
       }
     ],
-    "globalOffsetX": 0,
-    "globalOffsetY": 0,
-    "delayMs": 250,
+  "globalOffsetX": -18, // -55,
+  "globalOffsetY": -12, // -40,
+    "delayMs": 225,
     "loop": false
   },
   jam: {
