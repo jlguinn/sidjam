@@ -386,18 +386,13 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
         return;
     }
 
-    sidPlayer.pause();
-    setIsPlaying(false);
-    stopTimer();
+    if (!playerState.isFlameActive) {  // New condition: Only pause if NOT flame confirm (keeps music running for boom)
+        sidPlayer.pause();
+        setIsPlaying(false);
+        stopTimer();
+    }
 
     if (playerState.isFlameActive && playerState.activeBracket === "0 - 0") {
-        // Step 1: Stop music
-        if (sidPlayer) {
-            sidPlayer.pause();
-            setIsPlaying(false);
-            stopTimer();
-        }
-
         // Disable jAM and other buttons to prevent interaction during boom
         document.getElementById('jamButton').disabled = true;
         document.getElementById('prevButton').disabled = true;
@@ -409,11 +404,17 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
         winnerLeft.classList.add('disabled');
         winnerRight.classList.add('disabled');
 
-        // New: Trigger boom animation with sound (no visual disable)
+        // New: Trigger boom animation with sound (music keeps playing)
         const bombButton = document.getElementById("flameButton");
         bombButton.style.pointerEvents = 'none';  // Disable clicks without fade
         renderSpriteAnimation(bombButton, "boom", true, async () => {
-            // onComplete: Steps 3-5
+            // onComplete: Now stop old music, then Steps 3-5
+            if (sidPlayer) {
+                sidPlayer.pause();
+                setIsPlaying(false);
+                stopTimer();
+            }
+
             let flamedIndex = playerState.activeContender;
             let flamedFile = playerState.contenders[flamedIndex];
 
