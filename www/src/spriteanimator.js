@@ -1,7 +1,7 @@
 // Configuration map for animations
 const ANIMATION_CONFIGS = {
   flame: {
-    spriteSheetPath: '../image/bomb_fuse_lit.png',
+    spriteSheetPath: '../image/bomb_fuse_sheet.png',
     staticImagePath: '../image/bomb_at_rest.png',
     scaleFactor:  0.55, //   128 / 235,
   "frames": [
@@ -42,7 +42,113 @@ const ANIMATION_CONFIGS = {
   "globalOffsetY": -27,
   "delayMs": 225,
   "loop": true
-
+  },
+  boom: {
+    spriteSheetPath: '../image/boom_sheet.png',
+    staticImagePath: '../image/bomb_at_rest.png',
+    scaleFactor:  0.55, 
+    "frames": [
+      {
+        "x": 0,
+        "y": 0,
+        "width": 267,
+        "height": 261,
+        "offsetX": -22,
+        "offsetY": 2
+      },
+      {
+        "x": 267,
+        "y": 0,
+        "width": 267,
+        "height": 261,
+        "offsetX": -15,
+        "offsetY": 5
+      },
+      {
+        "x": 534,
+        "y": 0,
+        "width": 267,
+        "height": 261,
+        "offsetX": -4,
+        "offsetY": 7
+      },
+      {
+        "x": 801,
+        "y": 0,
+        "width": 267,
+        "height": 261,
+        "offsetX": 8,
+        "offsetY": 7
+      },
+      {
+        "x": 0,
+        "y": 261,
+        "width": 267,
+        "height": 261,
+        "offsetX": -24,
+        "offsetY": 40
+      },
+      {
+        "x": 267,
+        "y": 261,
+        "width": 267,
+        "height": 261,
+        "offsetX": -9,
+        "offsetY": 41
+      },
+      {
+        "x": 534,
+        "y": 261,
+        "width": 267,
+        "height": 261,
+        "offsetX": 11,
+        "offsetY": 35
+      },
+      {
+        "x": 801,
+        "y": 261,
+        "width": 267,
+        "height": 261,
+        "offsetX": 15,
+        "offsetY": 41
+      },
+      {
+        "x": 0,
+        "y": 522,
+        "width": 267,
+        "height": 261,
+        "offsetX": -17,
+        "offsetY": 45
+      },
+      {
+        "x": 267,
+        "y": 522,
+        "width": 267,
+        "height": 261,
+        "offsetX": 12,
+        "offsetY": 36
+      },
+      {
+        "x": 534,
+        "y": 522,
+        "width": 267,
+        "height": 261,
+        "offsetX": 10,
+        "offsetY": 27
+      },
+      {
+        "x": 801,
+        "y": 522,
+        "width": 267,
+        "height": 261,
+        "offsetX": 16,
+        "offsetY": 29
+      }
+    ],
+    "globalOffsetX": 0,
+    "globalOffsetY": 0,
+    "delayMs": 250,
+    "loop": true
   },
   jam: {
     spriteSheetPath: '../image/jam-sprite.png',
