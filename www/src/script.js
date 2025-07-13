@@ -1335,8 +1335,6 @@ async function initializeApp() {
     updateFlameButtonBound();
     renderWinnerButtonBitmap(0, brackets.getPlayerState());
     renderWinnerButtonBitmap(1, brackets.getPlayerState());
-    
-    console.log("Application ready. Waiting for user to press Play.");
 }
     
 document.addEventListener('DOMContentLoaded', () => {

@@ -1,4 +1,6 @@
 <?php
+$version = "2025.07.12";
+
 // Define debug toggle (hardcoded for now)
 $debug_enabled = isset($_GET['debug']) && $_GET['debug'] === 'true'; // Set to true if ?debug=true is in the URL
 $log_level = 0; // Default: terse
@@ -205,7 +207,7 @@ $cxn->close();
             const PLAYER_LOG_LEVEL = typeof window.LOG_LEVEL === 'number' ? window.LOG_LEVEL : 0;
             if (PLAYER_LOG_LEVEL >= msgLogLevel) console.log(msg);
         };
-        console.log("sID JAm Version 2025.05.20 (Beta)");
+        console.log("sID JAm Version <?php echo $version; ?>");  
         window.logmsg(`Log Level: ${window.LOG_LEVEL === 1 ? "VERBOSE" : window.LOG_LEVEL === 2 ? "DEBUGGING" : window.LOG_LEVEL === 0 ? "TERSE" : window.LOG_LEVEL === -1 ? "SILENT" : window.LOG_LEVEL.toString()}`, 0);
     </script>
     <script type="module" src="src/script.js"></script>
@@ -229,7 +231,7 @@ $cxn->close();
         </div>
     </div>
 
-    <div id="version">Version 2025.05.20 (beta)</div>
+    <div id="version">Version <?php echo $version; ?></div> 
 
     <div id="vs-matchup">
         <span id="song1">-</span>
@@ -534,3 +536,4 @@ $cxn->close();
     </div>
 </body>
 </html>
+</DOCUMENT>
