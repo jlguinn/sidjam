@@ -3,6 +3,7 @@ import { sidPlayer, isPlaying, stopTimer, setIsPlaying } from './player.js';
 import { applyTheme, updateRoundInfo, getCurrentThemeIndex, updateSongTitleHighlight } from './ui.js';
 import { baseColorSchemes } from './themes.js';
 import { renderWinnerButtonBitmap } from './bitmap.js';
+import { renderSpriteAnimation } from './spriteAnimator.js';
 
 // ... (The top part of the file, including SeededRandom and playerState, remains unchanged) ...
 const USE_DETERMINISTIC_RANDOM = false;
@@ -390,68 +391,123 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
     stopTimer();
 
     if (playerState.isFlameActive && playerState.activeBracket === "0 - 0") {
-        let flamedIndex = playerState.activeContender;
-        let flamedFile = playerState.contenders[flamedIndex];
-
-        window.logmsg(`Flamed!: ${window.sidJamData.pathToId[flamedFile]}`, 0);
-        window.logmsg(`${flamedFile}`, 0);
-
-        let votes = [{ id: window.sidJamData.pathToId[flamedFile], increment: -2 }];
-        try {
-            const response = await fetch('dbcontrol/log_result.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: window.user.id, votes })
-            });
-            if (!response.ok) throw new Error(`log_result.php failed: ${response.status}`);
-            const data = await response.json();
-            if (!data.success) throw new Error('Failed to log flame result');
-
-            const resultsResponse = await fetch(`dbcontrol/get_results.php?user_id=${window.user.id}`);
-            if (!resultsResponse.ok) throw new Error(`get_results.php failed: ${resultsResponse.status}`);
-            window.sidJamData.cachedResults = await resultsResponse.json();
-
-            let newContender = replaceContenderFromBracket("0 - 0", playerState.contenders);
-            let newBracket = playerState.activeBracket;
-
-            if (!newContender) {
-                newBracket = findFallbackBracket();
-                if (!newBracket) {
-                    window.logmsg("No fallback bracket found for Flame. Cannot continue.", 0);
-                    return;
-                }
-                newContender = replaceContenderFromBracket(newBracket, playerState.contenders);
-                if (!newContender) {
-                    window.logmsg(`No contenders available in fallback bracket ${newBracket}. Cannot continue.`, 0);
-                    return;
-                }
-                updatePlayerState({ activeBracket: newBracket, peekBracket: newBracket });
-                updateBracketDropdown();
-                const bracketSelect = document.getElementById("bracket-select");
-                if (bracketSelect) {
-                    bracketSelect.value = newBracket.replace(' - ', '-');
-                }
-            }
-
-            window.logmsg(`New contender: ${window.sidJamData.pathToId[newContender]}`, 0);
-            window.logmsg(`${newContender}`, 0);
-
-            updatePlayerState({
-                contenders: playerState.contenders.map((c, i) => i === flamedIndex ? newContender : c),
-                isFlameActive: false
-            });
-            loadSong(newContender, -1, true); // UPDATED CALL
-            updatePlayerState({ hasPlayed: true });
-            updateVsMatchup(playerState);
-            updateRoundInfo(playerState);
-            updateWinnerButtons(playerState, sidPlayer);
-            updateFlameButton(playerState, sidPlayer);
-            renderWinnerButtonBitmap(0, playerState);
-            renderWinnerButtonBitmap(1, playerState);
-            voteProcessed = true;
-        } catch (error) {
-            window.logmsg(`jamToggle: Error flaming song: ${error.message}`, 0);
+        // Step 1: Stop music
+        if (sidPlayer) {
+            sidPlayer.pause();
+            setIsPlaying(false);
+            stopTimer();
         }
+
+        // Disable jAM and other buttons to prevent interaction during boom
+        document.getElementById('jamButton').disabled = true;
+        document.getElementById('prevButton').disabled = true;
+        document.getElementById('nextButton').disabled = true;
+        const winnerLeft = document.getElementById('winner-left');
+        const winnerRight = document.getElementById('winner-right');
+        winnerLeft.disabled = true;
+        winnerRight.disabled = true;
+        winnerLeft.classList.add('disabled');
+        winnerRight.classList.add('disabled');
+
+        // New: Trigger boom animation with sound (no visual disable)
+        const bombButton = document.getElementById("flameButton");
+        bombButton.style.pointerEvents = 'none';  // Disable clicks without fade
+        renderSpriteAnimation(bombButton, "boom", true, async () => {
+            // onComplete: Steps 3-5
+            let flamedIndex = playerState.activeContender;
+            let flamedFile = playerState.contenders[flamedIndex];
+
+            window.logmsg(`Flamed!: ${window.sidJamData.pathToId[flamedFile]}`, 0);
+            window.logmsg(`${flamedFile}`, 0);
+
+            let votes = [{ id: window.sidJamData.pathToId[flamedFile], increment: -2 }];
+            try {
+                const response = await fetch('dbcontrol/log_result.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: window.user.id, votes })
+                });
+                if (!response.ok) throw new Error(`log_result.php failed: ${response.status}`);
+                const data = await response.json();
+                if (!data.success) throw new Error('Failed to log flame result');
+
+                const resultsResponse = await fetch(`dbcontrol/get_results.php?user_id=${window.user.id}`);
+                if (!resultsResponse.ok) throw new Error(`get_results.php failed: ${resultsResponse.status}`);
+                window.sidJamData.cachedResults = await resultsResponse.json();
+
+                let newContender = replaceContenderFromBracket("0 - 0", playerState.contenders);
+                let newBracket = playerState.activeBracket;
+
+                if (!newContender) {
+                    newBracket = findFallbackBracket();
+                    if (!newBracket) {
+                        window.logmsg("No fallback bracket found for Flame. Cannot continue.", 0);
+                        return;
+                    }
+                    newContender = replaceContenderFromBracket(newBracket, playerState.contenders);
+                    if (!newContender) {
+                        window.logmsg(`No contenders available in fallback bracket ${newBracket}. Cannot continue.`, 0);
+                        return;
+                    }
+                    updatePlayerState({ activeBracket: newBracket, peekBracket: newBracket });
+                    updateBracketDropdown();
+                    const bracketSelect = document.getElementById("bracket-select");
+                    if (bracketSelect) {
+                        bracketSelect.value = newBracket.replace(' - ', '-');
+                    }
+                }
+
+                window.logmsg(`New contender: ${window.sidJamData.pathToId[newContender]}`, 0);
+                window.logmsg(`${newContender}`, 0);
+
+                updatePlayerState({
+                    contenders: playerState.contenders.map((c, i) => i === flamedIndex ? newContender : c),
+                    isFlameActive: false
+                });
+
+                // Step 3: Load new contender (without autoPlay)
+                loadSong(newContender, -1, false); // Load but don't play yet
+
+                // Step 4: Play new contender
+                sidPlayer.play();
+                setIsPlaying(true);
+                startTimer(updateTimer, updateJamButton);
+
+                // Step 5: Restore buttons/state
+                updatePlayerState({ hasPlayed: true });
+                updateVsMatchup(playerState);
+                updateRoundInfo(playerState);
+                updateWinnerButtons(playerState, sidPlayer);
+                updateFlameButton(playerState, sidPlayer);
+                renderWinnerButtonBitmap(0, playerState);
+                renderWinnerButtonBitmap(1, playerState);
+                bombButton.style.pointerEvents = 'auto';  // Re-enable clicks
+
+                // Re-enable other buttons
+                document.getElementById('jamButton').disabled = false;
+                document.getElementById('prevButton').disabled = false;
+                document.getElementById('nextButton').disabled = false;
+                winnerLeft.disabled = false;
+                winnerRight.disabled = false;
+                winnerLeft.classList.remove('disabled');
+                winnerRight.classList.remove('disabled');
+
+                voteProcessed = true;
+            } catch (error) {
+                window.logmsg(`jamToggle: Error flaming song: ${error.message}`, 0);
+                // Error fallback: Re-enable buttons
+                bombButton.style.pointerEvents = 'auto';
+                document.getElementById('jamButton').disabled = false;
+                document.getElementById('prevButton').disabled = false;
+                document.getElementById('nextButton').disabled = false;
+                winnerLeft.disabled = false;
+                winnerRight.disabled = false;
+                winnerLeft.classList.remove('disabled');
+                winnerRight.classList.remove('disabled');
+            }
+        });
+
+        return;  // Early return to wait for onComplete
     } else if (playerState.winner !== null || playerState.bothContendersSelected) {
         try {
             await logResult();

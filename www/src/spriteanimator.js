@@ -46,6 +46,7 @@ const ANIMATION_CONFIGS = {
   boom: {
     spriteSheetPath: '../image/boom_sheet.png',
     staticImagePath: '../image/bomb_at_rest.png',
+    soundTrack: '../image/fizz_boom.wav',
     scaleFactor:  0.55, 
     "frames": [
       {
@@ -148,7 +149,7 @@ const ANIMATION_CONFIGS = {
     "globalOffsetX": 0,
     "globalOffsetY": 0,
     "delayMs": 250,
-    "loop": true
+    "loop": false
   },
   jam: {
     spriteSheetPath: '../image/jam-sprite.png',
@@ -167,33 +168,40 @@ const ANIMATION_CONFIGS = {
   }
 };
 
-// Store preloaded sprite sheets
+
+
 const spriteSheets = new Map();
+const audioTracks = new Map();  // New for sounds
+
+// Preload assets (call at bottom)
+function preloadAssets() {
+  Object.entries(ANIMATION_CONFIGS).forEach(([animationId, config]) => {
+    const img = new Image();
+    img.src = config.spriteSheetPath;
+    img.onerror = () => window.logmsg(`Failed to load sprite sheet for ${animationId}: ${config.spriteSheetPath}`, 1);
+    img.onload = () => window.logmsg(`Sprite sheet for ${animationId} loaded`, 1);
+    spriteSheets.set(animationId, img);
+
+    if (config.soundTrack) {  // New: Preload sound
+      const audio = new Audio(config.soundTrack);
+      audio.preload = 'auto';
+      audio.onerror = () => window.logmsg(`Failed to load sound for ${animationId}: ${config.soundTrack}`, 1);
+      audio.oncanplaythrough = () => window.logmsg(`Sound for ${animationId} preloaded`, 1);
+      audioTracks.set(animationId, audio);
+    }
+  });
+}
+preloadAssets();
 
 // Store animation state per target element
 const animationStates = new WeakMap();
 
-// Preload sprite sheets for all animations
-function preloadSpriteSheets() {
-  Object.entries(ANIMATION_CONFIGS).forEach(([animationId, config]) => {
-    const img = new Image();
-    img.src = config.spriteSheetPath;
-    img.onerror = () => {
-      window.logmsg(`Failed to load sprite sheet for ${animationId}: ${config.spriteSheetPath}`, 1);
-    };
-    img.onload = () => {
-      window.logmsg(`Sprite sheet for ${animationId} loaded successfully`, 1);
-    };
-    spriteSheets.set(animationId, img);
-  });
-}
-
-// Render the sprite sheet animation
-export function renderSpriteAnimation(targetElement, animationId, isActive) {
+// Render the sprite sheet animation (full updated)
+export function renderSpriteAnimation(targetElement, animationId, isActive, onComplete = null) {
   // Validate animationId
   if (!ANIMATION_CONFIGS[animationId]) {
     window.logmsg(`Invalid animationId: ${animationId}`, 1);
-    targetElement.style.backgroundImage = `url(${ANIMATION_CONFIGS.flame.staticImagePath})`;
+    targetElement.style.backgroundImage = `url(${ANIMATION_CONFIGS.flame.staticImagePath})`;  // Fallback to flame static if invalid
     targetElement.style.backgroundSize = 'contain';
     targetElement.style.backgroundRepeat = 'no-repeat';
     targetElement.style.backgroundPosition = 'center';
@@ -266,6 +274,13 @@ export function renderSpriteAnimation(targetElement, animationId, isActive) {
   targetElement.style.backgroundColor = 'transparent';
   targetElement.appendChild(canvas);
 
+  // New: Play sound if defined
+  const audio = audioTracks.get(animationId);
+  if (audio) {
+    audio.currentTime = 0;  // Reset
+    audio.play().catch(err => window.logmsg(`Sound playback error for ${animationId}: ${err}`, 1));
+  }
+
   // Animation loop
   function animate() {
     const now = performance.now();
@@ -284,6 +299,7 @@ export function renderSpriteAnimation(targetElement, animationId, isActive) {
       if (!config.loop && state.currentFrame === 0) {
         cancelAnimationFrame(state.animationFrameId);
         animationStates.set(targetElement, { ...state, animationFrameId: null });
+        if (onComplete) onComplete();  // New: Call onComplete at end of non-loop
         return;
       }
       state.lastFrameTime = now;
@@ -301,6 +317,3 @@ export function renderSpriteAnimation(targetElement, animationId, isActive) {
   animate();
   animationStates.set(targetElement, state);
 }
-
-// Initialize sprite sheet loading
-preloadSpriteSheets();
