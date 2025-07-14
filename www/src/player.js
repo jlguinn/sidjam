@@ -55,7 +55,7 @@ export async function loadSong(filename, trackNumber, callbacks) {
         callbacks.resetVoiceStates();
         callbacks.updateNavigationButtons();
         callbacks.updateVsMatchup();
-        ui.updateFlameButton(brackets.getPlayerState());
+        ui.updateBombButton(brackets.getPlayerState());
         callbacks.updateRoundInfo();
         
         // Start visualizations now that a song is loaded and ready.

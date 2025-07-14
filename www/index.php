@@ -317,16 +317,16 @@ $cxn->close();
         <div id="winner-right" class="bitmap-button" onclick="window.setWinner(1)" aria-label="Select Right Winner"></div>
     </div>
 
-    <div id="bracket-flame-row">
+    <div id="bracket-bomb-row">
         <div id="bracket-controls">
             <div class="bracket-row">
                 <select id="bracket-select" onchange="window.changeBracket()" aria-label="Select Bracket"></select>
                 <button id="ellipsis-button" onclick="(() => { window.logmsg('[...]', 1); toggleSongList(); })()" disabled aria-label="Toggle Song List">...</button>
             </div>
         </div>
-        <div id="flame-wrapper">
-            <div id="flame-controls">
-                <button id="flameButton" onclick="window.toggleFlame()" disabled aria-label="Toggle Flame"></button>
+        <div id="bomb-wrapper">
+            <div id="bomb-controls">
+                <button id="bombButton" onclick="window.toggleBomb()" disabled aria-label="Toggle Bomb"></button>
                 <img src="/image/revive.png" id="reviveButton" class="disabled" loading="lazy" onclick="window.toggleRevive()" alt="Revive Button">
             </div>
         </div>

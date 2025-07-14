@@ -1,6 +1,6 @@
 // Configuration map for animations
 const ANIMATION_CONFIGS = {
-  flame: {
+  bomb: {
     spriteSheetPath: '../image/bomb_fuse_sheet.png',
     staticImagePath: '../image/bomb_at_rest.png',
     scaleFactor:  0.653, //   128 / 235,
@@ -201,7 +201,7 @@ export function renderSpriteAnimation(targetElement, animationId, isActive, onCo
   // Validate animationId
   if (!ANIMATION_CONFIGS[animationId]) {
     window.logmsg(`Invalid animationId: ${animationId}`, 1);
-    targetElement.style.backgroundImage = `url(${ANIMATION_CONFIGS.flame.staticImagePath})`;  // Fallback to flame static if invalid
+    targetElement.style.backgroundImage = `url(${ANIMATION_CONFIGS.bomb.staticImagePath})`;  // Fallback to bomb static if invalid
     targetElement.style.backgroundSize = 'contain';
     targetElement.style.backgroundRepeat = 'no-repeat';
     targetElement.style.backgroundPosition = 'center';

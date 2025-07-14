@@ -653,8 +653,8 @@ body {
     border: 1px solid var(--background-alt);
 }
 
-/* Bracket and Flame Controls */
-#bracket-flame-row {
+/* Bracket and Bomb Controls */
+#bracket-bomb-row {
     display: flex;
     align-items: center;
     justify-content: flex-start; /* Can keep this or remove since we'll use absolute positioning */
@@ -692,7 +692,7 @@ body {
     line-height: 20px;
 }
 
-#flameButton {
+#bombButton {
     position: relative;  /* Anchor for absolute canvas */
     overflow: visible;   /* Allow animation to extend beyond bounds */
     top: 8px;
@@ -710,7 +710,7 @@ body {
     position: relative;
 }
 
-#flameButton canvas {
+#bombButton canvas {
     position: absolute;
     top: -24px;
     left: -19px;
@@ -719,40 +719,40 @@ body {
     z-index: 1;
 }
 
-#flameButton:disabled {
+#bombButton:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
 
 
-#flameButton canvas.animate {
+#bombButton canvas.animate {
     top: -5px;  /* Fuse-specific */
     left: 0;
 }
 
 
-#flame-wrapper {
+#bomb-wrapper {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
     top: -70px;
 }
 
-#flame-controls {
+#bomb-controls {
     display: flex;
     justify-content: center;
     margin-top: 1px;
 }
 
-#flame-controls.hidden {
+#bomb-controls.hidden {
     display: none;
 }
 
-.flame-activated {
+.bomb-activated {
     animation: blink 2s forwards;
 }
 
-.flame-song {
+.bomb-song {
     background-color: #8B0000;
     padding: 2px var(--spacing-xs);
     border-radius: 3px;

@@ -37,7 +37,7 @@ const updateVsMatchupBound = () => {
 };
 const updateRoundInfoBound = () => ui.updateRoundInfo(brackets.getPlayerState());
 const updateWinnerButtonsBound = () => ui.updateWinnerButtons(brackets.getPlayerState(), player.sidPlayer);
-const updateFlameButtonBound = () => ui.updateFlameButton(brackets.getPlayerState(), player.sidPlayer);
+const updateBombButtonBound = () => ui.updateBombButton(brackets.getPlayerState(), player.sidPlayer);
 const updateJamButtonBound = (isPlaying) => ui.updateJamButton(isPlaying, brackets.getPlayerState(), player.sidPlayer);
 
 
@@ -207,7 +207,7 @@ window.jamToggle = () => {
         updateVsMatchupBound,
         updateRoundInfoBound,
         updateWinnerButtonsBound,
-        updateFlameButtonBound,
+        updateBombButtonBound,
         brackets.updateBracketDropdown
     ).then(() => savePlayerState());
 };
@@ -218,14 +218,14 @@ window.setWinner = (index) => {
         index,
         updateRoundInfoBound,
         updateWinnerButtonsBound,
-        updateFlameButtonBound
+        updateBombButtonBound
     );
 };
 
-window.toggleFlame = () => {
-    window.logmsg("[Flame]", 1);
-    brackets.toggleFlame(
-        updateFlameButtonBound,
+window.toggleBomb = () => {
+    window.logmsg("[Bomb]", 1);
+    brackets.toggleBomb(
+        updateBombButtonBound,
         updateVsMatchupBound,
         updateWinnerButtonsBound
     );
@@ -287,7 +287,7 @@ window.changeBracket = () => {
     const newBracket = bracketSelect.value.replace('-', ' - ');
     window.logmsg(`[Bracket: ${newBracket}]`, 1);
     brackets.changeBracket(
-        updateFlameButtonBound,
+        updateBombButtonBound,
         loadSongBound,
         updateRoundInfoBound,
         updateVsMatchupBound,
@@ -362,7 +362,7 @@ function toggleSongList() {
         updateVsMatchupBound();
         updateRoundInfoBound();
         updateWinnerButtonsBound();
-        updateFlameButtonBound();
+        updateBombButtonBound();
     } else {
         overlay.style.display = "block";
         filterInput.value = "";
@@ -577,7 +577,7 @@ function enterNowPlayingMode(song) {
     updateVsMatchupBound();
     updateRoundInfoBound();
     updateWinnerButtonsBound();
-    updateFlameButtonBound();
+    updateBombButtonBound();
     savePlayerState();
 }
 
@@ -1092,8 +1092,8 @@ window.resetPlayer = function() {
         window.logmsg('Song info element not found in the DOM', 1);
     }
 
-    brackets.updatePlayerState({ hasPlayed: false, isFlameActive: false });
-    ui.updateFlameButton(brackets.getPlayerState(), null);
+    brackets.updatePlayerState({ hasPlayed: false, isBombActive: false });
+    ui.updateBombButton(brackets.getPlayerState(), null);
 };
 
 window.updateUIForLogout = function() {
@@ -1305,7 +1305,7 @@ async function initializeApp() {
             if (!player_state || !isValidState) {
                 window.logmsg("No valid saved state found. Starting a new bout.", 1);
             }
-            brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateFlameButtonBound);
+            brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateBombButtonBound);
         }
 
         updateVsMatchupBound();
@@ -1314,7 +1314,7 @@ async function initializeApp() {
         
     } catch (error) {
         window.logmsg(`Error during data initialization: ${error}`, 0);
-        brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateFlameButtonBound);
+        brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateBombButtonBound);
         updateVsMatchupBound();
         updateRoundInfoBound();
     }
@@ -1332,7 +1332,7 @@ async function initializeApp() {
     
     ui.applyTheme(brackets.getPlayerState().currentMode);
     updateWinnerButtonsBound();
-    updateFlameButtonBound();
+    updateBombButtonBound();
     renderWinnerButtonBitmap(0, brackets.getPlayerState());
     renderWinnerButtonBitmap(1, brackets.getPlayerState());
 }

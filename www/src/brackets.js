@@ -56,7 +56,7 @@ export let playerState = {
     hasPlayed: false,
     hasJammed: false,
     bothContendersSelected: false,
-    isFlameActive: false,
+    isBombActive: false,
     isReviveActive: false,
     peekBracket: "0 - 0",
     activeBracket: "0 - 0",
@@ -200,7 +200,7 @@ function shuffleArray(array) {
     return array;
 }
 
-export function pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton) {
+export function pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateBombButton) {
     let filteredFiles = [];
     if (playerState.peekBracket === "All") {
         filteredFiles = window.sidJamData.sidFiles;
@@ -234,7 +234,7 @@ export function pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerBut
         contenders: selectedContenders,
         hasJammed: false,
         bothContendersSelected: false,
-        isFlameActive: false,
+        isBombActive: false,
         activeContender: 0
     });
 
@@ -246,11 +246,11 @@ export function pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerBut
     updateRoundInfo(playerState);
     updateVsMatchup(playerState);
     updateWinnerButtons(playerState, sidPlayer);
-    updateFlameButton(playerState, sidPlayer);
+    updateBombButton(playerState, sidPlayer);
     return true;
 }
 
-export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup, updateRoundInfo, updateWinnerButtons, updateFlameButton, updateBracketDropdown) {
+export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup, updateRoundInfo, updateWinnerButtons, updateBombButton, updateBracketDropdown) {
     if (!sidPlayer) return;
 
     let shouldUpdateBracketDropdown = false;
@@ -312,7 +312,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                     winner: null,
                     hasJammed: false,
                     bothContendersSelected: false,
-                    isFlameActive: false
+                    isBombActive: false
                 });
 
                 applyTheme("bout");
@@ -321,7 +321,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 updateVsMatchup(playerState);
                 updateRoundInfo(playerState);
                 updateWinnerButtons(playerState, sidPlayer);
-                updateFlameButton(playerState, sidPlayer);
+                updateBombButton(playerState, sidPlayer);
                 updateSongTitleHighlight(playerState.currentMode, playerState.isReviveActive);
                 updateBracketDropdown();
                 const bracketSelect = document.getElementById("bracket-select");
@@ -346,7 +346,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 winner: null,
                 hasJammed: false,
                 bothContendersSelected: false,
-                isFlameActive: false
+                isBombActive: false
             });
             if (playerState.contenders.length === 2 && 
                 playerState.contenders.every(c => window.sidJamData.sidFiles.includes(c)) &&
@@ -354,13 +354,13 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 loadSong(playerState.contenders[0], -1, true); // UPDATED CALL
                 updatePlayerState({ hasPlayed: true });
             } else {
-                let success = pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
+                let success = pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateBombButton);
                 if (!success) {
                     newBracket = findEligibleBracket();
                     if (newBracket) {
                         updatePlayerState({ peekBracket: newBracket, activeBracket: newBracket });
                         shouldUpdateBracketDropdown = true;
-                        pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
+                        pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateBombButton);
                     } else {
                         window.logmsg("No eligible brackets, stopping", 0);
                         return;
@@ -371,7 +371,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
             updateVsMatchup(playerState);
             updateRoundInfo(playerState);
             updateWinnerButtons(playerState, sidPlayer);
-            updateFlameButton(playerState, sidPlayer);
+            updateBombButton(playerState, sidPlayer);
             renderWinnerButtonBitmap(0, playerState);
             renderWinnerButtonBitmap(1, playerState);
             shouldUpdateBracketDropdown = true;
@@ -386,13 +386,13 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
         return;
     }
 
-    if (!playerState.isFlameActive) {  // New condition: Only pause if NOT flame confirm (keeps music running for boom)
+    if (!playerState.isBombActive) {  // New condition: Only pause if NOT bomb confirm (keeps music running for boom)
         sidPlayer.pause();
         setIsPlaying(false);
         stopTimer();
     }
 
-    if (playerState.isFlameActive && playerState.activeBracket === "0 - 0") {
+    if (playerState.isBombActive && playerState.activeBracket === "0 - 0") {
         // Disable jAM and other buttons to prevent interaction during boom
         document.getElementById('jamButton').disabled = true;
         document.getElementById('prevButton').disabled = true;
@@ -405,7 +405,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
         winnerRight.classList.add('disabled');
 
         // New: Trigger boom animation with sound (music keeps playing)
-        const bombButton = document.getElementById("flameButton");
+        const bombButton = document.getElementById("bombButton");
         bombButton.style.pointerEvents = 'none';  // Disable clicks without fade
         renderSpriteAnimation(bombButton, "boom", true, async () => {
             // onComplete: Now stop old music, then Steps 3-5
@@ -415,13 +415,13 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 stopTimer();
             }
 
-            let flamedIndex = playerState.activeContender;
-            let flamedFile = playerState.contenders[flamedIndex];
+            let bombdIndex = playerState.activeContender;
+            let bombdFile = playerState.contenders[bombdIndex];
 
-            window.logmsg(`Flamed!: ${window.sidJamData.pathToId[flamedFile]}`, 0);
-            window.logmsg(`${flamedFile}`, 0);
+            window.logmsg(`Bombd!: ${window.sidJamData.pathToId[bombdFile]}`, 0);
+            window.logmsg(`${bombdFile}`, 0);
 
-            let votes = [{ id: window.sidJamData.pathToId[flamedFile], increment: -2 }];
+            let votes = [{ id: window.sidJamData.pathToId[bombdFile], increment: -2 }];
             try {
                 const response = await fetch('dbcontrol/log_result.php', {
                     method: 'POST',
@@ -430,7 +430,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 });
                 if (!response.ok) throw new Error(`log_result.php failed: ${response.status}`);
                 const data = await response.json();
-                if (!data.success) throw new Error('Failed to log flame result');
+                if (!data.success) throw new Error('Failed to log bomb result');
 
                 const resultsResponse = await fetch(`dbcontrol/get_results.php?user_id=${window.user.id}`);
                 if (!resultsResponse.ok) throw new Error(`get_results.php failed: ${resultsResponse.status}`);
@@ -442,7 +442,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 if (!newContender) {
                     newBracket = findFallbackBracket();
                     if (!newBracket) {
-                        window.logmsg("No fallback bracket found for Flame. Cannot continue.", 0);
+                        window.logmsg("No fallback bracket found for Bomb. Cannot continue.", 0);
                         return;
                     }
                     newContender = replaceContenderFromBracket(newBracket, playerState.contenders);
@@ -462,8 +462,8 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 window.logmsg(`${newContender}`, 0);
 
                 updatePlayerState({
-                    contenders: playerState.contenders.map((c, i) => i === flamedIndex ? newContender : c),
-                    isFlameActive: false
+                    contenders: playerState.contenders.map((c, i) => i === bombdIndex ? newContender : c),
+                    isBombActive: false
                 });
 
                 // Step 3: Load new contender (without autoPlay)
@@ -479,7 +479,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 updateVsMatchup(playerState);
                 updateRoundInfo(playerState);
                 updateWinnerButtons(playerState, sidPlayer);
-                updateFlameButton(playerState, sidPlayer);
+                updateBombButton(playerState, sidPlayer);
                 renderWinnerButtonBitmap(0, playerState);
                 renderWinnerButtonBitmap(1, playerState);
                 bombButton.style.pointerEvents = 'auto';  // Re-enable clicks
@@ -518,13 +518,13 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 winner: null,
                 bothContendersSelected: false
             });
-            let success = pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
+            let success = pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateBombButton);
             if (!success) {
                 newBracket = findEligibleBracket();
                 if (newBracket) {
                     updatePlayerState({ peekBracket: newBracket, activeBracket: newBracket });
                     shouldUpdateBracketDropdown = true;
-                    pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
+                    pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateBombButton);
                 } else {
                     window.logmsg("No eligible brackets, stopping", 0);
                     return;
@@ -535,7 +535,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
             updateVsMatchup(playerState);
             updateRoundInfo(playerState);
             updateWinnerButtons(playerState, sidPlayer);
-            updateFlameButton(playerState, sidPlayer);
+            updateBombButton(playerState, sidPlayer);
             renderWinnerButtonBitmap(0, playerState);
             renderWinnerButtonBitmap(1, playerState);
         } catch (error) {
@@ -554,7 +554,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
         updateVsMatchup(playerState);
         updateRoundInfo(playerState);
         updateWinnerButtons(playerState, sidPlayer);
-        updateFlameButton(playerState, sidPlayer);
+        updateBombButton(playerState, sidPlayer);
         renderWinnerButtonBitmap(0, playerState);
         renderWinnerButtonBitmap(1, playerState);
     }
@@ -572,7 +572,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
     }
 }
 
-export function updateWinner(contenderIndex, updateRoundInfo, updateWinnerButtons, updateFlameButton) {
+export function updateWinner(contenderIndex, updateRoundInfo, updateWinnerButtons, updateBombButton) {
     const isZeroZeroBracket = playerState.activeBracket === "0 - 0";
 
     if (playerState.winner === null && !playerState.bothContendersSelected) {
@@ -594,12 +594,12 @@ export function updateWinner(contenderIndex, updateRoundInfo, updateWinnerButton
 
     updateRoundInfo(playerState);
     updateWinnerButtons(playerState, sidPlayer);
-    updateFlameButton(playerState, sidPlayer);
+    updateBombButton(playerState, sidPlayer);
 }
 
-export function toggleFlame(updateFlameButton, updateVsMatchup, updateWinnerButtons) {
-    updatePlayerState({ isFlameActive: !playerState.isFlameActive });
-    updateFlameButton(playerState, sidPlayer);
+export function toggleBomb(updateBombButton, updateVsMatchup, updateWinnerButtons) {
+    updatePlayerState({ isBombActive: !playerState.isBombActive });
+    updateBombButton(playerState, sidPlayer);
     updateVsMatchup(playerState);
     updateWinnerButtons(playerState, sidPlayer);
     updateRoundInfo(playerState);
@@ -613,7 +613,7 @@ export function toggleRevive(updateReviveButton, updateSongTitleHighlight) {
     updateSongTitleHighlight(playerState.currentMode, playerState.isReviveActive);
 }
 
-export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, updateVsMatchup, updateWinnerButtons) {
+export function changeBracket(updateBombButton, loadSong, updateRoundInfo, updateVsMatchup, updateWinnerButtons) {
     const bracketSelect = document.getElementById("bracket-select");
     if (!bracketSelect) {
         return;
@@ -623,7 +623,7 @@ export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, upda
 
     if (isSpecialBracket(newBracket)) {
         updatePlayerState({ peekBracket: newBracket });
-        updateFlameButton(playerState, sidPlayer);
+        updateBombButton(playerState, sidPlayer);
         updateVsMatchup(playerState);
         updateRoundInfo(playerState);
         updateWinnerButtons(playerState, sidPlayer);
@@ -632,7 +632,7 @@ export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, upda
 
     if (newBracket === playerState.activeBracket) {
         updatePlayerState({ peekBracket: newBracket });
-        updateFlameButton(playerState, sidPlayer);
+        updateBombButton(playerState, sidPlayer);
         updateVsMatchup(playerState);
         updateRoundInfo(playerState);
         updateWinnerButtons(playerState, sidPlayer);
@@ -653,9 +653,9 @@ export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, upda
         roundCount: 1,
         winner: null,
         bothContendersSelected: false,
-        isFlameActive: false
+        isBombActive: false
     });
-    let success = pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateFlameButton);
+    let success = pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateBombButton);
     if (!success) {
         window.logmsg(`Failed to pick contenders for ${newBracket}, reverting`, 0);
         updatePlayerState({ peekBracket: playerState.activeBracket });
@@ -663,7 +663,7 @@ export function changeBracket(updateFlameButton, loadSong, updateRoundInfo, upda
         return;
     }
 
-    updateFlameButton(playerState, sidPlayer);
+    updateBombButton(playerState, sidPlayer);
     if (loadSong) loadSong(playerState.contenders[playerState.activeContender], -1, true); // UPDATED CALL
     renderWinnerButtonBitmap(0, playerState);
     renderWinnerButtonBitmap(1, playerState);

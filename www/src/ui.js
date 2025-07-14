@@ -166,8 +166,8 @@ export function updateVsMatchup(playerState) {
     vsMatchup.style.setProperty('--text-exterior', theme.exteriorTextColor);
     vsMatchup.style.setProperty('--text-contender', contenderTextColor);
 
-    song1.classList.remove("active-song", "flame-song");
-    song2.classList.remove("active-song", "flame-song");
+    song1.classList.remove("active-song", "bomb-song");
+    song2.classList.remove("active-song", "bomb-song");
 
     if (playerState.currentMode === "nowPlaying") {
         vsMatchup.classList.add("now-playing");
@@ -181,12 +181,12 @@ export function updateVsMatchup(playerState) {
         let song1Class = playerState.hasPlayed && playerState.activeContender === 0 ? 'active-song text--contender' : 'text--exterior';
         let song2Class = playerState.hasPlayed && playerState.activeContender === 1 ? 'active-song text--contender' : 'text--exterior';
 
-        // Apply flame-song class to the active contender when isFlameActive is true
-        if (playerState.isFlameActive) {
+        // Apply bomb-song class to the active contender when isBombActive is true
+        if (playerState.isBombActive) {
             if (playerState.activeContender === 0) {
-                song1Class = 'flame-song';
+                song1Class = 'bomb-song';
             } else if (playerState.activeContender === 1) {
-                song2Class = 'flame-song';
+                song2Class = 'bomb-song';
             }
         }
 
@@ -239,11 +239,11 @@ export function updateRoundInfo(playerState) {
         return;
     }
 
-    if (playerState.isFlameActive) {
-        roundDiv.innerHTML = `<span class="flame-activated text--exterior">Flame Activated</span>`;
+    if (playerState.isBombActive) {
+        roundDiv.innerHTML = `<span class="bomb-activated text--exterior">Bomb Activated</span>`;
         blinkMessageTimeout = setTimeout(() => {
-            if (playerState.isFlameActive) {
-                roundDiv.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="3">Click jAM to eliminate this contender or click Flame again to cancel...</marquee>`;
+            if (playerState.isBombActive) {
+                roundDiv.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="3">Click jAM to eliminate this contender or click Bomb again to cancel...</marquee>`;
             }
             blinkMessageTimeout = null;
         }, 2000);
@@ -395,7 +395,7 @@ export function updateWinnerButtons(playerState, sidPlayer) {
 
     winnerLeft.classList.remove("hidden");
     winnerRight.classList.remove("hidden");
-    const disabled = !playerState.hasPlayed || (playerState.roundCount === 1 && !playerState.hasJammed) || playerState.isFlameActive;
+    const disabled = !playerState.hasPlayed || (playerState.roundCount === 1 && !playerState.hasJammed) || playerState.isBombActive;
     winnerLeft.disabled = disabled;
     winnerRight.disabled = disabled;
     winnerLeft.classList.toggle("disabled", disabled);
@@ -446,51 +446,51 @@ export function updateJamButton(isPlaying) {
     jamButton.setAttribute('title', isPlaying ? 'Pause and Switch Mode' : 'Play and Switch Mode');
 }
 
-export function updateFlameButton(playerState, sidPlayer) {
-    const flameControls = document.getElementById("flame-controls");
-    const flameButton = document.getElementById("flameButton");
+export function updateBombButton(playerState, sidPlayer) {
+    const bombControls = document.getElementById("bomb-controls");
+    const bombButton = document.getElementById("bombButton");
     const reviveButton = document.getElementById("reviveButton");
 
-    if (!flameControls || !flameButton || !reviveButton) {
-        console.error('Flame controls elements not found in the DOM');
+    if (!bombControls || !bombButton || !reviveButton) {
+        console.error('Bomb controls elements not found in the DOM');
         return;
     }
 
     if (playerState.currentMode === "nowPlaying") {
         if (playerState.nowPlayingSongBracket === "Eliminated" && playerState.nowPlayingSong) {
-            flameControls.classList.remove("hidden");
-            flameButton.style.display = "none";
+            bombControls.classList.remove("hidden");
+            bombButton.style.display = "none";
             reviveButton.style.display = "block";
             updateReviveButton(playerState.isReviveActive);
             return;
         }
-        flameControls.classList.add("hidden");
-        flameButton.style.display = "none";
+        bombControls.classList.add("hidden");
+        bombButton.style.display = "none";
         reviveButton.style.display = "none";
         return;
     }
 
-    // Use activeBracket to determine flame visibility
+    // Use activeBracket to determine bomb visibility
     if (playerState.activeBracket === "0 - 0") {
-        flameControls.classList.remove("hidden");
-        flameButton.style.display = "block";
+        bombControls.classList.remove("hidden");
+        bombButton.style.display = "block";
         reviveButton.style.display = "none";
     } else {
-        flameControls.classList.add("hidden");
-        flameButton.style.display = "none";
+        bombControls.classList.add("hidden");
+        bombButton.style.display = "none";
         reviveButton.style.display = "none";
         return;
     }
 
     if (playerState.winner !== null || playerState.bothContendersSelected) {
-        flameButton.disabled = true;
+        bombButton.disabled = true;
     } else {
         const availableSongs = window.sidJamData.sidFiles.filter(song => !playerState.contenders.includes(song));
-        flameButton.disabled = !playerState.hasPlayed || availableSongs.length === 0;
+        bombButton.disabled = !playerState.hasPlayed || availableSongs.length === 0;
     }
 
-    renderSpriteAnimation(flameButton, "flame", playerState.isFlameActive);
-    flameButton.setAttribute('title', playerState.isFlameActive ? 'Cancel Flame' : 'Flame Contender');
+    renderSpriteAnimation(bombButton, "bomb", playerState.isBombActive);
+    bombButton.setAttribute('title', playerState.isBombActive ? 'Cancel Bomb' : 'Bomb Contender');
 }
 
 export function updateReviveButton(isReviveActive) {
