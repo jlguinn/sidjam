@@ -1,160 +1,163 @@
+// spriteanimator.js
 // Configuration map for animations
 const ANIMATION_CONFIGS = {
   bomb: {
     spriteSheetPath: '../image/bomb_fuse_sheet.png',
     staticImagePath: '../image/bomb_at_rest.png',
-    scaleFactor:  0.653, //   128 / 235,
-  "frames": [
-    {
-      "x": 0, 
-      "y": 0,
-      "width": 235,
-      "height": 203,
-      "offsetX": -22,
-      "offsetY": -5
-    },
-    {
-      "x": 235,
-      "y": 0,
-      "width": 235,
-      "height": 203,
-      "offsetX": 7,
-      "offsetY": -11
-    },
-    {
-      "x": 0,
-      "y": 203,
-      "width": 235,
-      "height": 203,
-      "offsetX": -18,
-      "offsetY": 11
-    },
-    {
-      "x": 235,
-      "y": 203,
-      "width": 235,
-      "height": 203,
-      "offsetX": 15,
-      "offsetY": 9
-    }
-  ],
-  "globalOffsetX": 0, // -37,
-  "globalOffsetY": 0, // -27,
-  "delayMs": 225,
-  "loop": true
+    scaleFactor: 0.653, // 128 / 235
+    frames: [
+      {
+        x: 0,
+        y: 0,
+        width: 235,
+        height: 203,
+        offsetX: -22,
+        offsetY: -5
+      },
+      {
+        x: 235,
+        y: 0,
+        width: 235,
+        height: 203,
+        offsetX: 7,
+        offsetY: -11
+      },
+      {
+        x: 0,
+        y: 203,
+        width: 235,
+        height: 203,
+        offsetX: -18,
+        offsetY: 11
+      },
+      {
+        x: 235,
+        y: 203,
+        width: 235,
+        height: 203,
+        offsetX: 15,
+        offsetY: 9
+      }
+    ],
+    globalOffsetX: 0,
+    globalOffsetY: 0,
+    delayMs: 225,
+    loop: true
   },
   boom: {
     spriteSheetPath: '../image/boom_sheet.png',
     staticImagePath: '../image/bomb_at_rest.png',
     soundTrack: '../image/fizz_boom.wav',
-    scaleFactor:  0.653,
-    "frames": [
+    scaleFactor: 0.653,
+    volume: 0.6, // Default volume (max)
+    audioOffsetMs: 0, // No offset by default
+    frames: [
       {
-        "x": 0,
-        "y": 0,
-        "width": 267,
-        "height": 261,
-        "offsetX": -22,
-        "offsetY": 2
+        x: 0,
+        y: 0,
+        width: 267,
+        height: 261,
+        offsetX: -22,
+        offsetY: 2
       },
       {
-        "x": 267,
-        "y": 0,
-        "width": 267,
-        "height": 261,
-        "offsetX": -15,
-        "offsetY": 5
+        x: 267,
+        y: 0,
+        width: 267,
+        height: 261,
+        offsetX: -15,
+        offsetY: 5
       },
       {
-        "x": 534,
-        "y": 0,
-        "width": 267,
-        "height": 261,
-        "offsetX": -4,
-        "offsetY": 7
+        x: 534,
+        y: 0,
+        width: 267,
+        height: 261,
+        offsetX: -4,
+        offsetY: 7
       },
       {
-        "x": 801,
-        "y": 0,
-        "width": 267,
-        "height": 261,
-        "offsetX": 8,
-        "offsetY": 7
+        x: 801,
+        y: 0,
+        width: 267,
+        height: 261,
+        offsetX: 8,
+        offsetY: 7
       },
       {
-        "x": 0,
-        "y": 261,
-        "width": 267,
-        "height": 261,
-        "offsetX": -24,
-        "offsetY": 40
+        x: 0,
+        y: 261,
+        width: 267,
+        height: 261,
+        offsetX: -24,
+        offsetY: 40
       },
       {
-        "x": 267,
-        "y": 261,
-        "width": 267,
-        "height": 261,
-        "offsetX": -9,
-        "offsetY": 41
+        x: 267,
+        y: 261,
+        width: 267,
+        height: 261,
+        offsetX: -9,
+        offsetY: 41
       },
       {
-        "x": 534,
-        "y": 261,
-        "width": 267,
-        "height": 261,
-        "offsetX": 11,
-        "offsetY": 35
+        x: 534,
+        y: 261,
+        width: 267,
+        height: 261,
+        offsetX: 11,
+        offsetY: 35
       },
       {
-        "x": 801,
-        "y": 261,
-        "width": 267,
-        "height": 261,
-        "offsetX": 15,
-        "offsetY": 41
+        x: 801,
+        y: 261,
+        width: 267,
+        height: 261,
+        offsetX: 15,
+        offsetY: 41
       },
       {
-        "x": 0,
-        "y": 522,
-        "width": 267,
-        "height": 261,
-        "offsetX": -17,
-        "offsetY": 45
+        x: 0,
+        y: 522,
+        width: 267,
+        height: 261,
+        offsetX: -17,
+        offsetY: 45
       },
       {
-        "x": 267,
-        "y": 522,
-        "width": 267,
-        "height": 261,
-        "offsetX": 12,
-        "offsetY": 36
+        x: 267,
+        y: 522,
+        width: 267,
+        height: 261,
+        offsetX: 12,
+        offsetY: 36
       },
       {
-        "x": 534,
-        "y": 522,
-        "width": 267,
-        "height": 261,
-        "offsetX": 10,
-        "offsetY": 27
+        x: 534,
+        y: 522,
+        width: 267,
+        height: 261,
+        offsetX: 10,
+        offsetY: 27
       },
       {
-        "x": 801,
-        "y": 522,
-        "width": 267,
-        "height": 261,
-        "offsetX": 16,
-        "offsetY": 29
+        x: 801,
+        y: 522,
+        width: 267,
+        height: 261,
+        offsetX: 16,
+        offsetY: 29
       }
     ],
-  "globalOffsetX": -18, // -55,
-  "globalOffsetY": -12, // -40,
-    "delayMs": 225,
-    "loop": false
+    globalOffsetX: -18,
+    globalOffsetY: -12,
+    delayMs: 225,
+    loop: false
   },
   jam: {
     spriteSheetPath: '../image/jam-sprite.png',
     staticImagePath: '../image/jam-static.png',
-    scaleFactor: 160 / 320, // Scales 320px width to 160px
+    scaleFactor: 160 / 320,
     frames: [
       { x: 0, y: 0, width: 320, height: 238, offsetX: -6, offsetY: -1 },
       { x: 320, y: 0, width: 320, height: 238, offsetX: -1, offsetY: 0 },
@@ -168,12 +171,10 @@ const ANIMATION_CONFIGS = {
   }
 };
 
-
-
 const spriteSheets = new Map();
-const audioTracks = new Map();  // New for sounds
+const audioTracks = new Map();
 
-// Preload assets (call at bottom)
+// Preload assets
 function preloadAssets() {
   Object.entries(ANIMATION_CONFIGS).forEach(([animationId, config]) => {
     const img = new Image();
@@ -182,9 +183,10 @@ function preloadAssets() {
     img.onload = () => window.logmsg(`Sprite sheet for ${animationId} loaded`, 1);
     spriteSheets.set(animationId, img);
 
-    if (config.soundTrack) {  // New: Preload sound
+    if (config.soundTrack) {
       const audio = new Audio(config.soundTrack);
       audio.preload = 'auto';
+      audio.volume = Math.max(0, Math.min(1, config.volume || 1.0)); // Set volume during preload
       audio.onerror = () => window.logmsg(`Failed to load sound for ${animationId}: ${config.soundTrack}`, 1);
       audio.oncanplaythrough = () => window.logmsg(`Sound for ${animationId} preloaded`, 1);
       audioTracks.set(animationId, audio);
@@ -196,12 +198,12 @@ preloadAssets();
 // Store animation state per target element
 const animationStates = new WeakMap();
 
-// Render the sprite sheet animation (full updated)
+// Render the sprite sheet animation
 export function renderSpriteAnimation(targetElement, animationId, isActive, onComplete = null) {
   // Validate animationId
   if (!ANIMATION_CONFIGS[animationId]) {
     window.logmsg(`Invalid animationId: ${animationId}`, 1);
-    targetElement.style.backgroundImage = `url(${ANIMATION_CONFIGS.bomb.staticImagePath})`;  // Fallback to bomb static if invalid
+    targetElement.style.backgroundImage = `url(${ANIMATION_CONFIGS.bomb.staticImagePath})`;
     targetElement.style.backgroundSize = 'contain';
     targetElement.style.backgroundRepeat = 'no-repeat';
     targetElement.style.backgroundPosition = 'center';
@@ -274,14 +276,65 @@ export function renderSpriteAnimation(targetElement, animationId, isActive, onCo
   targetElement.style.backgroundColor = 'transparent';
   targetElement.appendChild(canvas);
 
-  // New: Play sound if defined
+  // Play sound with offset
   const audio = audioTracks.get(animationId);
   if (audio) {
-    audio.currentTime = 0;  // Reset
-    audio.play().catch(err => window.logmsg(`Sound playback error for ${animationId}: ${err}`, 1));
+    audio.currentTime = 0; // Reset
+    audio.volume = Math.max(0, Math.min(1, config.volume || 1.0)); // Apply volume
+    const offsetMs = config.audioOffsetMs || 0;
+
+    if (offsetMs >= 0) {
+      // Positive offset: Delay audio
+      setTimeout(() => {
+        audio.play().catch(err => window.logmsg(`Sound playback error for ${animationId}: ${err}`, 1));
+      }, offsetMs);
+    } else {
+      // Negative offset: Delay video
+      const videoDelay = Math.abs(offsetMs);
+      setTimeout(() => {
+        // Start animation
+        function animate() {
+          const now = performance.now();
+          if (now - state.lastFrameTime >= config.delayMs) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const frame = config.frames[state.currentFrame];
+            const scaledOffsetX = (frame.offsetX + config.globalOffsetX) * config.scaleFactor;
+            const scaledOffsetY = (frame.offsetY + config.globalOffsetY) * config.scaleFactor;
+            ctx.drawImage(
+              spriteSheet,
+              frame.x, frame.y, frame.width, frame.height,
+              scaledOffsetX, scaledOffsetY, frame.width * config.scaleFactor, frame.height * config.scaleFactor
+            );
+
+            state.currentFrame = (state.currentFrame + 1) % config.frames.length;
+            if (!config.loop && state.currentFrame === 0) {
+              cancelAnimationFrame(state.animationFrameId);
+              animationStates.set(targetElement, { ...state, animationFrameId: null });
+              if (onComplete) onComplete();
+              return;
+            }
+            state.lastFrameTime = now;
+          }
+          state.animationFrameId = requestAnimationFrame(animate);
+          animationStates.set(targetElement, state);
+        }
+
+        state = {
+          currentFrame: 0,
+          lastFrameTime: performance.now(),
+          animationFrameId: null
+        };
+        animate();
+      }, videoDelay);
+
+      // Play audio immediately
+      audio.play().catch(err => window.logmsg(`Sound playback error for ${animationId}: ${err}`, 1));
+      animationStates.set(targetElement, state);
+      return; // Exit to avoid starting animation twice
+    }
   }
 
-  // Animation loop
+  // Animation loop (when no video delay)
   function animate() {
     const now = performance.now();
     if (now - state.lastFrameTime >= config.delayMs) {
@@ -299,7 +352,7 @@ export function renderSpriteAnimation(targetElement, animationId, isActive, onCo
       if (!config.loop && state.currentFrame === 0) {
         cancelAnimationFrame(state.animationFrameId);
         animationStates.set(targetElement, { ...state, animationFrameId: null });
-        if (onComplete) onComplete();  // New: Call onComplete at end of non-loop
+        if (onComplete) onComplete();
         return;
       }
       state.lastFrameTime = now;
@@ -308,7 +361,7 @@ export function renderSpriteAnimation(targetElement, animationId, isActive, onCo
     animationStates.set(targetElement, state);
   }
 
-  // Start animation
+  // Start animation (when no video delay)
   state = {
     currentFrame: 0,
     lastFrameTime: performance.now(),
