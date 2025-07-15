@@ -136,8 +136,6 @@ window.toggleVUMeters = () => {
     savePlayerState();
 };
 
-// script.js
-
 window.togglePlayPause = async () => {
     // If the player object doesn't exist yet, this is the first play click.
     if (!player.sidPlayer) {
@@ -176,28 +174,30 @@ window.togglePlayPause = async () => {
             document.getElementById('nextButton').disabled = false;
             document.getElementById('jamButton').disabled = false;
             document.getElementById('ellipsis-button').disabled = false;
+            // *** Add this line to enable bombButton ***
+            document.getElementById('bombButton').disabled = false;
             ui.updateNavigationButtons(player.sidPlayer);
-            updateWinnerButtonsBound();
+            updateWinnerButtonsBound(); // Winner buttons remain disabled until hasJammed
             updateVsMatchupBound();
+            updateBombButtonBound(); // Ensure bomb button state is updated
         }
         return; // End the function here for the first play.
     }
 
-    // --- If player already exists, this is a NORMAL play/pause toggle ---
+    // --- Normal play/pause toggle ---
     if (player.isPlaying) {
         player.sidPlayer.pause();
         player.setIsPlaying(false);
         player.stopTimer(updateJamButtonBound);
-        viz.toggleWaveformFreeze(true); // Freeze waveforms
+        viz.toggleWaveformFreeze(true);
     } else {
-        viz.toggleWaveformFreeze(false); // Un-freeze waveforms
+        viz.toggleWaveformFreeze(false);
         player.sidPlayer.play();
         player.setIsPlaying(true);
         player.startTimer(player.updateTimer, updateJamButtonBound);
     }
     ui.updatePlayPauseButton(player.isPlaying);
 };
-
 window.jamToggle = () => {
     window.logmsg("[jAM]", 1);
     brackets.jamToggle(
