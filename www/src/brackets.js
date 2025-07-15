@@ -1,7 +1,6 @@
 // brackets.js
-import { sidPlayer, isPlaying, stopTimer, setIsPlaying } from './player.js';
+import { sidPlayer, isPlaying, stopTimer, setIsPlaying, startTimer, updateTimer } from './player.js'; // Add startTimer, updateTimer
 import { applyTheme, updateRoundInfo, getCurrentThemeIndex, updateSongTitleHighlight } from './ui.js';
-import { baseColorSchemes } from './themes.js';
 import { renderWinnerButtonBitmap } from './bitmap.js';
 import { renderSpriteAnimation } from './spriteAnimator.js';
 
@@ -250,7 +249,7 @@ export function pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerBut
     return true;
 }
 
-export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup, updateRoundInfo, updateWinnerButtons, updateBombButton, updateBracketDropdown) {
+export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup, updateRoundInfo, updateWinnerButtons, updateBombButton) {
     if (!sidPlayer) return;
 
     let shouldUpdateBracketDropdown = false;
@@ -316,7 +315,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 });
 
                 applyTheme("bout");
-                loadSong(playerState.nowPlayingSong, -1, true); // UPDATED CALL
+                loadSong(playerState.nowPlayingSong, -1, true);
                 updatePlayerState({ hasPlayed: true });
                 updateVsMatchup(playerState);
                 updateRoundInfo(playerState);
@@ -351,7 +350,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
             if (playerState.contenders.length === 2 && 
                 playerState.contenders.every(c => window.sidJamData.sidFiles.includes(c)) &&
                 getContenderCount(playerState.activeBracket) >= 2) {
-                loadSong(playerState.contenders[0], -1, true); // UPDATED CALL
+                loadSong(playerState.contenders[0], -1, true);
                 updatePlayerState({ hasPlayed: true });
             } else {
                 let success = pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerButtons, updateBombButton);
@@ -386,7 +385,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
         return;
     }
 
-    if (!playerState.isBombActive) {  // New condition: Only pause if NOT bomb confirm (keeps music running for boom)
+    if (!playerState.isBombActive) {
         sidPlayer.pause();
         setIsPlaying(false);
         stopTimer();
@@ -404,11 +403,11 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
         winnerLeft.classList.add('disabled');
         winnerRight.classList.add('disabled');
 
-        // New: Trigger boom animation with sound (music keeps playing)
+        // Trigger boom animation with sound
         const bombButton = document.getElementById("bombButton");
-        bombButton.style.pointerEvents = 'none';  // Disable clicks without fade
+        bombButton.style.pointerEvents = 'none';
         renderSpriteAnimation(bombButton, "boom", true, async () => {
-            // onComplete: Now stop old music, then Steps 3-5
+            // onComplete: Stop old music, then process bomb
             if (sidPlayer) {
                 sidPlayer.pause();
                 setIsPlaying(false);
@@ -423,6 +422,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
 
             let votes = [{ id: window.sidJamData.pathToId[bombdFile], increment: -2 }];
             try {
+                // Log bomb result (2 losses)
                 const response = await fetch('dbcontrol/log_result.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -432,10 +432,12 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 const data = await response.json();
                 if (!data.success) throw new Error('Failed to log bomb result');
 
+                // Refresh cachedResults
                 const resultsResponse = await fetch(`dbcontrol/get_results.php?user_id=${window.user.id}`);
                 if (!resultsResponse.ok) throw new Error(`get_results.php failed: ${resultsResponse.status}`);
                 window.sidJamData.cachedResults = await resultsResponse.json();
 
+                // Get new contender
                 let newContender = replaceContenderFromBracket("0 - 0", playerState.contenders);
                 let newBracket = playerState.activeBracket;
 
@@ -451,64 +453,89 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                         return;
                     }
                     updatePlayerState({ activeBracket: newBracket, peekBracket: newBracket });
-                    updateBracketDropdown();
-                    const bracketSelect = document.getElementById("bracket-select");
-                    if (bracketSelect) {
-                        bracketSelect.value = newBracket.replace(' - ', '-');
-                    }
+                    shouldUpdateBracketDropdown = true;
                 }
 
                 window.logmsg(`New contender: ${window.sidJamData.pathToId[newContender]}`, 0);
                 window.logmsg(`${newContender}`, 0);
 
+                // Update playerState with new contender
                 updatePlayerState({
                     contenders: playerState.contenders.map((c, i) => i === bombdIndex ? newContender : c),
-                    isBombActive: false
+                    isBombActive: false,
+                    hasPlayed: true,
+                    hasJammed: true // Ensure winner buttons enable after bomb
                 });
 
-                // Step 3: Load new contender (without autoPlay)
-                loadSong(newContender, -1, false); // Load but don't play yet
+                // Persist playerState to database
+                try {
+                    const stateResponse = await fetch('dbcontrol/save_state.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user_id: window.user.id, player_state: playerState })
+                    });
+                    if (!stateResponse.ok) throw new Error(`save_state.php failed: ${stateResponse.status}`);
+                    const stateData = await stateResponse.json();
+                    if (!stateData.success) throw new Error('Failed to persist player state');
+                } catch (error) {
+                    window.logmsg(`jamToggle: Error persisting player state: ${error.message}`, 0);
+                }
 
-                // Step 4: Play new contender
+                // Load new contender
+                await loadSong(newContender, -1, false);
+
+                // Play new contender
                 sidPlayer.play();
                 setIsPlaying(true);
-                startTimer(updateTimer, updateJamButton);
+                if (startTimer) {
+                    // Use updateJamButtonBound as a fallback, assuming it's defined in the global scope
+                    const updateJamButton = window.updateJamButtonBound || (() => window.logmsg('Warning: updateJamButton is not defined', 0));
+                    startTimer(updateTimer, updateJamButton);
+                } else {
+                    window.logmsg('Warning: startTimer is not defined, skipping timer', 0);
+                }
 
-                // Step 5: Restore buttons/state
-                updatePlayerState({ hasPlayed: true });
+                // Update UI
                 updateVsMatchup(playerState);
                 updateRoundInfo(playerState);
                 updateWinnerButtons(playerState, sidPlayer);
                 updateBombButton(playerState, sidPlayer);
+                updateBracketDropdown(); // Ensure dropdown reflects new contender and losses
                 renderWinnerButtonBitmap(0, playerState);
                 renderWinnerButtonBitmap(1, playerState);
-                bombButton.style.pointerEvents = 'auto';  // Re-enable clicks
+                bombButton.style.pointerEvents = 'auto';
 
-                // Re-enable other buttons
+                // Re-enable buttons
                 document.getElementById('jamButton').disabled = false;
                 document.getElementById('prevButton').disabled = false;
                 document.getElementById('nextButton').disabled = false;
                 winnerLeft.disabled = false;
-                winnerRight.disabled = false;
+                winnerRight.disabled = true; // Keep winner-right disabled until next song
                 winnerLeft.classList.remove('disabled');
-                winnerRight.classList.remove('disabled');
+                winnerRight.classList.add('disabled');
 
                 voteProcessed = true;
             } catch (error) {
-                window.logmsg(`jamToggle: Error flaming song: ${error.message}`, 0);
-                // Error fallback: Re-enable buttons
+                window.logmsg(`jamToggle: Error bombing song: ${error.message}`, 0);
                 bombButton.style.pointerEvents = 'auto';
                 document.getElementById('jamButton').disabled = false;
                 document.getElementById('prevButton').disabled = false;
                 document.getElementById('nextButton').disabled = false;
                 winnerLeft.disabled = false;
-                winnerRight.disabled = false;
+                winnerRight.disabled = true; // Keep winner-right disabled
                 winnerLeft.classList.remove('disabled');
-                winnerRight.classList.remove('disabled');
+                winnerRight.classList.add('disabled');
             }
         });
 
-        return;  // Early return to wait for onComplete
+        // Update bracket dropdown immediately to reflect bombed song's losses
+        updateBracketDropdown();
+        const bracketSelect = document.getElementById("bracket-select");
+        if (bracketSelect) {
+            bracketSelect.value = playerState.peekBracket.replace(' - ', '-');
+        }
+
+        return;
     } else if (playerState.winner !== null || playerState.bothContendersSelected) {
         try {
             await logResult();
@@ -530,7 +557,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                     return;
                 }
             }
-            loadSong(playerState.contenders[playerState.activeContender], -1, true); // UPDATED CALL
+            loadSong(playerState.contenders[playerState.activeContender], -1, true);
             updatePlayerState({ hasPlayed: true });
             updateVsMatchup(playerState);
             updateRoundInfo(playerState);
@@ -549,7 +576,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
             updateRoundInfo(playerState);
         }
         updatePlayerState({ hasJammed: true });
-        loadSong(playerState.contenders[playerState.activeContender], -1, true); // UPDATED CALL
+        loadSong(playerState.contenders[playerState.activeContender], -1, true);
         updatePlayerState({ hasPlayed: true });
         updateVsMatchup(playerState);
         updateRoundInfo(playerState);
