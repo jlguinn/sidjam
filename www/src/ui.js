@@ -241,15 +241,19 @@ export function updateRoundInfo(playerState) {
 
     if (playerState.isBombActive) {
         roundDiv.innerHTML = `<span class="bomb-activated text--exterior">Bomb Activated</span>`;
+        const message = `Click jAM to eliminate this contender or click Bomb again to cancel...`;
         blinkMessageTimeout = setTimeout(() => {
             if (playerState.isBombActive) {
-                roundDiv.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="3">Click jAM to eliminate this contender or click Bomb again to cancel...</marquee>`;
+                const highlightSpan = document.createElement('span');
+                highlightSpan.className = 'hint-marquee-highlight';
+                highlightSpan.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="5">${message}</marquee>`; // Speed increased to 5
+                roundDiv.innerHTML = '';
+                roundDiv.appendChild(highlightSpan);
             }
             blinkMessageTimeout = null;
         }, 2000);
         return;
     }
-
     if (!playerState.hasPlayed) {
         roundDiv.textContent = "Press Play";
     } else if (playerState.bothContendersSelected) {

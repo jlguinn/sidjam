@@ -47,6 +47,7 @@ const updateJamButtonBound = (isPlaying) => ui.updateJamButton(isPlaying, bracke
 
 // New user hint system
 let hintMarqueeTimeout = null;
+let confirmHintTimeout = null; 
 
 function abandonHintSystem() {
     const state = brackets.getPlayerState();
@@ -76,25 +77,34 @@ function satisfyHint(hintToSatisfy) {
 
     window.logmsg(`Hint satisfied: ${hintToSatisfy}`, 1);
     
-    // Clear effects and timeout
+    // Clear timeouts
+    if (hintMarqueeTimeout) {
+        clearTimeout(hintMarqueeTimeout);
+        hintMarqueeTimeout = null;
+    }
+    if (confirmHintTimeout) { // Also clear the confirm hint timer
+        clearTimeout(confirmHintTimeout);
+        confirmHintTimeout = null;
+    }
+
+    // Remove all possible throbbing effects
     document.getElementById('jamButton')?.classList.remove('throb');
     document.getElementById('winner-left')?.classList.remove('throb');
     document.getElementById('winner-right')?.classList.remove('throb');
     document.getElementById('bracket-select')?.classList.remove('throb');
     document.getElementById('ellipsis-button')?.classList.remove('throb');
     document.getElementById('help-button')?.classList.remove('throb');
-    if (hintMarqueeTimeout) {
-        clearTimeout(hintMarqueeTimeout);
-        hintMarqueeTimeout = null;
-    }
-
-    // Advance to next hint
+    
+    // Advance to next hint with updated sequence
     switch (hintToSatisfy) {
         case 'jAM':
             brackets.updatePlayerState({ nextHint: 'winner' });
             break;
         case 'winner':
-            brackets.updatePlayerState({ nextHint: 'bracket' });
+            brackets.updatePlayerState({ nextHint: 'confirm' }); // Updated
+            break;
+        case 'confirm':
+            brackets.updatePlayerState({ nextHint: 'bracket' }); // New
             break;
         case 'bracket':
             brackets.updatePlayerState({ nextHint: 'reg' });
@@ -104,8 +114,39 @@ function satisfyHint(hintToSatisfy) {
             break;
     }
 
-    brackets.updatePlayerState({ hintTriggeredThisSong: true }); // Prevent next hint on same song
-    updateRoundInfoBound(); // Restore original message
+    brackets.updatePlayerState({ hintTriggeredThisSong: true }); 
+    updateRoundInfoBound();
+}
+
+// New function to trigger the 'confirm' hint after a delay
+function triggerConfirmHint() {
+    clearTimeout(confirmHintTimeout); 
+
+    const state = brackets.getPlayerState();
+    if (window.isLoggedIn || state.nextHint !== 'confirm') {
+        return;
+    }
+
+    confirmHintTimeout = setTimeout(() => {
+        if (state.isBombActive || state.isReviveActive) return;
+
+        const roundInfoEl = document.getElementById("round-info");
+        if (!roundInfoEl) return;
+        
+        window.logmsg("Triggering hint: confirm", 1);
+        const message = "Click jAM to confirm your decision or Winner button(s) to change...";
+        
+        const highlightSpan = document.createElement('span');
+        highlightSpan.className = 'hint-marquee-highlight';
+        highlightSpan.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="5">${message}</marquee>`; // Speed increased
+        roundInfoEl.innerHTML = '';
+        roundInfoEl.appendChild(highlightSpan);
+
+        document.getElementById('jamButton')?.classList.add('throb');
+        document.getElementById('winner-left')?.classList.add('throb');
+        document.getElementById('winner-right')?.classList.add('throb');
+
+    }, 3000);
 }
 
 function handleHintSystem(currentTime) {
@@ -170,9 +211,15 @@ function handleHintSystem(currentTime) {
     if (conditionMet) {
         window.logmsg(`Triggering hint: ${state.nextHint}`, 1);
         brackets.updatePlayerState({ hintTriggeredThisSong: true });
-        roundInfoEl.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="3">${message}</marquee>`;
+        
+        const highlightSpan = document.createElement('span');
+        highlightSpan.className = 'hint-marquee-highlight';
+        highlightSpan.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="5">${message}</marquee>`; // Speed increased
+        roundInfoEl.innerHTML = '';
+        roundInfoEl.appendChild(highlightSpan);
     }
 }
+
 
 function wildcardToSqlLike(pattern) {
     // No longer needed client-side, but kept for reference
@@ -273,7 +320,7 @@ window.togglePlayPause = async () => {
     // If the player object doesn't exist yet, this is the first play click.
     if (!player.sidPlayer) {
         console.log("First play click: Initializing player and loading song...");
-        
+        brackets.updatePlayerState({ hasPlayed: true });
         // 1. Initialize the player and create the audio context from a user gesture.
         await player.initPlayer();
         
@@ -303,7 +350,6 @@ window.togglePlayPause = async () => {
             });
 
             // 4. Update state and enable all controls.
-            brackets.updatePlayerState({ hasPlayed: true });
             document.getElementById('prevButton').disabled = false;
             document.getElementById('nextButton').disabled = false;
             document.getElementById('jamButton').disabled = false;
@@ -350,12 +396,18 @@ window.jamToggle = () => {
 window.setWinner = (index) => {
     window.logmsg(index === 0 ? "[ < Winner]" : "[Winner >]", 1);
     satisfyHint('winner');
+    satisfyHint('confirm');
     brackets.updateWinner(
         index,
         updateRoundInfoBound,
         updateWinnerButtonsBound,
         updateBombButtonBound
     );
+
+    // If the next hint is now 'confirm', set the timer to trigger it.
+    if (brackets.getPlayerState().nextHint === 'confirm') {
+        triggerConfirmHint();
+    }
 };
 
 window.toggleBomb = () => {

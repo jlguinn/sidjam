@@ -292,6 +292,16 @@ body {
     border-radius: 3px;
 }
 
+.hint-marquee-highlight {
+    background-color: #00ffff;
+    padding: 2px var(--spacing-xs);
+    border-radius: 3px;
+    display: inline-block; /* Ensures the background fits the content */
+    width: 220px; /* Match the original marquee width */
+    color: #000000; /* Explicitly set text color for contrast */
+    font-weight: bold; /* Make text bold */
+}
+
 .winner-highlight {
     background-color: var(--success);
     padding: 2px var(--spacing-xs);
@@ -772,9 +782,9 @@ body {
 }
 
 @keyframes throb {
-    0% { filter: brightness(1.0); }
-    50% { filter: brightness(1.3); }
-    100% { filter: brightness(1.0); }
+    0% { filter: brightness(0.7); }
+    50% { filter: brightness(1.7); }
+    100% { filter: brightness(0.8); }
 }
 .throb {
     animation: throb 0.7s infinite ease-in-out;
