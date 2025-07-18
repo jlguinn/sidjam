@@ -1,11 +1,9 @@
 // File: themes.js
 export const baseColorSchemes = [
-// Light
-    { name: "Monochrome", interior: "#E4E4E4", exterior: "#F0F0F0", interiorTextColor: "#000000", exteriorTextColor: "#000000" },
 
 // Red-Violet
-    { name: "8-Bit Bloom", interior: "#F8F1F1", exterior: "#FFB6C1", interiorTextColor: "#4A2F2F", exteriorTextColor: "#000000" },
     { name: "Pixel Peach", interior: "#FFEFD5", exterior: "#FF6F61", interiorTextColor: "#4A2F2F", exteriorTextColor: "#FFFFFF" },
+    { name: "8-Bit Bloom", interior: "#F8F1F1", exterior: "#FFB6C1", interiorTextColor: "#4A2F2F", exteriorTextColor: "#000000" },
     { name: "VHS Sunset", interior: "#FFF0F5", exterior: "#FF69B4", interiorTextColor: "#4A2F2F", exteriorTextColor: "#FFFFFF" },
     { name: "Gold Rush", interior: "#FFD700", exterior: "#FF00FF", interiorTextColor: "#000000", exteriorTextColor: "#FFD700" },
     { name: "Cosmic Clash", interior: "#FFD700", exterior: "#4B0082", interiorTextColor: "#2F0047", exteriorTextColor: "#FFD700" },
@@ -38,6 +36,8 @@ export const baseColorSchemes = [
     { name: "Firecracker", interior: "#FF6347", exterior: "#FFFF00", interiorTextColor: "#000000", exteriorTextColor: "#FF6347" },
     { name: "Purple Haze", interior: "#9400D3", exterior: "#FFFF00", interiorTextColor: "#FFFFFF", exteriorTextColor: "#9400D3" },
 
+// Light
+    { name: "Monochrome", interior: "#E4E4E4", exterior: "#F0F0F0", interiorTextColor: "#000000", exteriorTextColor: "#000000" },
 
 
     // Unsorted

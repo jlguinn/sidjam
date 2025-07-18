@@ -81,6 +81,27 @@ function abandonHintSystem() {
     updateRoundInfoBound(); // Restore original message
 }
 
+function pauseHintEffects() {
+    window.logmsg("Pausing hint effects.", 1);
+    
+    // This function clears timers and effects for the 'confirm' hint
+    clearConfirmHintTimers();
+
+    // This handles the generic 10-second marquee trigger timer
+    if (hintMarqueeTimeout) {
+        clearTimeout(hintMarqueeTimeout);
+        hintMarqueeTimeout = null;
+    }
+
+    // Redundantly remove all possible throbbing effects to be safe
+    document.getElementById('jamButton')?.classList.remove('throb');
+    document.getElementById('winner-left')?.classList.remove('throb');
+    document.getElementById('winner-right')?.classList.remove('throb');
+    document.getElementById('bracket-select')?.classList.remove('throb');
+    document.getElementById('ellipsis-button')?.classList.remove('throb');
+    document.getElementById('help-button')?.classList.remove('throb');
+}
+
 function satisfyHint(hintToSatisfy) {
     const state = brackets.getPlayerState();
     if (state.nextHint !== hintToSatisfy) return;
@@ -441,15 +462,24 @@ window.setWinner = (index) => {
     }
 };
 
+// script.js
+
 window.toggleBomb = () => {
     window.logmsg("[Bomb]", 1);
+
+    // If the bomb is being activated, pause the hint's visual effects
+    // and reset the trigger flag to make the hint eligible again later.
+    if (!brackets.getPlayerState().isBombActive) {
+        pauseHintEffects();
+        brackets.updatePlayerState({ hintTriggeredThisSong: false });
+    }
+
     brackets.toggleBomb(
         updateBombButtonBound,
         updateVsMatchupBound,
         updateWinnerButtonsBound
     );
 };
-
 window.toggleRevive = () => {
     window.logmsg("[Revive]", 1);
     brackets.toggleRevive(
