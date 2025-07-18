@@ -355,7 +355,7 @@ $cxn->close();
                     <form id="signInFormElement" onsubmit="window.handleSignIn(event)">
                         <div class="form-group">
                             <label for="signInEmail">Email:</label>
-                            <input type="email" id="signInEmail" name="email" required aria-required="true">
+                            <input type="email" id="signInEmail" name="email" requi red aria-required="true">
                         </div>
                         <div class="form-group">
                             <label for="signInPassword">Password:</label>

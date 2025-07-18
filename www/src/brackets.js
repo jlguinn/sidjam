@@ -66,7 +66,9 @@ export let playerState = {
     isWaveformActive: true,
     isVUActive: true,
     isBarActive: false,
-    theme:0
+    theme:0,
+    nextHint: null, 
+    hintTriggeredThisSong: false 
 };
 
 export function debug(message) {
@@ -752,12 +754,6 @@ export async function logResult() {
             } catch (error) {
                 window.logmsg(`logResult: Error accessing sessionStorage: ${error.message}`, 0);
                 voteCount += 1;
-            }
-
-            if (voteCount === 3 && !window.isLoggedIn) {
-                window.showPromptMessage = true;
-                window.flashProfileIcon();
-                window.logmsg("Prompt triggered: flashing icon and enabling scrolling message", 1);
             }
         })
         .catch(error => {

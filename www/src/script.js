@@ -17,20 +17,24 @@ function debug(message) { window.logmsg(`[DEBUG] ${message}`, 2); }
 
 // Define bound functions at the top to ensure availability
 const updateTimerBound = () => player.updateTimer();
-const loadSongBound = (filename, trackNumber, autoPlay = true) => player.loadSong(
-    filename, 
-    trackNumber,
-    {
-        updateSongInfo: () => ui.updateSongInfo(player.sidPlayer),
-        updatePlayPauseButton: () => ui.updatePlayPauseButton(player.isPlaying),
-        resetVoiceStates: player.resetVoiceStates,
-        updateNavigationButtons: () => ui.updateNavigationButtons(player.sidPlayer),
-        updateVsMatchup: updateVsMatchupBound,
-        updateJamButton: updateJamButtonBound,
-        updateRoundInfo: updateRoundInfoBound,
-        autoPlay: autoPlay
-    }
-);
+const loadSongBound = (filename, trackNumber, autoPlay = true) => { // Modified
+    brackets.updatePlayerState({ hintTriggeredThisSong: false }); // Add this line
+    player.loadSong(
+        filename, 
+        trackNumber,
+        {
+            updateSongInfo: () => ui.updateSongInfo(player.sidPlayer),
+            updatePlayPauseButton: () => ui.updatePlayPauseButton(player.isPlaying),
+            resetVoiceStates: player.resetVoiceStates,
+            updateNavigationButtons: () => ui.updateNavigationButtons(player.sidPlayer),
+            updateVsMatchup: updateVsMatchupBound,
+            updateJamButton: updateJamButtonBound,
+            updateRoundInfo: updateRoundInfoBound,
+            autoPlay: autoPlay,
+            onTick: handleHintSystem
+        }
+    );
+};
 
 const updateVsMatchupBound = () => {
     ui.updateVsMatchup(brackets.getPlayerState());
@@ -40,6 +44,135 @@ const updateWinnerButtonsBound = () => ui.updateWinnerButtons(brackets.getPlayer
 const updateBombButtonBound = () => ui.updateBombButton(brackets.getPlayerState(), player.sidPlayer);
 const updateJamButtonBound = (isPlaying) => ui.updateJamButton(isPlaying, brackets.getPlayerState(), player.sidPlayer);
 
+
+// New user hint system
+let hintMarqueeTimeout = null;
+
+function abandonHintSystem() {
+    const state = brackets.getPlayerState();
+    if (!state.nextHint) return;
+    
+    window.logmsg("Hint system abandoned.", 1);
+    brackets.updatePlayerState({ nextHint: null });
+
+    // Remove all possible throbbing effects
+    document.getElementById('jamButton')?.classList.remove('throb');
+    document.getElementById('winner-left')?.classList.remove('throb');
+    document.getElementById('winner-right')?.classList.remove('throb');
+    document.getElementById('bracket-select')?.classList.remove('throb');
+    document.getElementById('ellipsis-button')?.classList.remove('throb');
+    document.getElementById('help-button')?.classList.remove('throb');
+    
+    if (hintMarqueeTimeout) {
+        clearTimeout(hintMarqueeTimeout);
+        hintMarqueeTimeout = null;
+    }
+    updateRoundInfoBound(); // Restore original message
+}
+
+function satisfyHint(hintToSatisfy) {
+    const state = brackets.getPlayerState();
+    if (state.nextHint !== hintToSatisfy) return;
+
+    window.logmsg(`Hint satisfied: ${hintToSatisfy}`, 1);
+    
+    // Clear effects and timeout
+    document.getElementById('jamButton')?.classList.remove('throb');
+    document.getElementById('winner-left')?.classList.remove('throb');
+    document.getElementById('winner-right')?.classList.remove('throb');
+    document.getElementById('bracket-select')?.classList.remove('throb');
+    document.getElementById('ellipsis-button')?.classList.remove('throb');
+    document.getElementById('help-button')?.classList.remove('throb');
+    if (hintMarqueeTimeout) {
+        clearTimeout(hintMarqueeTimeout);
+        hintMarqueeTimeout = null;
+    }
+
+    // Advance to next hint
+    switch (hintToSatisfy) {
+        case 'jAM':
+            brackets.updatePlayerState({ nextHint: 'winner' });
+            break;
+        case 'winner':
+            brackets.updatePlayerState({ nextHint: 'bracket' });
+            break;
+        case 'bracket':
+            brackets.updatePlayerState({ nextHint: 'reg' });
+            break;
+        case 'reg':
+            brackets.updatePlayerState({ nextHint: null });
+            break;
+    }
+
+    brackets.updatePlayerState({ hintTriggeredThisSong: true }); // Prevent next hint on same song
+    updateRoundInfoBound(); // Restore original message
+}
+
+function handleHintSystem(currentTime) {
+    const state = brackets.getPlayerState();
+    if (window.isLoggedIn || !state.nextHint || state.hintTriggeredThisSong || currentTime !== 10) {
+        return;
+    }
+
+    // Don't show hints if a higher-priority message is active
+    if (state.isBombActive || state.isReviveActive) return;
+
+    const roundInfoEl = document.getElementById("round-info");
+    if (!roundInfoEl) return;
+    
+    let message = '';
+    let conditionMet = false;
+
+    switch (state.nextHint) {
+        case 'jAM':
+            // Trigger on the very first song played
+            if (state.roundCount === 1 && !state.hasJammed) {
+                message = "Welcome to sID JAm... Click jAM to hear next contender...";
+                document.getElementById('jamButton')?.classList.add('throb');
+                conditionMet = true;
+            }
+            break;
+        case 'winner':
+            if (state.hasJammed) {
+                message = "Choose a winner or click jAM to hear contenders again...";
+                document.getElementById('winner-left')?.classList.add('throb');
+                document.getElementById('winner-right')?.classList.add('throb');
+                conditionMet = true;
+            }
+            break;
+        case 'bracket':
+            const otherBrackets = Object.keys(window.sidJamData.cachedResults || {})
+                .map(path => brackets.getSongBracket(path))
+                .filter(bracket => bracket && bracket !== "0 - 0" && bracket !== "Eliminated")
+                .reduce((acc, bracket) => {
+                    acc[bracket] = (acc[bracket] || 0) + 1;
+                    return acc;
+                }, {});
+            const hasEligibleBracket = Object.values(otherBrackets).some(count => count >= 2);
+            
+            if (hasEligibleBracket) {
+                message = "Change brackets or listen to songs on-demand at any time...";
+                document.getElementById('bracket-select')?.classList.add('throb');
+                document.getElementById('ellipsis-button')?.classList.add('throb');
+                conditionMet = true;
+            }
+            break;
+        case 'reg':
+            if (!state.hasJammed) { // First song of a new round
+                 message = "Create a username to save your decisions... Click help for more information... Thank you for trying sID JAm!..";
+                 document.getElementById('help-button')?.classList.add('throb');
+                 window.flashProfileIcon(); // Moved from logResult
+                 conditionMet = true;
+            }
+            break;
+    }
+
+    if (conditionMet) {
+        window.logmsg(`Triggering hint: ${state.nextHint}`, 1);
+        brackets.updatePlayerState({ hintTriggeredThisSong: true });
+        roundInfoEl.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="3">${message}</marquee>`;
+    }
+}
 
 function wildcardToSqlLike(pattern) {
     // No longer needed client-side, but kept for reference
@@ -165,7 +298,8 @@ window.togglePlayPause = async () => {
                 updateNavigationButtons: () => ui.updateNavigationButtons(player.sidPlayer),
                 updateVsMatchup: updateVsMatchupBound,
                 updateJamButton: updateJamButtonBound,
-                updateRoundInfo: updateRoundInfoBound
+                updateRoundInfo: updateRoundInfoBound,
+                onTick: handleHintSystem 
             });
 
             // 4. Update state and enable all controls.
@@ -194,12 +328,13 @@ window.togglePlayPause = async () => {
         viz.toggleWaveformFreeze(false);
         player.sidPlayer.play();
         player.setIsPlaying(true);
-        player.startTimer(player.updateTimer, updateJamButtonBound);
+        player.startTimer(player.updateTimer, updateJamButtonBound, handleHintSystem);
     }
     ui.updatePlayPauseButton(player.isPlaying);
 };
 window.jamToggle = () => {
     window.logmsg("[jAM]", 1);
+    satisfyHint(brackets.getPlayerState().nextHint); // Satisfy any active hint
     brackets.jamToggle(
         player.sidPlayer,
         loadSongBound,
@@ -214,6 +349,7 @@ window.jamToggle = () => {
 
 window.setWinner = (index) => {
     window.logmsg(index === 0 ? "[ < Winner]" : "[Winner >]", 1);
+    satisfyHint('winner');
     brackets.updateWinner(
         index,
         updateRoundInfoBound,
@@ -286,6 +422,7 @@ window.changeBracket = () => {
     }
     const newBracket = bracketSelect.value.replace('-', ' - ');
     window.logmsg(`[Bracket: ${newBracket}]`, 1);
+    abandonHintSystem();
     brackets.changeBracket(
         updateBombButtonBound,
         loadSongBound,
@@ -364,6 +501,7 @@ function toggleSongList() {
         updateWinnerButtonsBound();
         updateBombButtonBound();
     } else {
+        satisfyHint('bracket'); 
         overlay.style.display = "block";
         filterInput.value = "";
         currentOffset = 0;
@@ -537,6 +675,7 @@ function updatePlayingIndicator() {
 }
 
 function playSongOnDemand(filename) {
+    abandonHintSystem(); 
     const state = brackets.getPlayerState();
     if (state.peekPlayingSong === filename) {
         enterNowPlayingMode(filename);
@@ -730,6 +869,7 @@ window.handleRegister = async function(event) {
         });
         const result = await response.json();
         if (result.success) {
+            abandonHintSystem();
             window.location.reload();
         } else {
             errorElement.textContent = result.message || 'Registration failed';
@@ -1251,6 +1391,7 @@ async function initializeApp() {
             if (window.isLoggedIn) {
                 window.togglePreferencesPopUp();
             } else {
+                satisfyHint('reg');
                 window.toggleAuthPopUp();
             }
         });
@@ -1308,6 +1449,14 @@ async function initializeApp() {
             brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateBombButtonBound);
         }
 
+        if (!window.isLoggedIn) {
+            brackets.updatePlayerState({ nextHint: 'jAM' });
+            window.logmsg("Unregistered user: Initializing hint system.", 1);
+        } else {
+            brackets.updatePlayerState({ nextHint: null });
+            window.logmsg("Registered user. No hints needed.", 1);
+        }
+
         updateVsMatchupBound();
         updateRoundInfoBound();
         brackets.updateBracketDropdown();
@@ -1342,6 +1491,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (helpButton) {
         helpButton.addEventListener('click', () => {
             window.logmsg('Help button clicked, opening help.html in new tab', 1);
+            satisfyHint('reg');
             window.open('help.html', '_blank'); // Opens help.html in a new tab
         });
     } else {

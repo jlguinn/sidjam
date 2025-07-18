@@ -7,6 +7,7 @@ export let sidPlayer = null;
 export let streamer = null;
 export let isPlaying = false;
 let timerInterval;
+let onTickCallback = null;
 
 /**
  * Creates the single, persistent player instance. Called only once.
@@ -67,7 +68,7 @@ export async function loadSong(filename, trackNumber, callbacks) {
         if (callbacks.autoPlay) {
             sidPlayer.play();
             isPlaying = true;
-            startTimer(updateTimer, callbacks.updateJamButton);
+            startTimer(updateTimer, callbacks.updateJamButton, callbacks.onTick);
         }
         
         callbacks.updatePlayPauseButton();
@@ -96,9 +97,10 @@ export function resetVoiceStates() {
     }
 }
 
-export function startTimer(updateTimer, updateJamButton) {
+export function startTimer(updateTimer, updateJamButton, tickCallback) {
     stopTimer(updateJamButton);
     updateTimer();
+    onTickCallback = tickCallback || null;
     timerInterval = setInterval(updateTimer, 1000);
     if (updateJamButton) updateJamButton(true);
 }
@@ -106,6 +108,7 @@ export function startTimer(updateTimer, updateJamButton) {
 export function stopTimer(updateJamButton) {
     clearInterval(timerInterval);
     timerInterval = null;
+    onTickCallback = null;
     if (updateJamButton) updateJamButton(false);
 }
 
@@ -119,9 +122,11 @@ export function updateTimer() {
             timerElement.textContent = "Time: " +
                 (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
         }
+        if (onTickCallback) {
+            onTickCallback(currentTime);
+        }
     }
 }
-
 export function toggleVoice(voiceNum) {
     if (window.backend) {
         const button = document.getElementById(`voice${voiceNum}`);
