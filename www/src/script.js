@@ -126,7 +126,7 @@ function triggerConfirmHint() {
     clearConfirmHintTimers(); // Always start with a clean slate
 
     const state = brackets.getPlayerState();
-    if (window.isLoggedIn || state.nextHint !== 'confirm') {
+    if (window.isLoggedIn || state.nextHint !== 'confirm' || state.winner === null) {
         return;
     }
 
@@ -415,12 +415,15 @@ window.jamToggle = () => {
 window.setWinner = (index) => {
     window.logmsg(index === 0 ? "[ < Winner]" : "[Winner >]", 1);
     
-    const currentHint = brackets.getPlayerState().nextHint;
+    const state = brackets.getPlayerState();
+    const currentHint = state.nextHint;
 
-    // Conditionally satisfy the HINT THAT IS CURRENTLY ACTIVE
+    // If the current hint is 'winner', satisfy it.
     if (currentHint === 'winner') {
         satisfyHint('winner');
-    } else if (currentHint === 'confirm') {
+    } 
+    // ONLY satisfy 'confirm' if a winner is ALREADY selected (i.e., this is a vote change).
+    else if (currentHint === 'confirm' && state.winner !== null) {
         satisfyHint('confirm');
     }
 
