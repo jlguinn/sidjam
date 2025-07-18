@@ -47,7 +47,17 @@ const updateJamButtonBound = (isPlaying) => ui.updateJamButton(isPlaying, bracke
 
 // New user hint system
 let hintMarqueeTimeout = null;
-let confirmHintTimeout = null; 
+let confirmHintTimers = []; 
+
+function clearConfirmHintTimers() {
+    confirmHintTimers.forEach(clearTimeout);
+    confirmHintTimers = [];
+    
+    // Also remove all related visual effects
+    document.getElementById('jamButton')?.classList.remove('throb');
+    document.getElementById('winner-left')?.classList.remove('throb');
+    document.getElementById('winner-right')?.classList.remove('throb');
+}
 
 function abandonHintSystem() {
     const state = brackets.getPlayerState();
@@ -77,34 +87,27 @@ function satisfyHint(hintToSatisfy) {
 
     window.logmsg(`Hint satisfied: ${hintToSatisfy}`, 1);
     
-    // Clear timeouts
+    // Clear any generic or alternating hint timers
     if (hintMarqueeTimeout) {
         clearTimeout(hintMarqueeTimeout);
         hintMarqueeTimeout = null;
     }
-    if (confirmHintTimeout) { // Also clear the confirm hint timer
-        clearTimeout(confirmHintTimeout);
-        confirmHintTimeout = null;
-    }
-
-    // Remove all possible throbbing effects
-    document.getElementById('jamButton')?.classList.remove('throb');
-    document.getElementById('winner-left')?.classList.remove('throb');
-    document.getElementById('winner-right')?.classList.remove('throb');
+    clearConfirmHintTimers();
+    
+    // The rest of the function is the same, just with the 'confirm' case
     document.getElementById('bracket-select')?.classList.remove('throb');
     document.getElementById('ellipsis-button')?.classList.remove('throb');
     document.getElementById('help-button')?.classList.remove('throb');
     
-    // Advance to next hint with updated sequence
     switch (hintToSatisfy) {
         case 'jAM':
             brackets.updatePlayerState({ nextHint: 'winner' });
             break;
         case 'winner':
-            brackets.updatePlayerState({ nextHint: 'confirm' }); // Updated
+            brackets.updatePlayerState({ nextHint: 'confirm' });
             break;
         case 'confirm':
-            brackets.updatePlayerState({ nextHint: 'bracket' }); // New
+            brackets.updatePlayerState({ nextHint: 'bracket' });
             break;
         case 'bracket':
             brackets.updatePlayerState({ nextHint: 'reg' });
@@ -118,27 +121,27 @@ function satisfyHint(hintToSatisfy) {
     updateRoundInfoBound();
 }
 
-// New function to trigger the 'confirm' hint after a delay
+// This function now orchestrates the new alternating message sequence
 function triggerConfirmHint() {
-    clearTimeout(confirmHintTimeout); 
+    clearConfirmHintTimers(); // Always start with a clean slate
 
     const state = brackets.getPlayerState();
     if (window.isLoggedIn || state.nextHint !== 'confirm') {
         return;
     }
 
-    confirmHintTimeout = setTimeout(() => {
-        if (state.isBombActive || state.isReviveActive) return;
+    const roundInfoEl = document.getElementById("round-info");
+    if (!roundInfoEl) return;
 
-        const roundInfoEl = document.getElementById("round-info");
-        if (!roundInfoEl) return;
-        
-        window.logmsg("Triggering hint: confirm", 1);
-        const message = "Click jAM to confirm your decision or Winner button(s) to change...";
-        
+    // Define the two functions that will alternate
+    const showHintMessage = () => {
+        if (brackets.getPlayerState().nextHint !== 'confirm') return; // Exit if satisfied during timeout
+
+        window.logmsg("Displaying 'confirm' hint marquee.", 2);
+        const message = "Click jAM to confirm or Winner buttons to change...";
         const highlightSpan = document.createElement('span');
         highlightSpan.className = 'hint-marquee-highlight';
-        highlightSpan.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="5">${message}</marquee>`; // Speed increased
+        highlightSpan.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="5">${message}</marquee>`;
         roundInfoEl.innerHTML = '';
         roundInfoEl.appendChild(highlightSpan);
 
@@ -146,7 +149,23 @@ function triggerConfirmHint() {
         document.getElementById('winner-left')?.classList.add('throb');
         document.getElementById('winner-right')?.classList.add('throb');
 
-    }, 3000);
+        // After 10 seconds, switch back to the winner message
+        confirmHintTimers.push(setTimeout(showWinnerMessage, 10000));
+    };
+
+    const showWinnerMessage = () => {
+        if (brackets.getPlayerState().nextHint !== 'confirm') return; // Exit if satisfied
+
+        window.logmsg("Displaying 'Winner' message during hint sequence.", 2);
+        clearConfirmHintTimers(); // Clear effects before showing winner
+        updateRoundInfoBound(); // This will render the "Winner: ..." message
+
+        // After 3 seconds, switch back to the hint marquee
+        confirmHintTimers.push(setTimeout(showHintMessage, 3000));
+    };
+
+    // Start the entire sequence after an initial 3-second delay
+    confirmHintTimers.push(setTimeout(showHintMessage, 3000));
 }
 
 function handleHintSystem(currentTime) {
@@ -395,8 +414,17 @@ window.jamToggle = () => {
 
 window.setWinner = (index) => {
     window.logmsg(index === 0 ? "[ < Winner]" : "[Winner >]", 1);
-    satisfyHint('winner');
-    satisfyHint('confirm');
+    
+    const currentHint = brackets.getPlayerState().nextHint;
+
+    // Conditionally satisfy the HINT THAT IS CURRENTLY ACTIVE
+    if (currentHint === 'winner') {
+        satisfyHint('winner');
+    } else if (currentHint === 'confirm') {
+        satisfyHint('confirm');
+    }
+
+    // This updates the UI to show "Winner: ..." immediately
     brackets.updateWinner(
         index,
         updateRoundInfoBound,
@@ -404,7 +432,7 @@ window.setWinner = (index) => {
         updateBombButtonBound
     );
 
-    // If the next hint is now 'confirm', set the timer to trigger it.
+    // If the hint was just advanced to 'confirm', trigger the new sequence
     if (brackets.getPlayerState().nextHint === 'confirm') {
         triggerConfirmHint();
     }
