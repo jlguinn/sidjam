@@ -141,7 +141,7 @@ function triggerHintImmediately(hintName) {
         
         // ADDED THIS MISSING CASE BLOCK
         case 'reg':
-            message = "Create a username to save your decisions... Click help for more information... Thank you for trying sID JAm!..";
+            message = "Create a username to save your progress... Click help for more information... Thank you for trying sID JAm!..";
             
             const helpButton = document.getElementById('help-button');
             const profileIcon = document.getElementById('profile-icon');
@@ -498,7 +498,7 @@ window.jamToggle = () => {
     clearBothWinnersHintTimers();
     const state = brackets.getPlayerState();
     const hint = state.nextHint;
-    let boutWasDecided = false; // Flag to track if this jAM click is deciding a bout
+    let boutWasDecided = (state.winner !== null || state.bothContendersSelected);
 
     if (hint === 'confirm' && state.winner === null) {
         window.logmsg("Unconfirmed winner; regressing to 'winner' hint.", 1);
@@ -512,8 +512,7 @@ window.jamToggle = () => {
     // --- HINT SATISFACTION LOGIC ---
     if (state.winner !== null || state.bothContendersSelected) {
         // This is a "confirm bout" click.
-        boutWasDecided = true; // Set the flag
-        if (hint === 'confirm' || (hint === 'reg' && state.hintTriggeredThisSong)) {
+        if (hint === 'confirm' || ((hint === 'bracket' || hint === 'reg') && state.hintTriggeredThisSong)) {
             satisfyHint(hint);
         }
     } else {
@@ -523,9 +522,9 @@ window.jamToggle = () => {
         } else if (hint === 'winner') {
             pauseHintEffects();
             updateRoundInfoBound();
-        } else if (hint === 'bracket' && state.hintTriggeredThisSong) {
-            // Satisfy 'bracket' with any jAM click, but only if seen.
-            satisfyHint('bracket');
+        } else if ((hint === 'bracket' || hint === 'reg') && state.hintTriggeredThisSong) {
+            // This now correctly satisfies 'reg' if it has been seen.
+            satisfyHint(hint);
         }
     }
     
@@ -541,11 +540,12 @@ window.jamToggle = () => {
         brackets.updateBracketDropdown,
         handleHintSystem
     ).then(() => {
-        // This block executes AFTER the jamToggle action is complete.
-        
-        // Use the flag to trigger the 'reg' hint ONLY if a bout was decided.
         if (boutWasDecided && brackets.getPlayerState().nextHint === 'reg') {
-            triggerHintImmediately('reg');
+            setTimeout(() => {
+                if (brackets.getPlayerState().nextHint === 'reg') {
+                    triggerHintImmediately('reg');
+                }
+            }, 100);
         }
         
         savePlayerState();

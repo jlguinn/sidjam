@@ -551,7 +551,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                     return;
                 }
             }
-            loadSong(playerState.contenders[playerState.activeContender], -1, true);
+            await loadSong(playerState.contenders[playerState.activeContender], -1, true);
             updatePlayerState({ hasPlayed: true });
             updateVsMatchup(playerState);
             updateRoundInfo(playerState);
