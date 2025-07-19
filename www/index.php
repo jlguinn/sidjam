@@ -320,7 +320,7 @@ $cxn->close();
     <div id="bracket-bomb-row">
         <div id="bracket-controls">
             <div class="bracket-row">
-                <select id="bracket-select" onchange="window.changeBracket()" aria-label="Select Bracket"></select>
+                <select id="bracket-select" onchange="window.changeBracket()" onmousedown="window.satisfyBracketHint()" aria-label="Select Bracket"></select>
                 <button id="ellipsis-button" onclick="(() => { window.logmsg('[...]', 1); toggleSongList(); })()" disabled aria-label="Toggle Song List">...</button>
             </div>
         </div>

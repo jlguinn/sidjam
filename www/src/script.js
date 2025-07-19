@@ -102,7 +102,7 @@ function triggerBothWinnersHint() {
     const showHintMessage = () => {
         if (!brackets.getPlayerState().bothContendersSelected) return; // Exit if state changed
 
-        const message = "Multiple winners allowed only in 0 - 0 bracket...";
+        const message = "Multiple winners allowed in 0 - 0 bracket... Click winner to adjust or jAM to confirm...";
         const highlightSpan = document.createElement('span');
         highlightSpan.className = 'hint-marquee-highlight';
         highlightSpan.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="5">${message}</marquee>`;
@@ -200,6 +200,13 @@ function satisfyHint(hintToSatisfy) {
     updateRoundInfoBound();
 }
 
+
+window.satisfyBracketHint = () => {
+    // This is called on mousedown from index.html to satisfy the hint immediately.
+    satisfyHint('bracket');
+};
+
+
 // This function now orchestrates the new alternating message sequence
 function triggerConfirmHint() {
     clearConfirmHintTimers(); // Always start with a clean slate
@@ -217,7 +224,7 @@ function triggerConfirmHint() {
         if (brackets.getPlayerState().nextHint !== 'confirm') return; // Exit if satisfied during timeout
 
         window.logmsg("Displaying 'confirm' hint marquee.", 2);
-        const message = "Click jAM to confirm or Winner buttons to change...";
+        const message = "Click jAM to confirm or Winner to change...";
         const highlightSpan = document.createElement('span');
         highlightSpan.className = 'hint-marquee-highlight';
         highlightSpan.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="5">${message}</marquee>`;
@@ -298,7 +305,7 @@ function handleHintSystem(currentTime) {
             break;
         case 'reg':
             if (!state.hasJammed) { // First song of a new round
-                 message = "Create a username to save your decisions... Click help for more information... Thank you for trying sID JAm!..";
+                 message = "Create a user profile to save your decisions... Click help for more information... Thank you for trying sID JAm!..";
                  
                  // UPDATED: Apply new effects
                  const helpButton = document.getElementById('help-button');
@@ -496,36 +503,32 @@ window.jamToggle = () => {
     const state = brackets.getPlayerState();
     const hint = state.nextHint;
 
-    // Handle regression from an unconfirmed 'confirm' hint
     if (hint === 'confirm' && state.winner === null) {
         window.logmsg("Unconfirmed winner; regressing to 'winner' hint.", 1);
         pauseHintEffects();
         updateRoundInfoBound();
         brackets.updatePlayerState({ nextHint: 'winner' });
         triggerHintImmediately('winner');
-        return; // Stop further execution
+        return;
     }
 
-    // --- FINAL REVISED HINT LOGIC ---
-    // This new structure handles each hint case specifically and correctly.
+    // --- FINAL HINT SATISFACTION LOGIC ---
+    // This revised structure correctly handles all conditions.
 
-    // Case 1: The 'bracket' hint is active and has been triggered.
-    if (hint === 'bracket' && state.hintTriggeredThisSong) {
-        satisfyHint('bracket');
-    }
-    // Case 2: The 'winner' hint is active. A jAM click only pauses its effects.
-    else if (hint === 'winner') {
+    if ((hint === 'bracket' || hint === 'reg') && state.hintTriggeredThisSong) {
+        // Satisfy 'bracket' or 'reg' with any jAM click, but ONLY if the hint has been seen.
+        satisfyHint(hint);
+    } else if (hint === 'winner') {
+        // A jAM click on the 'winner' hint just pauses its effects.
         pauseHintEffects();
         updateRoundInfoBound();
-    }
-    // Case 3: Other hints that are always satisfied by a jAM click.
-    else if (hint === 'jAM' || hint === 'confirm' || hint === 'reg') {
+    } else if (hint === 'jAM' || hint === 'confirm') {
+        // 'jAM' and 'confirm' hints are always satisfied by a jAM click.
         satisfyHint(hint);
     }
-    // If none of these conditions are met (e.g., hint is 'bracket' but hasn't triggered),
-    // no hint logic runs, which is the correct behavior.
 
-    // Proceed with the main jamToggle action
+    // --- GAME LOGIC ---
+    // This proceeds after the hint logic is settled.
     brackets.jamToggle(
         player.sidPlayer,
         loadSongBound,
