@@ -293,13 +293,10 @@ body {
 }
 
 .hint-marquee-highlight {
-    background-color: #00ffff;
     padding: 2px var(--spacing-xs);
     border-radius: 3px;
     display: inline-block; /* Ensures the background fits the content */
     width: 220px; /* Match the original marquee width */
-    color: #000000; /* Explicitly set text color for contrast */
-    font-weight: bold; /* Make text bold */
 }
 
 .winner-highlight {

@@ -48,6 +48,7 @@ const updateJamButtonBound = (isPlaying) => ui.updateJamButton(isPlaying, bracke
 // New user hint system
 let hintMarqueeTimeout = null;
 let confirmHintTimers = []; 
+let bothWinnersHintTimers = []; 
 
 function clearConfirmHintTimers() {
     confirmHintTimers.forEach(clearTimeout);
@@ -57,6 +58,75 @@ function clearConfirmHintTimers() {
     document.getElementById('jamButton')?.classList.remove('throb');
     document.getElementById('winner-left')?.classList.remove('throb');
     document.getElementById('winner-right')?.classList.remove('throb');
+}
+
+function clearBothWinnersHintTimers() {
+    if (bothWinnersHintTimers.length > 0) {
+        window.logmsg("Clearing 'both winners' hint.", 2);
+        bothWinnersHintTimers.forEach(clearTimeout);
+        bothWinnersHintTimers = [];
+    }
+}
+
+function triggerBothWinnersHint() {
+    clearBothWinnersHintTimers(); // Start with a clean slate
+
+    const roundInfoEl = document.getElementById("round-info");
+    if (!roundInfoEl || !brackets.getPlayerState().bothContendersSelected) return;
+
+    const showHintMessage = () => {
+        if (!brackets.getPlayerState().bothContendersSelected) return; // Exit if state changed
+
+        const message = "Multiple winners allowed only in 0 - 0 bracket...";
+        const highlightSpan = document.createElement('span');
+        highlightSpan.className = 'hint-marquee-highlight';
+        highlightSpan.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="5">${message}</marquee>`;
+        roundInfoEl.innerHTML = '';
+        roundInfoEl.appendChild(highlightSpan);
+        
+        bothWinnersHintTimers.push(setTimeout(showStandardMessage, 10000));
+    };
+
+    const showStandardMessage = () => {
+        if (!brackets.getPlayerState().bothContendersSelected) return; // Exit if state changed
+        updateRoundInfoBound(); // This correctly shows "Winner: Both Contenders"
+        bothWinnersHintTimers.push(setTimeout(showHintMessage, 3000));
+    };
+
+    // The initial state is the standard message, so we start the timer to show the hint after 3 seconds.
+    showStandardMessage();
+}
+
+// New function to trigger a hint immediately, bypassing the 10-second timer
+function triggerHintImmediately(hintName) {
+    const roundInfoEl = document.getElementById("round-info");
+    if (!roundInfoEl || brackets.getPlayerState().nextHint !== hintName) return;
+
+    let message = '';
+    let conditionMet = true; // Assume we want to fire
+
+    window.logmsg(`Triggering hint immediately: ${hintName}`, 1);
+
+    switch (hintName) {
+        case 'winner':
+            message = "Choose a winner or click jAM to hear contenders again...";
+            document.getElementById('winner-left')?.classList.add('throb');
+            document.getElementById('winner-right')?.classList.add('throb');
+            break;
+        // Add other cases here if needed in the future
+        default:
+            conditionMet = false;
+            break;
+    }
+
+    if (conditionMet) {
+        brackets.updatePlayerState({ hintTriggeredThisSong: true });
+        const highlightSpan = document.createElement('span');
+        highlightSpan.className = 'hint-marquee-highlight';
+        highlightSpan.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="5">${message}</marquee>`;
+        roundInfoEl.innerHTML = '';
+        roundInfoEl.appendChild(highlightSpan);
+    }
 }
 
 function abandonHintSystem() {
@@ -418,9 +488,29 @@ window.togglePlayPause = async () => {
     }
     ui.updatePlayPauseButton(player.isPlaying);
 };
+
 window.jamToggle = () => {
     window.logmsg("[jAM]", 1);
-    satisfyHint(brackets.getPlayerState().nextHint); // Satisfy any active hint
+    
+    // Always clear the "both winners" hint when jAM is clicked.
+    clearBothWinnersHintTimers();
+
+    const state = brackets.getPlayerState();
+
+    // NEW: Handle regression from an unconfirmed 'confirm' hint.
+    if (state.nextHint === 'confirm' && state.winner === null) {
+        window.logmsg("Unconfirmed winner; regressing to 'winner' hint.", 1);
+        pauseHintEffects(); // Stop confirm hint effects
+        brackets.updatePlayerState({ nextHint: 'winner' });
+        triggerHintImmediately('winner');
+        return; // Stop further execution of jamToggle
+    }
+
+    // UPDATED: Do not satisfy the 'winner' hint with a jAM click.
+    if (state.nextHint !== 'winner') {
+        satisfyHint(state.nextHint);
+    }
+    
     brackets.jamToggle(
         player.sidPlayer,
         loadSongBound,
@@ -436,19 +526,18 @@ window.jamToggle = () => {
 window.setWinner = (index) => {
     window.logmsg(index === 0 ? "[ < Winner]" : "[Winner >]", 1);
     
+    // Always clear any active special hints when a vote is cast.
+    clearBothWinnersHintTimers();
     const state = brackets.getPlayerState();
     const currentHint = state.nextHint;
-
-    // If the current hint is 'winner', satisfy it.
+    
+    // ... (logic to satisfy 'winner' or 'confirm' hint remains the same)
     if (currentHint === 'winner') {
         satisfyHint('winner');
-    } 
-    // ONLY satisfy 'confirm' if a winner is ALREADY selected (i.e., this is a vote change).
-    else if (currentHint === 'confirm' && state.winner !== null) {
+    } else if (currentHint === 'confirm' && state.winner !== null) {
         satisfyHint('confirm');
     }
 
-    // This updates the UI to show "Winner: ..." immediately
     brackets.updateWinner(
         index,
         updateRoundInfoBound,
@@ -456,9 +545,14 @@ window.setWinner = (index) => {
         updateBombButtonBound
     );
 
-    // If the hint was just advanced to 'confirm', trigger the new sequence
-    if (brackets.getPlayerState().nextHint === 'confirm') {
+    const newState = brackets.getPlayerState();
+    if (newState.nextHint === 'confirm') {
         triggerConfirmHint();
+    }
+    
+    // NEW: If the result is "both winners," trigger that hint sequence.
+    if (newState.bothContendersSelected) {
+        triggerBothWinnersHint();
     }
 };
 
