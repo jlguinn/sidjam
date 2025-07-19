@@ -251,7 +251,7 @@ export function pickContenders(updateRoundInfo, updateVsMatchup, updateWinnerBut
     return true;
 }
 
-export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup, updateRoundInfo, updateWinnerButtons, updateBombButton) {
+export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup, updateRoundInfo, updateWinnerButtons, updateBombButton, updateBracketDropdown, onTickCallback) {
     if (!sidPlayer) return;
 
     let shouldUpdateBracketDropdown = false;
@@ -490,9 +490,8 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 sidPlayer.play();
                 setIsPlaying(true);
                 if (startTimer) {
-                    // Use updateJamButtonBound as a fallback, assuming it's defined in the global scope
                     const updateJamButton = window.updateJamButtonBound || (() => window.logmsg('Warning: updateJamButton is not defined', 0));
-                    startTimer(updateTimer, updateJamButton);
+                    startTimer(updateTimer, updateJamButton, onTickCallback);
                 } else {
                     window.logmsg('Warning: startTimer is not defined, skipping timer', 0);
                 }
@@ -500,7 +499,6 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 // Update UI
                 updateVsMatchup(playerState);
                 updateRoundInfo(playerState);
-                updateWinnerButtons(playerState, sidPlayer);
                 updateBombButton(playerState, sidPlayer);
                 updateBracketDropdown(); // Ensure dropdown reflects new contender and losses
                 renderWinnerButtonBitmap(0, playerState);
@@ -511,10 +509,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 document.getElementById('jamButton').disabled = false;
                 document.getElementById('prevButton').disabled = false;
                 document.getElementById('nextButton').disabled = false;
-                winnerLeft.disabled = false;
-                winnerRight.disabled = true; // Keep winner-right disabled until next song
-                winnerLeft.classList.remove('disabled');
-                winnerRight.classList.add('disabled');
+                updateWinnerButtons(playerState, sidPlayer);
 
                 voteProcessed = true;
             } catch (error) {
@@ -523,10 +518,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 document.getElementById('jamButton').disabled = false;
                 document.getElementById('prevButton').disabled = false;
                 document.getElementById('nextButton').disabled = false;
-                winnerLeft.disabled = false;
-                winnerRight.disabled = true; // Keep winner-right disabled
-                winnerLeft.classList.remove('disabled');
-                winnerRight.classList.add('disabled');
+                updateWinnerButtons(playerState, sidPlayer);
             }
         });
 

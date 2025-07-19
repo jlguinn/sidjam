@@ -497,17 +497,23 @@ window.jamToggle = () => {
 
     const state = brackets.getPlayerState();
 
-    // NEW: Handle regression from an unconfirmed 'confirm' hint.
+    // Handle regression from an unconfirmed 'confirm' hint.
     if (state.nextHint === 'confirm' && state.winner === null) {
         window.logmsg("Unconfirmed winner; regressing to 'winner' hint.", 1);
         pauseHintEffects(); // Stop confirm hint effects
+        updateRoundInfoBound(); // Restore round info message
         brackets.updatePlayerState({ nextHint: 'winner' });
         triggerHintImmediately('winner');
         return; // Stop further execution of jamToggle
     }
 
-    // UPDATED: Do not satisfy the 'winner' hint with a jAM click.
-    if (state.nextHint !== 'winner') {
+    // If the 'winner' hint is active, a jAM click should
+    // pause its effects without satisfying it. For all other
+    // hints, the jAM click will satisfy them as normal.
+    if (state.nextHint === 'winner') {
+        pauseHintEffects();
+        updateRoundInfoBound(); // Restore the standard round info message
+    } else {
         satisfyHint(state.nextHint);
     }
     
@@ -519,7 +525,8 @@ window.jamToggle = () => {
         updateRoundInfoBound,
         updateWinnerButtonsBound,
         updateBombButtonBound,
-        brackets.updateBracketDropdown
+        brackets.updateBracketDropdown,
+        handleHintSystem
     ).then(() => savePlayerState());
 };
 
