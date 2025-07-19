@@ -50,6 +50,31 @@ let hintMarqueeTimeout = null;
 let confirmHintTimers = []; 
 let bothWinnersHintTimers = []; 
 
+function clearAllHintEffects() {
+    // Clear Timers
+    if (hintMarqueeTimeout) {
+        clearTimeout(hintMarqueeTimeout);
+        hintMarqueeTimeout = null;
+    }
+    clearConfirmHintTimers();
+    clearBothWinnersHintTimers();
+
+    // Clear CSS classes (throbbing)
+    document.getElementById('jamButton')?.classList.remove('throb');
+    document.getElementById('winner-left')?.classList.remove('throb');
+    document.getElementById('winner-right')?.classList.remove('throb');
+    document.getElementById('bracket-select')?.classList.remove('throb');
+    document.getElementById('ellipsis-button')?.classList.remove('throb');
+    document.getElementById('help-button')?.classList.remove('throb');
+    document.getElementById('profile-icon')?.classList.remove('throb'); // Added for reg hint
+
+    // Reset styles
+    const helpButton = document.getElementById('help-button');
+    if (helpButton) {
+        helpButton.style.transform = 'scale(1)'; // Added for reg hint
+    }
+}
+
 function clearConfirmHintTimers() {
     confirmHintTimers.forEach(clearTimeout);
     confirmHintTimers = [];
@@ -136,40 +161,13 @@ function abandonHintSystem() {
     window.logmsg("Hint system abandoned.", 1);
     brackets.updatePlayerState({ nextHint: null });
 
-    // Remove all possible throbbing effects
-    document.getElementById('jamButton')?.classList.remove('throb');
-    document.getElementById('winner-left')?.classList.remove('throb');
-    document.getElementById('winner-right')?.classList.remove('throb');
-    document.getElementById('bracket-select')?.classList.remove('throb');
-    document.getElementById('ellipsis-button')?.classList.remove('throb');
-    document.getElementById('help-button')?.classList.remove('throb');
-    
-    if (hintMarqueeTimeout) {
-        clearTimeout(hintMarqueeTimeout);
-        hintMarqueeTimeout = null;
-    }
+    clearAllHintEffects(); // Use the new centralized function
     updateRoundInfoBound(); // Restore original message
 }
 
 function pauseHintEffects() {
     window.logmsg("Pausing hint effects.", 1);
-    
-    // This function clears timers and effects for the 'confirm' hint
-    clearConfirmHintTimers();
-
-    // This handles the generic 10-second marquee trigger timer
-    if (hintMarqueeTimeout) {
-        clearTimeout(hintMarqueeTimeout);
-        hintMarqueeTimeout = null;
-    }
-
-    // Redundantly remove all possible throbbing effects to be safe
-    document.getElementById('jamButton')?.classList.remove('throb');
-    document.getElementById('winner-left')?.classList.remove('throb');
-    document.getElementById('winner-right')?.classList.remove('throb');
-    document.getElementById('bracket-select')?.classList.remove('throb');
-    document.getElementById('ellipsis-button')?.classList.remove('throb');
-    document.getElementById('help-button')?.classList.remove('throb');
+    clearAllHintEffects(); // Use the new centralized function
 }
 
 function satisfyHint(hintToSatisfy) {
@@ -177,18 +175,8 @@ function satisfyHint(hintToSatisfy) {
     if (state.nextHint !== hintToSatisfy) return;
 
     window.logmsg(`Hint satisfied: ${hintToSatisfy}`, 1);
-    
-    // Clear any generic or alternating hint timers
-    if (hintMarqueeTimeout) {
-        clearTimeout(hintMarqueeTimeout);
-        hintMarqueeTimeout = null;
-    }
-    clearConfirmHintTimers();
-    
-    // The rest of the function is the same, just with the 'confirm' case
-    document.getElementById('bracket-select')?.classList.remove('throb');
-    document.getElementById('ellipsis-button')?.classList.remove('throb');
-    document.getElementById('help-button')?.classList.remove('throb');
+
+    clearAllHintEffects();
     
     switch (hintToSatisfy) {
         case 'jAM':
@@ -311,8 +299,20 @@ function handleHintSystem(currentTime) {
         case 'reg':
             if (!state.hasJammed) { // First song of a new round
                  message = "Create a username to save your decisions... Click help for more information... Thank you for trying sID JAm!..";
-                 document.getElementById('help-button')?.classList.add('throb');
-                 window.flashProfileIcon(); // Moved from logResult
+                 
+                 // UPDATED: Apply new effects
+                 const helpButton = document.getElementById('help-button');
+                 const profileIcon = document.getElementById('profile-icon');
+                 
+                 if (helpButton) {
+                     helpButton.classList.add('throb');
+                     helpButton.style.transform = 'scale(2)';
+                 }
+                 if (profileIcon) {
+                     profileIcon.classList.add('throb');
+                 }
+                 
+                 // REMOVED: window.flashProfileIcon();
                  conditionMet = true;
             }
             break;
@@ -492,29 +492,27 @@ window.togglePlayPause = async () => {
 window.jamToggle = () => {
     window.logmsg("[jAM]", 1);
     
-    // Always clear the "both winners" hint when jAM is clicked.
     clearBothWinnersHintTimers();
-
     const state = brackets.getPlayerState();
 
-    // Handle regression from an unconfirmed 'confirm' hint.
+    // ... (regression logic for 'confirm' hint is unchanged)
     if (state.nextHint === 'confirm' && state.winner === null) {
         window.logmsg("Unconfirmed winner; regressing to 'winner' hint.", 1);
-        pauseHintEffects(); // Stop confirm hint effects
-        updateRoundInfoBound(); // Restore round info message
+        pauseHintEffects();
+        updateRoundInfoBound();
         brackets.updatePlayerState({ nextHint: 'winner' });
         triggerHintImmediately('winner');
-        return; // Stop further execution of jamToggle
+        return;
     }
 
-    // If the 'winner' hint is active, a jAM click should
-    // pause its effects without satisfying it. For all other
-    // hints, the jAM click will satisfy them as normal.
-    if (state.nextHint === 'winner') {
+    const hint = state.nextHint;
+    if (hint === 'winner') {
+        // For the 'winner' hint, a jAM click just pauses the effects.
         pauseHintEffects();
-        updateRoundInfoBound(); // Restore the standard round info message
-    } else {
-        satisfyHint(state.nextHint);
+        updateRoundInfoBound();
+    } else if (hint === 'jAM' || hint === 'confirm' || hint === 'reg') { // Added 'jAM' to this condition
+        // Satisfy hints that are meant to be resolved by a jAM click.
+        satisfyHint(hint);
     }
     
     brackets.jamToggle(
