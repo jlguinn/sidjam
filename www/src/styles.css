@@ -305,6 +305,33 @@ body {
     border-radius: 3px;
 }
 
+
+/* Styling for the new 'previous theme' button */
+#prevThemeButton {
+    width: 0;
+    height: 0;
+    border-top: 12px solid transparent; /* Half of height */
+    border-bottom: 12px solid transparent; /* Half of height */
+    border-right: 12px solid; /* Creates the triangle shape */
+    background-color: transparent;
+    border-left: none;
+    cursor: pointer;
+    padding: 0;
+    margin-right: 3px; /* Small gap between buttons */
+
+    /* Initially hidden with a fade transition */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+}
+
+/* Make the button visible on hover of the container or when it has a 'visible' class */
+#color-toggle:hover #prevThemeButton,
+#prevThemeButton.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
 /* jAM and Winner Buttons */
 #jamButton {
     width: 160px;
@@ -546,64 +573,6 @@ body {
     left: -90px;
     width: 250px;
     height: 21px;
-}
-
-/* Waveform Zoom Controls */
-#waveform-zoom-controls {
-    position: absolute;
-    top: 335px; /* Below voice3-canvas: 3 canvases * 100px + 2 gaps * 10px + 15px offset */
-    left: -140px; /* Align with #voice-visualizations */
-    width: 250px; /* Match canvas width */
-    display: flex;
-    justify-content: center;
-    gap: var(--spacing-sm); /* 10px gap between buttons */
-    z-index: 10; /* Ensure buttons are above other elements */
-}
-
-#waveform-zoom-controls.hidden {
-    display: none;
-}
-
-.zoom-button {
-    width: 20px;
-    height: 20px;
-    padding: 0;
-    border: 1px solid #4c566a; /* Matches --border */
-    border-radius: 4px;
-    background-color: #2e3440; /* Explicit canvas background match */
-    color: #00bb00; /* Softer green for better contrast */
-    font-size: 14px;
-    font-weight: bold;
-    line-height: 20px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-    -webkit-user-select: none;
-    user-select: none;
-}
-
-.zoom-button:hover {
-    background-color: var(--primary); /* #00ff00, green background */
-    color: var(--background); /* #2e3440, dark text */
-    transform: scale(1.1);
-}
-
-.zoom-button:focus {
-    outline: none;
-    box-shadow: 0 0 5px rgba(0, 255, 0, 0.8); /* Green glow to match theme */
-}
-
-.zoom-button:disabled {
-    filter: grayscale(100%) opacity(0.5);
-    cursor: not-allowed;
-}
-
-.zoom-button#reset-view-button {
-    font-size: 12px; /* Slightly smaller for Unicode arrow */
-    line-height: 18px; /* Center vertically */
 }
 
 .viz-toggle-button {

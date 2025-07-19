@@ -40,6 +40,7 @@ function adjustTextColor(textColor, highlightColor, fallbackColor) {
     return "#000000";
 }
 
+
 export function applyTheme(currentMode) {
     const baseTheme = baseColorSchemes[currentThemeIndex];
     const theme = currentMode === "nowPlaying" ? getInvertedTheme(baseTheme) : baseTheme;
@@ -130,19 +131,26 @@ export function applyTheme(currentMode) {
     const nextIndex = (currentThemeIndex + 1) % baseColorSchemes.length;
     const nextBaseTheme = baseColorSchemes[nextIndex];
     const nextTheme = currentMode === "nowPlaying" ? getInvertedTheme(nextBaseTheme) : nextBaseTheme;
-    const button = document.getElementById("colorButton");
-    if (!button) {
-        console.error('Color toggle button not found in the DOM');
+    
+    const nextButton = document.getElementById("colorButton");
+    const prevButton = document.getElementById("prevThemeButton"); // ADDED
+
+    if (!nextButton || !prevButton) { // MODIFIED
+        console.error('One or more theme toggle buttons not found in the DOM');
         return;
     }
-    button.style.backgroundColor = nextTheme.exterior;
-    const icon = button.querySelector('.color-toggle__icon');
+    // Update color for BOTH buttons
+    nextButton.style.backgroundColor = nextTheme.exterior;
+    prevButton.style.borderRightColor = nextTheme.exterior; // ADDED
+
+    const icon = nextButton.querySelector('.color-toggle__icon');
     if (icon) {
         icon.style.backgroundColor = nextTheme.interior;
     } else {
         console.error('Color toggle icon not found in #colorButton');
     }
-    button.title = `Switch Theme \n  From: ${baseTheme.name}\n  To: ${nextBaseTheme.name}`;
+    nextButton.title = `Switch Theme \n  From: ${baseTheme.name}\n  To: ${nextBaseTheme.name}`;
+    prevButton.title = `Previous Theme`; // ADDED
 
     updateWaveformVisibility(brackets.getPlayerState().isWaveformActive);
     updateVUMeterVisibility(brackets.getPlayerState().isVUActive, brackets.getPlayerState().isBarActive);
@@ -246,7 +254,7 @@ export function updateRoundInfo(playerState) {
             if (playerState.isBombActive) {
                 const highlightSpan = document.createElement('span');
                 highlightSpan.className = 'hint-marquee-highlight';
-                highlightSpan.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="5">${message}</marquee>`; // Speed increased to 5
+                highlightSpan.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="5">${message}</marquee>`;
                 roundDiv.innerHTML = '';
                 roundDiv.appendChild(highlightSpan);
             }
@@ -473,8 +481,6 @@ export function updateBombButton(playerState, sidPlayer) {
         reviveButton.style.display = "none";
         return;
     }
-
-    // Use activeBracket to determine bomb visibility
     if (playerState.activeBracket === "0 - 0") {
         bombControls.classList.remove("hidden");
         bombButton.style.display = "block";
@@ -531,28 +537,18 @@ export function updateSongTitleHighlight(mode, isReviveActive) {
     updateRoundInfo(brackets.getPlayerState());
 }
 
-export function toggleColorScheme(currentMode) {
+export function nextTheme(currentMode) {
     setCurrentThemeIndex((currentThemeIndex + 1) % baseColorSchemes.length);
-    const currentBaseTheme = baseColorSchemes[currentThemeIndex];
     applyTheme(currentMode);
+    const playerState = brackets.getPlayerState();
+    updateVsMatchup(playerState);
+}
 
-    const nextIndex = (getCurrentThemeIndex() + 1) % baseColorSchemes.length;
-    const nextBaseTheme = baseColorSchemes[nextIndex];
-    const nextTheme = currentMode === "nowPlaying" ? getInvertedTheme(nextBaseTheme) : nextBaseTheme;
-    const button = document.getElementById("colorButton");
-    if (!button) {
-        console.error('Color toggle button not found in the DOM');
-        return;
-    }
-    button.style.backgroundColor = nextTheme.exterior;
-    const icon = button.querySelector('.color-toggle__icon');
-    if (icon) {
-        icon.style.backgroundColor = nextTheme.interior;
-    } else {
-        console.error('Color toggle icon not found in #colorButton during toggleColorScheme');
-    }
-    button.title = `Switch Theme \n  From: ${currentBaseTheme.name}\n  To: ${nextBaseTheme.name}`;
-
+// ADDED: New function for previous theme
+export function prevTheme(currentMode) {
+    const newIndex = (currentThemeIndex - 1 + baseColorSchemes.length) % baseColorSchemes.length;
+    setCurrentThemeIndex(newIndex);
+    applyTheme(currentMode);
     const playerState = brackets.getPlayerState();
     updateVsMatchup(playerState);
 }

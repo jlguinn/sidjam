@@ -13,6 +13,8 @@ import * as player from './player.js';
 import { renderSpriteAnimation } from './spriteAnimator.js';
 import * as viz from './viz.js';
 
+let themeButtonFadeTimeout = null;
+
 function debug(message) { window.logmsg(`[DEBUG] ${message}`, 2); }
 
 // Define bound functions at the top to ensure availability
@@ -672,9 +674,15 @@ window.changeBracket = () => {
     if (brackets.getPlayerState().currentMode === "bout") savePlayerState();
 };
 
-window.toggleColorScheme = () => {
-    window.logmsg("[Theme]", 1);
-    ui.toggleColorScheme(brackets.getPlayerState().currentMode);
+window.nextTheme = () => {
+    window.logmsg("[Theme >]", 1);
+    ui.nextTheme(brackets.getPlayerState().currentMode);
+    savePlayerState();
+};
+
+window.prevTheme = () => {
+    window.logmsg("[< Theme]", 1);
+    ui.prevTheme(brackets.getPlayerState().currentMode);
     savePlayerState();
 };
 

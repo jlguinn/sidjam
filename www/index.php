@@ -258,7 +258,8 @@ $cxn->close();
                 </div>
             </div>
             <div id="color-toggle">
-                <button id="colorButton" aria-label="Toggle Color Scheme" onclick="window.toggleColorScheme()">
+                <button id="prevThemeButton" aria-label="Previous Color Scheme" onclick="window.prevTheme()"></button>
+                <button id="colorButton" aria-label="Toggle Color Scheme" onclick="window.nextTheme()">
                     <span class="color-toggle__icon"></span>
                 </button>
             </div>
