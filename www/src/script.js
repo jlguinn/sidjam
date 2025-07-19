@@ -494,9 +494,10 @@ window.jamToggle = () => {
     
     clearBothWinnersHintTimers();
     const state = brackets.getPlayerState();
+    const hint = state.nextHint;
 
     // ... (regression logic for 'confirm' hint is unchanged)
-    if (state.nextHint === 'confirm' && state.winner === null) {
+    if (hint === 'confirm' && state.winner === null) {
         window.logmsg("Unconfirmed winner; regressing to 'winner' hint.", 1);
         pauseHintEffects();
         updateRoundInfoBound();
@@ -505,14 +506,27 @@ window.jamToggle = () => {
         return;
     }
 
-    const hint = state.nextHint;
-    if (hint === 'winner') {
-        // For the 'winner' hint, a jAM click just pauses the effects.
-        pauseHintEffects();
-        updateRoundInfoBound();
-    } else if (hint === 'jAM' || hint === 'confirm' || hint === 'reg') { // Added 'jAM' to this condition
-        // Satisfy hints that are meant to be resolved by a jAM click.
-        satisfyHint(hint);
+    // --- REVISED HINT LOGIC ---
+    if (state.winner !== null || state.bothContendersSelected) {
+        // STATE: A winner has been selected. This jAM click confirms the bout result.
+        
+        // It satisfies hints about confirming or what to do next.
+        if (hint === 'confirm' || hint === 'reg') {
+            satisfyHint(hint);
+        }
+        // It ONLY satisfies the 'bracket' hint if that hint has already been triggered on this song.
+        else if (hint === 'bracket' && state.hintTriggeredThisSong) {
+            satisfyHint(hint);
+        }
+
+    } else {
+        // STATE: No winner selected. This is a click to hear the other song.
+        if (hint === 'jAM') {
+            satisfyHint('jAM');
+        } else if (hint === 'winner') {
+            pauseHintEffects();
+            updateRoundInfoBound();
+        }
     }
     
     brackets.jamToggle(
@@ -634,7 +648,9 @@ window.changeBracket = () => {
     }
     const newBracket = bracketSelect.value.replace('-', ' - ');
     window.logmsg(`[Bracket: ${newBracket}]`, 1);
-    abandonHintSystem();
+    
+    satisfyHint('bracket');
+    
     brackets.changeBracket(
         updateBombButtonBound,
         loadSongBound,
@@ -887,7 +903,7 @@ function updatePlayingIndicator() {
 }
 
 function playSongOnDemand(filename) {
-    abandonHintSystem(); 
+    satisfyHint('bracket'); 
     const state = brackets.getPlayerState();
     if (state.peekPlayingSong === filename) {
         enterNowPlayingMode(filename);
