@@ -128,7 +128,7 @@ function triggerHintImmediately(hintName) {
     if (!roundInfoEl || brackets.getPlayerState().nextHint !== hintName) return;
 
     let message = '';
-    let conditionMet = true; // Assume we want to fire
+    let conditionMet = true;
 
     window.logmsg(`Triggering hint immediately: ${hintName}`, 1);
 
@@ -138,7 +138,23 @@ function triggerHintImmediately(hintName) {
             document.getElementById('winner-left')?.classList.add('throb');
             document.getElementById('winner-right')?.classList.add('throb');
             break;
-        // Add other cases here if needed in the future
+        
+        // ADDED THIS MISSING CASE BLOCK
+        case 'reg':
+            message = "Create a username to save your decisions... Click help for more information... Thank you for trying sID JAm!..";
+            
+            const helpButton = document.getElementById('help-button');
+            const profileIcon = document.getElementById('profile-icon');
+            
+            if (helpButton) {
+                helpButton.classList.add('throb');
+                helpButton.style.transform = 'scale(2)';
+            }
+            if (profileIcon) {
+                profileIcon.classList.add('throb');
+            }
+            break;
+
         default:
             conditionMet = false;
             break;
@@ -301,26 +317,6 @@ function handleHintSystem(currentTime) {
                 document.getElementById('bracket-select')?.classList.add('throb');
                 document.getElementById('ellipsis-button')?.classList.add('throb');
                 conditionMet = true;
-            }
-            break;
-        case 'reg':
-            if (!state.hasJammed) { // First song of a new round
-                 message = "Create a user profile to save your decisions... Click help for more information... Thank you for trying sID JAm!..";
-                 
-                 // UPDATED: Apply new effects
-                 const helpButton = document.getElementById('help-button');
-                 const profileIcon = document.getElementById('profile-icon');
-                 
-                 if (helpButton) {
-                     helpButton.classList.add('throb');
-                     helpButton.style.transform = 'scale(2)';
-                 }
-                 if (profileIcon) {
-                     profileIcon.classList.add('throb');
-                 }
-                 
-                 // REMOVED: window.flashProfileIcon();
-                 conditionMet = true;
             }
             break;
     }
@@ -502,6 +498,7 @@ window.jamToggle = () => {
     clearBothWinnersHintTimers();
     const state = brackets.getPlayerState();
     const hint = state.nextHint;
+    let boutWasDecided = false; // Flag to track if this jAM click is deciding a bout
 
     if (hint === 'confirm' && state.winner === null) {
         window.logmsg("Unconfirmed winner; regressing to 'winner' hint.", 1);
@@ -512,23 +509,27 @@ window.jamToggle = () => {
         return;
     }
 
-    // --- FINAL HINT SATISFACTION LOGIC ---
-    // This revised structure correctly handles all conditions.
-
-    if ((hint === 'bracket' || hint === 'reg') && state.hintTriggeredThisSong) {
-        // Satisfy 'bracket' or 'reg' with any jAM click, but ONLY if the hint has been seen.
-        satisfyHint(hint);
-    } else if (hint === 'winner') {
-        // A jAM click on the 'winner' hint just pauses its effects.
-        pauseHintEffects();
-        updateRoundInfoBound();
-    } else if (hint === 'jAM' || hint === 'confirm') {
-        // 'jAM' and 'confirm' hints are always satisfied by a jAM click.
-        satisfyHint(hint);
+    // --- HINT SATISFACTION LOGIC ---
+    if (state.winner !== null || state.bothContendersSelected) {
+        // This is a "confirm bout" click.
+        boutWasDecided = true; // Set the flag
+        if (hint === 'confirm' || (hint === 'reg' && state.hintTriggeredThisSong)) {
+            satisfyHint(hint);
+        }
+    } else {
+        // This is a "hear other song" click.
+        if (hint === 'jAM') {
+            satisfyHint('jAM');
+        } else if (hint === 'winner') {
+            pauseHintEffects();
+            updateRoundInfoBound();
+        } else if (hint === 'bracket' && state.hintTriggeredThisSong) {
+            // Satisfy 'bracket' with any jAM click, but only if seen.
+            satisfyHint('bracket');
+        }
     }
-
+    
     // --- GAME LOGIC ---
-    // This proceeds after the hint logic is settled.
     brackets.jamToggle(
         player.sidPlayer,
         loadSongBound,
@@ -539,7 +540,16 @@ window.jamToggle = () => {
         updateBombButtonBound,
         brackets.updateBracketDropdown,
         handleHintSystem
-    ).then(() => savePlayerState());
+    ).then(() => {
+        // This block executes AFTER the jamToggle action is complete.
+        
+        // Use the flag to trigger the 'reg' hint ONLY if a bout was decided.
+        if (boutWasDecided && brackets.getPlayerState().nextHint === 'reg') {
+            triggerHintImmediately('reg');
+        }
+        
+        savePlayerState();
+    });
 };
 
 window.setWinner = (index) => {
