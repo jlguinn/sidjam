@@ -523,20 +523,17 @@ window.jamToggle = () => {
         return;
     }
     
-    // --- HINT SATISFACTION LOGIC (CORRECTED) ---
     if (hint === 'jAM' && !boutWasDecided) {
         satisfyHint('jAM');
     } else if (hint === 'confirm' && boutWasDecided) {
         satisfyHint('confirm');
-    } else if (hint === 'bracket') {
+    } else if (hint === 'bracket' && state.hintTriggeredThisSong) { // MODIFIED THIS LINE
         if (currentSongElapsedTime >= 15) {
             satisfyHint('bracket');
         } else {
             pauseHintEffects();
         }
     } else if (hint === 'reg' && state.hintTriggeredThisSong) {
-        // Satisfy hint if jAM is clicked after the hint has been displayed for a few seconds.
-        // The hint appears at t=10s, so we use t=15s for consistency.
         if (currentSongElapsedTime >= 15) {
             satisfyHint('reg');
         }
@@ -547,7 +544,6 @@ window.jamToggle = () => {
         updateRoundInfoBound();
     }
 
-    // --- GAME LOGIC (Unchanged) ---
     brackets.jamToggle(
         player.sidPlayer,
         loadSongBound,
