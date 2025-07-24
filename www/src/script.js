@@ -14,13 +14,15 @@ import { renderSpriteAnimation } from './spriteAnimator.js';
 import * as viz from './viz.js';
 
 let themeButtonFadeTimeout = null;
+let currentSongElapsedTime = 0;
 
-function debug(message) { window.logmsg(`[DEBUG] ${message}`, 2); }
 
 // Define bound functions at the top to ensure availability
 const updateTimerBound = () => player.updateTimer();
 const loadSongBound = (filename, trackNumber, autoPlay = true) => { // Modified
-    brackets.updatePlayerState({ hintTriggeredThisSong: false }); // Add this line
+    currentSongElapsedTime = 0; 
+    
+    brackets.updatePlayerState({ hintTriggeredThisSong: false }); // This line was already here
     player.loadSong(
         filename, 
         trackNumber,
@@ -37,6 +39,7 @@ const loadSongBound = (filename, trackNumber, autoPlay = true) => { // Modified
         }
     );
 };
+
 
 const updateVsMatchupBound = () => {
     ui.updateVsMatchup(brackets.getPlayerState());
@@ -214,7 +217,7 @@ function satisfyHint(hintToSatisfy) {
             break;
     }
 
-    brackets.updatePlayerState({ hintTriggeredThisSong: true }); 
+    brackets.updatePlayerState({ hintTriggeredThisSong: false }); 
     updateRoundInfoBound();
 }
 
@@ -242,7 +245,7 @@ function triggerConfirmHint() {
         if (brackets.getPlayerState().nextHint !== 'confirm') return; // Exit if satisfied during timeout
 
         window.logmsg("Displaying 'confirm' hint marquee.", 2);
-        const message = "Click jAM to confirm or Winner to change...";
+        const message = "Click jAM to confirm or winner buttons to change...";
         const highlightSpan = document.createElement('span');
         highlightSpan.className = 'hint-marquee-highlight';
         highlightSpan.innerHTML = `<marquee behavior="scroll" direction="left" scrollamount="5">${message}</marquee>`;
@@ -273,11 +276,12 @@ function triggerConfirmHint() {
 }
 
 function handleHintSystem(currentTime) {
+    currentSongElapsedTime = currentTime;
+
     const state = brackets.getPlayerState();
     if (window.isLoggedIn || !state.nextHint || state.hintTriggeredThisSong || currentTime !== 10) {
         return;
     }
-
     // Don't show hints if a higher-priority message is active
     if (state.isBombActive || state.isReviveActive) return;
 
@@ -321,8 +325,16 @@ function handleHintSystem(currentTime) {
                 conditionMet = true;
             }
             break;
+        case 'reg':
+            // Trigger during the first song of a round (when hasJammed is false)
+            if (state.hasJammed === false) {
+                message = "Create a username to save your decisions... Click help for more information... Thank you for trying sID JAm!..";
+                document.getElementById('help-button')?.classList.add('throb');
+                document.getElementById('profile-icon')?.classList.add('throb');
+                conditionMet = true;
+            }
+            break;
     }
-
     if (conditionMet) {
         window.logmsg(`Triggering hint: ${state.nextHint}`, 1);
         brackets.updatePlayerState({ hintTriggeredThisSong: true });
@@ -510,27 +522,32 @@ window.jamToggle = () => {
         triggerHintImmediately('winner');
         return;
     }
-
-    // --- HINT SATISFACTION LOGIC ---
-    if (state.winner !== null || state.bothContendersSelected) {
-        // This is a "confirm bout" click.
-        if (hint === 'confirm' || ((hint === 'bracket' || hint === 'reg') && state.hintTriggeredThisSong)) {
-            satisfyHint(hint);
-        }
-    } else {
-        // This is a "hear other song" click.
-        if (hint === 'jAM') {
-            satisfyHint('jAM');
-        } else if (hint === 'winner') {
+    
+    // --- HINT SATISFACTION LOGIC (CORRECTED) ---
+    if (hint === 'jAM' && !boutWasDecided) {
+        satisfyHint('jAM');
+    } else if (hint === 'confirm' && boutWasDecided) {
+        satisfyHint('confirm');
+    } else if (hint === 'bracket') {
+        if (currentSongElapsedTime >= 15) {
+            satisfyHint('bracket');
+        } else {
             pauseHintEffects();
-            updateRoundInfoBound();
-        } else if ((hint === 'bracket' || hint === 'reg') && state.hintTriggeredThisSong) {
-            // This now correctly satisfies 'reg' if it has been seen.
-            satisfyHint(hint);
+        }
+    } else if (hint === 'reg' && state.hintTriggeredThisSong) {
+        // Satisfy hint if jAM is clicked after the hint has been displayed for a few seconds.
+        // The hint appears at t=10s, so we use t=15s for consistency.
+        if (currentSongElapsedTime >= 15) {
+            satisfyHint('reg');
         }
     }
-    
-    // --- GAME LOGIC ---
+
+    if (hint === 'winner' && !boutWasDecided) {
+        pauseHintEffects();
+        updateRoundInfoBound();
+    }
+
+    // --- GAME LOGIC (Unchanged) ---
     brackets.jamToggle(
         player.sidPlayer,
         loadSongBound,
@@ -542,14 +559,6 @@ window.jamToggle = () => {
         brackets.updateBracketDropdown,
         handleHintSystem
     ).then(() => {
-        if (boutWasDecided && brackets.getPlayerState().nextHint === 'reg') {
-            setTimeout(() => {
-                if (brackets.getPlayerState().nextHint === 'reg') {
-                    triggerHintImmediately('reg');
-                }
-            }, 100);
-        }
-        
         savePlayerState();
     });
 };
@@ -707,7 +716,6 @@ function toggleSongList() {
                 player.sidPlayer.pause();
                 player.setIsPlaying(false);
                 player.stopTimer();
-                debug("Stopped peeked song");
             }
 
             let songToLoad = null;
