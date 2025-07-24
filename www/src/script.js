@@ -143,23 +143,6 @@ function triggerHintImmediately(hintName) {
             document.getElementById('winner-left')?.classList.add('throb');
             document.getElementById('winner-right')?.classList.add('throb');
             break;
-        
-        // ADDED THIS MISSING CASE BLOCK
-        case 'reg':
-            message = "Create a username to save your progress... Click help for more information... Thank you for trying sID JAm!..";
-            
-            const helpButton = document.getElementById('help-button');
-            const profileIcon = document.getElementById('profile-icon');
-            
-            if (helpButton) {
-                helpButton.classList.add('throb');
-                helpButton.style.transform = 'scale(2)';
-            }
-            if (profileIcon) {
-                profileIcon.classList.add('throb');
-            }
-            break;
-
         default:
             conditionMet = false;
             break;
@@ -328,9 +311,18 @@ function handleHintSystem(currentTime) {
         case 'reg':
             // Trigger during the first song of a round (when hasJammed is false)
             if (state.hasJammed === false) {
-                message = "Create a username to save your decisions... Click help for more information... Thank you for trying sID JAm!..";
-                document.getElementById('help-button')?.classList.add('throb');
-                document.getElementById('profile-icon')?.classList.add('throb');
+                message = "Create a username to save your progress... Click help for more information... Thank you for trying sID JAm!..";
+                const helpButton = document.getElementById('help-button');
+                const profileIcon = document.getElementById('profile-icon');
+
+                if (helpButton) {
+                    helpButton.classList.add('throb');
+                    // Add this line to restore magnification
+                    helpButton.style.transform = 'scale(2)';
+                }
+                if (profileIcon) {
+                    profileIcon.classList.add('throb');
+                }
                 conditionMet = true;
             }
             break;
