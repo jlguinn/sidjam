@@ -1,5 +1,5 @@
 <?php
-$version = "2025.07.19";
+$version = "2025.07.25";
 
 // Define debug toggle (hardcoded for now)
 $debug_enabled = isset($_GET['debug']) && $_GET['debug'] === 'true'; // Set to true if ?debug=true is in the URL
