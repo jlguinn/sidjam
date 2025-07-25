@@ -1689,6 +1689,11 @@ async function initializeApp() {
             if (!player_state || !isValidState) {
                 window.logmsg("No valid saved state found. Starting a new bout.", 1);
             }
+            const randomThemeIndex = Math.floor(Math.random() * baseColorSchemes.length);
+            brackets.updatePlayerState({ theme: randomThemeIndex });
+            ui.setCurrentThemeIndex(randomThemeIndex);
+            window.logmsg(`New user assigned random theme #${randomThemeIndex}: ${baseColorSchemes[randomThemeIndex].name}`, 1);
+            
             brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateBombButtonBound);
         }
 
