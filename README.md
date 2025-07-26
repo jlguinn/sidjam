@@ -1,7 +1,7 @@
 # sID JAm Help
 
 <div align="center">
-  <img src="image/sidjam_help_legend.jpg" alt="sID JAm Interface" width="1922" height="1397">
+  <img src="[image/sidjam_help_legend.jpg](https://sidjam.com/image/sidjam_help_legend.jpg)" alt="sID JAm Interface" width="1922" height="1397">
 </div>
 
 ---
