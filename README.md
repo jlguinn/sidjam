@@ -1,29 +1,13 @@
-# sID JAm Help
-
-<div align="center">
-  <img src="[image/sidjam_help_legend.jpg](https://sidjam.com/image/sidjam_help_legend.jpg)" alt="sID JAm Interface" width="1922" height="1397">
-</div>
+# sID JAm
 
 ---
 
-## Help
+sID JAm (https://sidjam.com) is a battle of the bands style C64 / SID music player that allows you to choose winners and losers from the HVSC collection in a double-elimination tournament controlled by you.
 
-**Contents:**
+<div align="center">
+  <img src="https://sidjam.com/image/sidjam_help_legend.jpg" alt="sID JAm Interface" width="1922" height="1397">
+</div>
 
-1.  **Song Info**
-2.  **jAM**
-3.  **Winner**
-4.  **Bomb**
-5.  **Brackets / Peek**
-6.  **Visualizations**
-7.  **Voice Mute Buttons**
-8.  **Theme Button**
-9.  **Profile**
-10. **Help**
-
-Welcome to sID JAm!
-
-sID JAm is a battle of the bands style C64 / SID music player that allows you to choose winners and losers from the HVSC collection in a double-elimination tournament controlled by you.
 
 ---
 
