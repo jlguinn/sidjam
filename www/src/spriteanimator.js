@@ -180,7 +180,7 @@ function preloadAssets() {
     const img = new Image();
     img.src = config.spriteSheetPath;
     img.onerror = () => window.logmsg(`Failed to load sprite sheet for ${animationId}: ${config.spriteSheetPath}`, 1);
-    img.onload = () => window.logmsg(`Sprite sheet for ${animationId} loaded`, 1);
+    img.onload = () => window.logmsg(`Sprite sheet for ${animationId} loaded`, 2);
     spriteSheets.set(animationId, img);
 
     if (config.soundTrack) {
@@ -188,7 +188,7 @@ function preloadAssets() {
       audio.preload = 'auto';
       audio.volume = Math.max(0, Math.min(1, config.volume || 1.0)); // Set volume during preload
       audio.onerror = () => window.logmsg(`Failed to load sound for ${animationId}: ${config.soundTrack}`, 1);
-      audio.oncanplaythrough = () => window.logmsg(`Sound for ${animationId} preloaded`, 1);
+      audio.oncanplaythrough = () => window.logmsg(`Sound for ${animationId} preloaded`, 2);
       audioTracks.set(animationId, audio);
     }
   });

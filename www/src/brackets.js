@@ -71,10 +71,6 @@ export let playerState = {
     hintTriggeredThisSong: false 
 };
 
-export function debug(message) {
-    window.logmsg(`[DEBUG] ${message}`, 2);
-}
-
 export function getPlayerState() {
     return playerState;
 }
@@ -604,12 +600,12 @@ export function updateWinner(contenderIndex, updateRoundInfo, updateWinnerButton
             updatePlayerState({ bothContendersSelected: true, winner: null });
         } else {
             updatePlayerState({ winner: contenderIndex });
-            window.logmsg(`Switched winner to contender ${contenderIndex} in ${playerState.activeBracket} bracket`, 1);
+            window.logmsg(`Switched winner to contender ${contenderIndex} in ${playerState.activeBracket} bracket`, 2);
         }
     } else if (playerState.bothContendersSelected && isZeroZeroBracket) {
         const otherContender = contenderIndex === 0 ? 1 : 0;
         updatePlayerState({ winner: otherContender, bothContendersSelected: false });
-        window.logmsg(`Toggled off contender ${contenderIndex}, set contender ${otherContender} as winner in 0-0 bracket`, 1);
+        window.logmsg(`Toggled off contender ${contenderIndex}, set contender ${otherContender} as winner in 0-0 bracket`, 2);
     } else {
         updatePlayerState({ winner: null });
     }

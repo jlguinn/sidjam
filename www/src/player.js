@@ -72,7 +72,7 @@ export async function loadSong(filename, trackNumber, callbacks) {
         }
         
         callbacks.updatePlayPauseButton();
-        window.logmsg(`Playback Success: ${fullFilePath}`, 1);
+        window.logmsg(`Playback Success: ${fullFilePath}`, 2);
 
     } catch (error) {
         window.logmsg(`Playback Failure: ${fullFilePath}, Error=${error}`, 0);

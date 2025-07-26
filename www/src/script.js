@@ -144,7 +144,7 @@ function triggerHintImmediately(hintName) {
     let message = '';
     let conditionMet = true;
 
-    window.logmsg(`Triggering hint immediately: ${hintName}`, 1);
+    window.logmsg(`Triggering hint immediately: ${hintName}`, 2);
 
     switch (hintName) {
         case 'winner':
@@ -171,7 +171,7 @@ function abandonHintSystem() {
     const state = brackets.getPlayerState();
     if (!state.nextHint) return;
     
-    window.logmsg("Hint system abandoned.", 1);
+    window.logmsg("Hint system abandoned.", 2);
     brackets.updatePlayerState({ nextHint: null });
 
     clearAllHintEffects(); // Use the new centralized function
@@ -179,7 +179,7 @@ function abandonHintSystem() {
 }
 
 function pauseHintEffects() {
-    window.logmsg("Pausing hint effects.", 1);
+    window.logmsg("Pausing hint effects.", 2);
     clearAllHintEffects(); // Use the new centralized function
 }
 
@@ -187,7 +187,7 @@ function satisfyHint(hintToSatisfy) {
     const state = brackets.getPlayerState();
     if (state.nextHint !== hintToSatisfy) return;
 
-    window.logmsg(`Hint satisfied: ${hintToSatisfy}`, 1);
+    window.logmsg(`Hint satisfied: ${hintToSatisfy}`, 2);
 
     clearAllHintEffects();
     
@@ -337,7 +337,7 @@ function handleHintSystem(currentTime) {
             break;
     }
     if (conditionMet) {
-        window.logmsg(`Triggering hint: ${state.nextHint}`, 1);
+        window.logmsg(`Triggering hint: ${state.nextHint}`, 2);
         brackets.updatePlayerState({ hintTriggeredThisSong: true });
         
         const highlightSpan = document.createElement('span');
@@ -446,9 +446,11 @@ window.toggleVUMeters = () => {
 };
 
 window.togglePlayPause = async () => {
+    // 
     // If the player object doesn't exist yet, this is the first play click.
     if (!player.sidPlayer) {
-        console.log("First play click: Initializing player and loading song...");
+        window.logmsg("First play click: Initializing player and loading song...",2);
+        window.logmsg('[>]',1);
         brackets.updatePlayerState({ hasPlayed: true });
         // 1. Initialize the player and create the audio context from a user gesture.
         await player.initPlayer();
@@ -495,11 +497,13 @@ window.togglePlayPause = async () => {
 
     // --- Normal play/pause toggle ---
     if (player.isPlaying) {
+        window.logmsg('[||]',1);
         player.sidPlayer.pause();
         player.setIsPlaying(false);
         player.stopTimer(updateJamButtonBound);
         viz.toggleWaveformFreeze(true);
     } else {
+        window.logmsg('[>]',1);
         viz.toggleWaveformFreeze(false);
         player.sidPlayer.play();
         player.setIsPlaying(true);
@@ -618,7 +622,7 @@ window.toggleRevive = () => {
     window.logmsg("[Revive]", 1);
     const reviveButton = document.getElementById('reviveButton');
     if (reviveButton && reviveButton.classList.contains('disabled')) {
-        window.logmsg("Revive button is disabled; action ignored.", 1);
+        window.logmsg("(Revive disabled; ignoring.)", 1);
         return;
     }
     brackets.toggleRevive(
@@ -1689,7 +1693,7 @@ async function initializeApp() {
     
     let isValidState = true;
     if (player_state) {
-        window.logmsg("Validating loaded player state...", 1);
+        window.logmsg("Validating loaded player state...", 2);
         const validPaths = new Set(window.sidJamData.sidFiles);
 
         // Check 1: Validate contender paths
@@ -1702,10 +1706,6 @@ async function initializeApp() {
             window.logmsg(`State invalid: Saved 'nowPlayingSong' path '${player_state.nowPlayingSong}' is no longer valid.`, 0);
             isValidState = false;
         }
-
-        if (isValidState) {
-            window.logmsg("Loaded player state is valid.", 1);
-        }
     }
 
     if (player_state && isValidState) {
@@ -1714,22 +1714,22 @@ async function initializeApp() {
         ui.setCurrentThemeIndex(brackets.getPlayerState().theme || 0);
     } else {
         if (!player_state || !isValidState) {
-            window.logmsg("No valid saved state found. Starting a new bout.", 1);
+            window.logmsg("No valid saved state found. Starting a new bout.", 2);
         }
         const randomThemeIndex = Math.floor(Math.random() * baseColorSchemes.length);
         brackets.updatePlayerState({ theme: randomThemeIndex });
         ui.setCurrentThemeIndex(randomThemeIndex);
-        window.logmsg(`New user assigned random theme #${randomThemeIndex}: ${baseColorSchemes[randomThemeIndex].name}`, 1);
+        window.logmsg(`New user assigned random theme #${randomThemeIndex}: ${baseColorSchemes[randomThemeIndex].name}`, 2);
         
         brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateBombButtonBound);
     }
 
     if (!window.isLoggedIn) {
         brackets.updatePlayerState({ nextHint: 'jAM' });
-        window.logmsg("Unregistered user: Initializing hint system.", 1);
+        window.logmsg("Unregistered user: Initializing hint system.", 2);
     } else {
         brackets.updatePlayerState({ nextHint: null });
-        window.logmsg("Registered user. No hints needed.", 1);
+        window.logmsg("Registered user. No hints needed.", 2);
     }
 
     updateVsMatchupBound();
@@ -1765,7 +1765,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const helpButton = document.getElementById('help-button'); // This is the button that *opens* the help
     if (helpButton) {
         helpButton.addEventListener('click', () => {
-            window.logmsg('Help button clicked, opening help.html in new tab', 1);
+            window.logmsg('Help button clicked, opening help.html in new tab', 2);
             satisfyHint('reg');
             window.open('help.html', '_blank'); // Opens help.html in a new tab
         });
