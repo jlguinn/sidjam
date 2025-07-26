@@ -13,9 +13,18 @@ import * as player from './player.js';
 import { renderSpriteAnimation } from './spriteAnimator.js';
 import * as viz from './viz.js';
 
-let themeButtonFadeTimeout = null;
 let currentSongElapsedTime = 0;
+let debouncedFilterHandler = null;
 
+
+function debounce(func, delay) {
+    let timeout;
+    return function(...args) {
+        const context = this;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(context, args), delay);
+    };
+}
 
 // Define bound functions at the top to ensure availability
 const updateTimerBound = () => player.updateTimer();
@@ -744,15 +753,13 @@ function toggleSongList() {
         songList.innerHTML = '';
         songListWrapper.dataset.observerSet = "";
         document.removeEventListener('keydown', handleEscapeKey);
-        filterInput.removeEventListener('input', handleFilterInput);
 
-        ui.applyTheme(state.currentMode);
-        updateVsMatchupBound();
-        updateRoundInfoBound();
-        updateWinnerButtonsBound();
-        updateBombButtonBound();
+        // Remove the specific debounced event listener
+        if (debouncedFilterHandler) {
+            filterInput.removeEventListener('input', debouncedFilterHandler);
+        }
     } else {
-        satisfyHint('bracket'); 
+        satisfyHint('bracket');
         overlay.style.display = "block";
         filterInput.value = "";
         currentOffset = 0;
@@ -763,7 +770,10 @@ function toggleSongList() {
         songListWrapper.scrollTop = 0;
         populateSongList("");
         document.addEventListener('keydown', handleEscapeKey);
-        filterInput.addEventListener('input', handleFilterInput);
+
+        // Create the debounced handler and add it as the event listener
+        debouncedFilterHandler = debounce(() => handleFilterInput(), 300);
+        filterInput.addEventListener('input', debouncedFilterHandler);
     }
 }
 
