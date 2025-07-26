@@ -157,15 +157,15 @@ const ANIMATION_CONFIGS = {
   jam: {
     spriteSheetPath: '../image/jam-sprite.png',
     staticImagePath: '../image/jam-static.png',
-    scaleFactor: 160 / 320,
+    scaleFactor: 154 / 320,
     frames: [
       { x: 0, y: 0, width: 320, height: 238, offsetX: -6, offsetY: -1 },
       { x: 320, y: 0, width: 320, height: 238, offsetX: -1, offsetY: 0 },
       { x: 0, y: 238, width: 320, height: 238, offsetX: -6, offsetY: 3 },
       { x: 320, y: 238, width: 320, height: 238, offsetX: -2, offsetY: -1 }
     ],
-    globalOffsetX: 0,
-    globalOffsetY: 0,
+    globalOffsetX: -2,
+    globalOffsetY: 7,
     delayMs: 400,
     loop: true
   }
