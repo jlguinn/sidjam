@@ -179,7 +179,9 @@ export function updateVsMatchup(playerState) {
 
     if (playerState.currentMode === "nowPlaying") {
         vsMatchup.classList.add("now-playing");
-        song1.innerHTML = `<span class="text--exterior">${playerState.nowPlayingSong ? playerState.nowPlayingSong.split('/').pop() : '-'}</span>`;
+        // Conditionally add revive-highlight to the inner span
+        const highlightClass = playerState.isReviveActive ? 'revive-highlight' : ''; //
+        song1.innerHTML = `<span class="text--exterior ${highlightClass}">${playerState.nowPlayingSong ? playerState.nowPlayingSong.split('/').pop() : '-'}</span>`; //
         vsText.textContent = "";
         song2.innerHTML = "";
     } else {
@@ -474,6 +476,13 @@ export function updateBombButton(playerState, sidPlayer) {
             bombButton.style.display = "none";
             reviveButton.style.display = "block";
             updateReviveButton(playerState.isReviveActive);
+
+            const isClickable = sidPlayer && player.isPlaying;
+            if (isClickable) {
+                reviveButton.classList.remove("disabled");
+            } else {
+                reviveButton.classList.add("disabled");
+            }
             return;
         }
         bombControls.classList.add("hidden");
@@ -518,20 +527,22 @@ export function updateReviveButton(isReviveActive) {
 }
 
 export function updateSongTitleHighlight(mode, isReviveActive) {
-    const songFileName = document.getElementById("song1");
-    if (!songFileName) {
+    const song1El = document.getElementById("song1");
+    if (!song1El) {
         console.error('Song title element not found in the DOM');
         return;
     }
 
-    const baseTheme = baseColorSchemes[currentThemeIndex];
-    const theme = mode === "nowPlaying" ? getInvertedTheme(baseTheme) : baseTheme;
-
-    songFileName.style.color = theme.exteriorTextColor;
-    if (isReviveActive) {
-        songFileName.classList.add("revive-highlight");
-    } else {
-        songFileName.classList.remove("revive-highlight");
+    // Target the inner span in nowPlaying mode for immediate feedback
+    if (mode === "nowPlaying") {
+        const innerSpan = song1El.querySelector('span');
+        if (innerSpan) {
+            if (isReviveActive) {
+                innerSpan.classList.add("revive-highlight");
+            } else {
+                innerSpan.classList.remove("revive-highlight");
+            }
+        }
     }
 
     updateRoundInfo(brackets.getPlayerState());

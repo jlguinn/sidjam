@@ -788,6 +788,7 @@ body {
 #reviveButton.disabled {
     filter: grayscale(70%) brightness(0.7);
     cursor: not-allowed;
+    pointer-events: none; /* Add this line */
 }
 
 #reviveButton.active {

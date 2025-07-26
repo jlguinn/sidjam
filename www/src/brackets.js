@@ -299,14 +299,15 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                         return;
                     }
                 }
+                const songToLoadAfterRevive = playerState.nowPlayingSong;
 
                 updatePlayerState({
                     currentMode: "bout",
                     activeBracket: newBracket,
                     peekBracket: newBracket,
-                    contenders: [playerState.nowPlayingSong, newContender],
+                    contenders: [songToLoadAfterRevive, newContender], // Use the variable here
                     isReviveActive: false,
-                    nowPlayingSong: null,
+                    nowPlayingSong: null, // This is now safe to clear
                     nowPlayingSongBracket: null,
                     activeContender: 0,
                     roundCount: 1,
@@ -317,7 +318,7 @@ export async function jamToggle(sidPlayer, loadSong, applyTheme, updateVsMatchup
                 });
 
                 applyTheme("bout");
-                loadSong(playerState.nowPlayingSong, -1, true);
+                loadSong(songToLoadAfterRevive, -1, true);
                 updatePlayerState({ hasPlayed: true });
                 updateVsMatchup(playerState);
                 updateRoundInfo(playerState);

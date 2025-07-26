@@ -373,6 +373,7 @@ async function savePlayerState() {
         activeBracket: playerState.activeBracket,
         currentMode: playerState.currentMode,
         nowPlayingSong: playerState.nowPlayingSong,
+        nowPlayingSongBracket: playerState.nowPlayingSongBracket,
         theme: ui.getCurrentThemeIndex(),
         isWaveformActive: playerState.isWaveformActive,
         isVUActive: playerState.isVUActive,
@@ -496,6 +497,7 @@ window.togglePlayPause = async () => {
         player.startTimer(player.updateTimer, updateJamButtonBound, handleHintSystem);
     }
     ui.updatePlayPauseButton(player.isPlaying);
+    updateBombButtonBound();
 };
 
 window.jamToggle = () => {
@@ -602,8 +604,14 @@ window.toggleBomb = () => {
         updateWinnerButtonsBound
     );
 };
+
 window.toggleRevive = () => {
     window.logmsg("[Revive]", 1);
+    const reviveButton = document.getElementById('reviveButton');
+    if (reviveButton && reviveButton.classList.contains('disabled')) {
+        window.logmsg("Revive button is disabled; action ignored.", 1);
+        return;
+    }
     brackets.toggleRevive(
         ui.updateReviveButton,
         () => ui.updateSongTitleHighlight(brackets.getPlayerState().currentMode, brackets.getPlayerState().isReviveActive)
@@ -1643,71 +1651,80 @@ async function initializeApp() {
     try {
         // Player is NOT initialized here. We wait for the user's click.
         
-        // Fetch all necessary data (sidtunes, results, etc.)
-        const songsResponse = await fetch(`dbcontrol/get_sidtunes.php?full_list=true&user_id=${window.user.id}`);
-        if (!songsResponse.ok) throw new Error(`Failed to load sidtunes: ${songsResponse.statusText}`);
-        const tunesData = await songsResponse.json();
-        window.sidJamData.sidFiles = tunesData.map(tune => tune.fullpath);
-        window.sidJamData.pathToId = {};
-        window.sidJamData.pathToRecord = {};
-        tunesData.forEach(tune => {
-            window.sidJamData.pathToId[tune.fullpath] = tune.id;
-            window.sidJamData.pathToRecord[tune.fullpath] = { wins: tune.wins, losses: tune.losses };
-        });
+    // Fetch all necessary data (sidtunes, results, etc.)
+    const songsResponse = await fetch(`dbcontrol/get_sidtunes.php?full_list=true&user_id=${window.user.id}`);
+    if (!songsResponse.ok) throw new Error(`Failed to load sidtunes: ${songsResponse.statusText}`);
+    const tunesData = await songsResponse.json();
+    window.sidJamData.sidFiles = tunesData.map(tune => tune.fullpath);
+    window.sidJamData.pathToId = {};
+    window.sidJamData.pathToRecord = {};
+    tunesData.forEach(tune => {
+        window.sidJamData.pathToId[tune.fullpath] = tune.id;
+        window.sidJamData.pathToRecord[tune.fullpath] = { wins: tune.wins, losses: tune.losses };
+    });
 
-        const leaderboardResponse = await fetch('dbcontrol/get_sidtunes.php?full_list=true&bracket=Leaderboard');
-        if (!leaderboardResponse.ok) throw new Error(`Failed to load Leaderboard tunes: ${leaderboardResponse.statusText}`);
-        const leaderboardData = await leaderboardResponse.json();
-        leaderboardData.forEach(tune => {
-            window.sidJamData.pathToRecord[tune.fullpath] = { wins: tune.wins, losses: tune.losses };
-        });
+    const leaderboardResponse = await fetch('dbcontrol/get_sidtunes.php?full_list=true&bracket=Leaderboard');
+    if (!leaderboardResponse.ok) throw new Error(`Failed to load Leaderboard tunes: ${leaderboardResponse.statusText}`);
+    const leaderboardData = await leaderboardResponse.json();
+    leaderboardData.forEach(tune => {
+        window.sidJamData.pathToRecord[tune.fullpath] = { wins: tune.wins, losses: tune.losses };
+    });
 
-        const resultsResponse = await fetch(`dbcontrol/get_results.php?user_id=${window.user.id}`);
-        if (!resultsResponse.ok) throw new Error(`Failed to load results: ${resultsResponse.statusText}`);
-        window.sidJamData.cachedResults = await resultsResponse.json();
+    const resultsResponse = await fetch(`dbcontrol/get_results.php?user_id=${window.user.id}`);
+    if (!resultsResponse.ok) throw new Error(`Failed to load results: ${resultsResponse.statusText}`);
+    window.sidJamData.cachedResults = await resultsResponse.json();
 
-        // Determine initial state.
-        const player_state = await loadPlayerState();
+    // Determine initial state.
+    const player_state = await loadPlayerState();
+    
+    let isValidState = true;
+    if (player_state) {
+        window.logmsg("Validating loaded player state...", 1);
+        const validPaths = new Set(window.sidJamData.sidFiles);
+
+        // Check 1: Validate contender paths
+        if (player_state.contenders?.some(path => path && !validPaths.has(path))) {
+            window.logmsg("State invalid: A saved contender path is no longer valid.", 0);
+            isValidState = false;
+        }
+        // Check 2: Validate the 'Now Playing' song path
+        if (player_state.nowPlayingSong && !validPaths.has(player_state.nowPlayingSong)) {
+            window.logmsg(`State invalid: Saved 'nowPlayingSong' path '${player_state.nowPlayingSong}' is no longer valid.`, 0);
+            isValidState = false;
+        }
+
+        if (isValidState) {
+            window.logmsg("Loaded player state is valid.", 1);
+        }
+    }
+
+    if (player_state && isValidState) {
+        // ... (The rest of the function is correct and remains unchanged)
+        brackets.updatePlayerState({ ...player_state });
+        ui.setCurrentThemeIndex(brackets.getPlayerState().theme || 0);
+    } else {
+        if (!player_state || !isValidState) {
+            window.logmsg("No valid saved state found. Starting a new bout.", 1);
+        }
+        const randomThemeIndex = Math.floor(Math.random() * baseColorSchemes.length);
+        brackets.updatePlayerState({ theme: randomThemeIndex });
+        ui.setCurrentThemeIndex(randomThemeIndex);
+        window.logmsg(`New user assigned random theme #${randomThemeIndex}: ${baseColorSchemes[randomThemeIndex].name}`, 1);
         
-        let isValidState = true;
-        if (player_state) {
-            const validPaths = new Set(window.sidJamData.sidFiles);
-            if (player_state.contenders?.some(path => path && !validPaths.has(path))) {
-                window.logmsg("Invalidating saved state due to missing contender path.", 1);
-                isValidState = false;
-            }
-            if (player_state.nowPlayingSong && !validPaths.has(player_state.nowPlayingSong)) {
-                window.logmsg("Invalidating saved state due to missing nowPlayingSong path.", 1);
-                isValidState = false;
-            }
-        }
+        brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateBombButtonBound);
+    }
 
-        if (player_state && isValidState) {
-            brackets.updatePlayerState({ ...player_state });
-            ui.setCurrentThemeIndex(brackets.getPlayerState().theme || 0);
-        } else {
-            if (!player_state || !isValidState) {
-                window.logmsg("No valid saved state found. Starting a new bout.", 1);
-            }
-            const randomThemeIndex = Math.floor(Math.random() * baseColorSchemes.length);
-            brackets.updatePlayerState({ theme: randomThemeIndex });
-            ui.setCurrentThemeIndex(randomThemeIndex);
-            window.logmsg(`New user assigned random theme #${randomThemeIndex}: ${baseColorSchemes[randomThemeIndex].name}`, 1);
-            
-            brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateBombButtonBound);
-        }
+    if (!window.isLoggedIn) {
+        brackets.updatePlayerState({ nextHint: 'jAM' });
+        window.logmsg("Unregistered user: Initializing hint system.", 1);
+    } else {
+        brackets.updatePlayerState({ nextHint: null });
+        window.logmsg("Registered user. No hints needed.", 1);
+    }
 
-        if (!window.isLoggedIn) {
-            brackets.updatePlayerState({ nextHint: 'jAM' });
-            window.logmsg("Unregistered user: Initializing hint system.", 1);
-        } else {
-            brackets.updatePlayerState({ nextHint: null });
-            window.logmsg("Registered user. No hints needed.", 1);
-        }
-
-        updateVsMatchupBound();
-        updateRoundInfoBound();
-        brackets.updateBracketDropdown();
+    updateVsMatchupBound();
+    updateRoundInfoBound();
+    brackets.updateBracketDropdown();
         
     } catch (error) {
         window.logmsg(`Error during data initialization: ${error}`, 0);
