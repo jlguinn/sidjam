@@ -147,6 +147,13 @@ body {
     width: 100%;
 }
 
+#vs-matchup .text--exterior.revive-highlight {
+    background-color: var(--success);
+    padding: 2px var(--spacing-xs);
+    border-radius: 3px;
+    color: #000000; /* Ensures readable black text on the highlight background */
+}
+
 #vs-text {
     flex: none;
     padding: 0 var(--spacing-xs);

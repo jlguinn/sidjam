@@ -388,6 +388,7 @@ export function updatePlayPauseButton(isPlaying) {
         return;
     }
     button.style.backgroundImage = isPlaying ? "url('../image/pause.png')" : "url('../image/play.png')";
+    updateBombButton(brackets.getPlayerState(), player.sidPlayer);
 }
 
 export function updateWinnerButtons(playerState, sidPlayer) {
@@ -476,8 +477,7 @@ export function updateBombButton(playerState, sidPlayer) {
             bombButton.style.display = "none";
             reviveButton.style.display = "block";
             updateReviveButton(playerState.isReviveActive);
-
-            const isClickable = sidPlayer && player.isPlaying;
+            const isClickable = !!sidPlayer;
             if (isClickable) {
                 reviveButton.classList.remove("disabled");
             } else {
