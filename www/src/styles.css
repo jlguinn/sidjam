@@ -754,6 +754,12 @@ body {
     z-index: 2;
 }
 
+@keyframes gentle-throb {
+    0% { filter: brightness(0.85); }
+    50% { filter: brightness(1.15); }
+    100% { filter: brightness(0.9); }
+}
+
 @keyframes throb {
     0% { filter: brightness(0.7); }
     50% { filter: brightness(1.7); }
@@ -800,7 +806,7 @@ body {
 
 #reviveButton.active {
     animation:
-        throb 0.7s infinite ease-in-out,
+        gentle-throb 0.7s infinite ease-in-out,
         flitter 2.82s infinite ease-in-out;
 }
 
