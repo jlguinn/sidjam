@@ -24,7 +24,6 @@ export async function initPlayer() {
     sidPlayer = ScriptNodePlayer.getInstance();
     window.player = sidPlayer;
     window.backend = backend; // Make backend global for timer access
-    console.log("Player object created.");
 }
 
 /**
@@ -45,7 +44,7 @@ export async function loadSong(filename, trackNumber, callbacks) {
         window.viz.resetVisualizationState();
     }
 
-    const rootPath = 'sid/HVSC_82-all-of-them/C64Music/';
+    const rootPath = 'sid/HVSC_83-all-of-them/C64Music/';
     const fullFilePath = `${rootPath}${filename.startsWith('/') ? filename.slice(1) : filename}`;
 
     try {
