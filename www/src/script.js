@@ -1803,12 +1803,13 @@ async function checkAdminAndShowUserCount() {
       }
       const data = await response.json();
 
-      // On success, log the welcome message to the console
-      if (data.success) {
-        console.log(`Hello Admin! There are ${data.user_count} registered users.`);
-      } else {
-        console.error("Admin check failed:", data.message);
-      }
+            // On success, log the welcome message to the console including active users
+            if (data.success) {
+                const active = typeof data.active_user_count !== 'undefined' ? data.active_user_count : 'unknown';
+                console.log(`Hello Admin! There are ${data.user_count} registered users (${active} active users).`);
+            } else {
+                console.error("Admin check failed:", data.message);
+            }
     } catch (error) {
       console.error("Error fetching registered user count:", error);
     }

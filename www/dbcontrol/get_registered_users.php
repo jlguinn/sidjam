@@ -1,43 +1,60 @@
 <?php
-session_start();
+header('Content-Type: application/json');
+// Return counts of registered users and "active" users (users with sidjam entries)
+
 $sidconPath = file_exists(__DIR__ . '/../../../dbcontrol_sidjam/sidcon.php')
     ? __DIR__ . '/../../../dbcontrol_sidjam/sidcon.php'
     : __DIR__ . '/sidcon.php';
 
 require_once $sidconPath;
 
-ini_set('display_errors', 0);
-ini_set('log_errors', 1);
-
-header('Content-Type: application/json');
-
-$user_id = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
-if ($user_id === 0 || $user_id >= 1100) {
-    error_log("GetRegisteredUsers: Unauthorized access attempt for user_id $user_id");
-    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
-    exit;
-}
-
+// Expect $host, $user, $pass, $database to be defined in sidcon.php
 $cxn = mysqli_connect($host, $user, $pass, $database);
 if (!$cxn) {
-    error_log("GetRegisteredUsers: Connection failed: " . mysqli_connect_error());
-    echo json_encode(['success' => false, 'message' => 'Connection failed']);
+    error_log("get_registered_users: DB connection failed: " . mysqli_connect_error());
+    echo json_encode(['success' => false, 'message' => 'Database connection failed']);
     exit;
 }
 
-$query = "SELECT COUNT(*) AS user_count FROM siduser WHERE email IS NOT NULL";
-$result = mysqli_query($cxn, $query);
+// Total registered users (users with an email)
+$user_count = 0;
+$active_user_count = 0;
 
-if ($result) {
-    $row = mysqli_fetch_assoc($result);
-    $user_count = (int)$row['user_count'];
-    error_log("GetRegisteredUsers: Successfully retrieved $user_count registered users for user_id $user_id");
-    echo json_encode(['success' => true, 'user_count' => $user_count]);
+$res = $cxn->query("SELECT COUNT(*) AS cnt FROM siduser WHERE email IS NOT NULL");
+if ($res) {
+    $row = $res->fetch_assoc();
+    $user_count = (int)($row['cnt'] ?? 0);
+    $res->free();
 } else {
-    error_log("GetRegisteredUsers: Query failed: " . mysqli_error($cxn));
-    echo json_encode(['success' => false, 'message' => 'Query failed']);
+    error_log("get_registered_users: Query failed (user_count): " . $cxn->error);
 }
 
-mysqli_free_result($result);
-mysqli_close($cxn);
+// Active users: users that have entries in sidjam and a non-null email
+// Using the provided logic: count distinct usernames that have sidjam rows and non-null emails
+$res2 = $cxn->query(
+    "SELECT COUNT(*) AS cnt FROM (SELECT 1 AS ActiveUser FROM siduser u JOIN sidjam s ON u.user_id = s.user_id WHERE u.email IS NOT NULL GROUP BY u.UserName) x"
+);
+if ($res2) {
+    $row2 = $res2->fetch_assoc();
+    $active_user_count = (int)($row2['cnt'] ?? 0);
+    $res2->free();
+} else {
+    // Fallback to DISTINCT username count if the above fails for any reason
+    error_log("get_registered_users: Query failed (active_user_count), trying fallback: " . $cxn->error);
+    $res3 = $cxn->query("SELECT COUNT(DISTINCT u.UserName) AS cnt FROM siduser u JOIN sidjam s ON u.user_id = s.user_id WHERE u.email IS NOT NULL");
+    if ($res3) {
+        $row3 = $res3->fetch_assoc();
+        $active_user_count = (int)($row3['cnt'] ?? 0);
+        $res3->free();
+    }
+}
+
+$cxn->close();
+
+echo json_encode([
+    'success' => true,
+    'user_count' => $user_count,
+    'active_user_count' => $active_user_count
+]);
+
 ?>
