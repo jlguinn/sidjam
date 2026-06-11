@@ -191,7 +191,14 @@ $cxn->close();
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>sID JAm</title>
+    <meta name="description" content="sID JAm is a web-based Commodore 64 SID music player and battle-of-the-bands tournament. Explore the HVSC, vote on chiptunes, and decide the winners of this massive retro music tournament.">
+    <meta name="keywords" content="C64, Commodore 64, SID music, HVSC, High Voltage SID Collection, chiptune, 8-bit, emulator, music player, retro gaming, battle of the bands">
+    <meta property="og:title" content="sID JAm - C64 SID Music Battle of the Bands">
+    <meta property="og:description" content="Listen to and vote on thousands of C64 SID tunes from the HVSC. Join the tournament and help find the best 8-bit tracks of all time.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="http://www.sidjam.com/image/sidjam_logo.jpg">
+    <meta property="og:url" content="http://www.sidjam.com/">
+    <title>sID JAm - C64 SID Music Battle of the Bands</title>
     <link rel="stylesheet" href="src/styles.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tektur:wght@400;700&display=swap">
     <script>window.WASM_SEARCH_PATH = 'src/websid/htdocs/';</script>
