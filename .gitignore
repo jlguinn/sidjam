@@ -11,3 +11,6 @@ www/sid/HVSC_*
 www/vendor/
 www/composer.json
 www/composer.lock
+docker-compose.override.yml
+www/src/websid/
+www/src/webaudio-player/
