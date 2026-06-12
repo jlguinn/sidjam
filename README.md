@@ -89,6 +89,18 @@ sID JAm was created with a lot of help from large language AI models including G
 
 ---
 
+## Local development:
+
+After `docker compose up -d` (with the HVSC collection in `www/sid/` and a populated database), generate the static song catalog once per HVSC release:
+
+```
+tools/generate_catalog.sh
+```
+
+This writes `www/catalog/sidtunes.json` (gitignored, derived from the `sidtunes` table), which the app loads at startup instead of querying the full catalog from the database.
+
+---
+
 ## Other notes:
 
 sID JAm uses the HVSC Music collection (version #82 from 2024 December).

@@ -1665,28 +1665,37 @@ async function initializeApp() {
     try {
         // Player is NOT initialized here. We wait for the user's click.
         
-    // Fetch all necessary data (sidtunes, results, etc.)
-    const songsResponse = await fetch(`dbcontrol/get_sidtunes.php?full_list=true&user_id=${window.user.id}`);
-    if (!songsResponse.ok) throw new Error(`Failed to load sidtunes: ${songsResponse.statusText}`);
-    const tunesData = await songsResponse.json();
-    window.sidJamData.sidFiles = tunesData.map(tune => tune.fullpath);
+    // Fetch all necessary data in parallel: the static catalog (immutable per
+    // HVSC release), the user's own results, and the global Leaderboard.
+    const [catalogResponse, resultsResponse, leaderboardResponse] = await Promise.all([
+        fetch('catalog/sidtunes.json'),
+        fetch(`dbcontrol/get_results.php?user_id=${window.user.id}`),
+        fetch('dbcontrol/get_sidtunes.php?full_list=true&bracket=Leaderboard')
+    ]);
+    if (!catalogResponse.ok) throw new Error(`Failed to load sidtunes catalog: ${catalogResponse.statusText}`);
+    if (!resultsResponse.ok) throw new Error(`Failed to load results: ${resultsResponse.statusText}`);
+    if (!leaderboardResponse.ok) throw new Error(`Failed to load Leaderboard tunes: ${leaderboardResponse.statusText}`);
+
+    const catalog = await catalogResponse.json();
+    window.sidJamData.sidFiles = catalog.tunes.map(tune => tune[1]);
     window.sidJamData.pathToId = {};
     window.sidJamData.pathToRecord = {};
-    tunesData.forEach(tune => {
-        window.sidJamData.pathToId[tune.fullpath] = tune.id;
-        window.sidJamData.pathToRecord[tune.fullpath] = { wins: tune.wins, losses: tune.losses };
+    catalog.tunes.forEach(tune => {
+        window.sidJamData.pathToId[tune[1]] = tune[0];
     });
 
-    const leaderboardResponse = await fetch('dbcontrol/get_sidtunes.php?full_list=true&bracket=Leaderboard');
-    if (!leaderboardResponse.ok) throw new Error(`Failed to load Leaderboard tunes: ${leaderboardResponse.statusText}`);
+    window.sidJamData.cachedResults = await resultsResponse.json();
+
+    // The user's own records, then the global Leaderboard records on top —
+    // same precedence as the old serial full_list fetches. Tunes absent from
+    // pathToRecord read as { wins: 0, losses: 0 } everywhere it is consumed.
+    Object.entries(window.sidJamData.cachedResults).forEach(([fullpath, record]) => {
+        window.sidJamData.pathToRecord[fullpath] = { wins: record.wins, losses: record.losses };
+    });
     const leaderboardData = await leaderboardResponse.json();
     leaderboardData.forEach(tune => {
         window.sidJamData.pathToRecord[tune.fullpath] = { wins: tune.wins, losses: tune.losses };
     });
-
-    const resultsResponse = await fetch(`dbcontrol/get_results.php?user_id=${window.user.id}`);
-    if (!resultsResponse.ok) throw new Error(`Failed to load results: ${resultsResponse.statusText}`);
-    window.sidJamData.cachedResults = await resultsResponse.json();
 
     // Determine initial state.
     const player_state = await loadPlayerState();

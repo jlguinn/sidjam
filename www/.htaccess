@@ -1,0 +1,5 @@
+# Debian's default deflate.conf omits application/json — without this the
+# 3MB static catalog (and every dbcontrol JSON response) crosses the wire raw.
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE application/json
+</IfModule>
