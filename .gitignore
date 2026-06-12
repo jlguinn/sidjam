@@ -14,3 +14,5 @@ www/composer.lock
 docker-compose.override.yml
 www/src/websid/
 www/src/webaudio-player/
+# Generated static catalog (rebuild with tools/generate_catalog.sh)
+www/catalog/
