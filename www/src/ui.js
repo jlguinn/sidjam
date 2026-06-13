@@ -232,6 +232,12 @@ export function updateRoundInfo(playerState) {
     }
 
     if (playerState.currentMode === "nowPlaying") {
+        if (!playerState.hasPlayed) {
+            // Shared-link open: mirror bout mode's "Press Play" until the first tap,
+            // then fall through to the natural Now Playing marquee.
+            roundDiv.textContent = "Press Play";
+            return;
+        }
         if (playerState.isReviveActive) {
             roundDiv.innerHTML = `<span class="revive-activated text--exterior">Revive Activated</span>`;
             blinkMessageTimeout = setTimeout(() => {
