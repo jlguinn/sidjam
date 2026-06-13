@@ -19,10 +19,12 @@ const PRUNE = args.includes('--prune');
 const TABLE = opt('--table', 'sidjam');
 const ENDPOINT = opt('--endpoint', 'http://localhost:8001');
 
-const client = new DynamoDBClient({
-    endpoint: ENDPOINT, region: 'us-east-1',
-    credentials: { accessKeyId: 'local', secretAccessKey: 'local' },
-});
+const client = ENDPOINT === 'aws'
+    ? new DynamoDBClient({ region: 'us-east-1' })   // real AWS, ambient credentials
+    : new DynamoDBClient({
+        endpoint: ENDPOINT, region: 'us-east-1',
+        credentials: { accessKeyId: 'local', secretAccessKey: 'local' },
+    });
 const ddb = DynamoDBDocumentClient.from(client, { marshallOptions: { removeUndefinedValues: true } });
 
 // --- read MySQL via docker exec, one JSON document per row (collation-safe) ---
