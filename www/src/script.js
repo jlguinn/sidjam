@@ -699,22 +699,34 @@ window.shareNowPlaying = async () => {
     const shareUrl = buildShareUrl(song, subsong);
     window.logmsg(`Share URL: ${shareUrl}`, 2);
 
-    const shareData = { title: 'sID JAm', text: 'Listen to this SID tune on sID JAm', url: shareUrl };
-    try {
-        if (navigator.share) {
-            await navigator.share(shareData);            // native sheet on mobile
-        } else if (navigator.clipboard?.writeText) {
-            await navigator.clipboard.writeText(shareUrl); // desktop fallback
-            showToast('Share link copied!');
-        } else {
-            showToast('Copy the address bar to share.');
-        }
-    } catch (e) {
-        if (e && e.name === 'AbortError') return;        // user dismissed the share sheet
-        try { await navigator.clipboard.writeText(shareUrl); showToast('Share link copied!'); }
-        catch { showToast("Couldn't share automatically."); }
+    // 1. Native share sheet — mobile, secure context (https). Best UX.
+    if (navigator.share) {
+        try { await navigator.share({ title: 'sID JAm', text: 'Listen to this SID tune on sID JAm', url: shareUrl }); return; }
+        catch (e) { if (e && e.name === 'AbortError') return; /* else fall through to copy */ }
     }
+    // 2. Async clipboard (secure context) -> 3. legacy execCommand (works on plain http).
+    let copied = false;
+    try { if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(shareUrl); copied = true; } } catch { /* fall through */ }
+    if (!copied) copied = legacyCopy(shareUrl);
+    if (copied) showToast('Share link copied!');
+    else window.prompt('Copy this link to share:', shareUrl); // 4. last resort: real URL in a dialog
 };
+
+// Clipboard copy that works in insecure contexts (plain http) where
+// navigator.clipboard is unavailable. Returns true on success.
+function legacyCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.top = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch { ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+}
 
 function showToast(msg) {
     let t = document.getElementById('share-toast');
