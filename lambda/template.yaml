@@ -15,6 +15,11 @@ Parameters:
   SesSenderEmail:
     Type: String
     Default: admin@sidjam.com
+  OriginSecret:
+    Type: String
+    Default: ''
+    NoEcho: true
+    Description: Shared secret CloudFront injects as x-origin-verify; empty disables the check
 
 Resources:
   SidjamTable:
@@ -60,6 +65,7 @@ Resources:
           CATALOG_KEY: catalog/sidtunes.json
           SES_SENDER_EMAIL: !Ref SesSenderEmail
           SES_SENDER_NAME: sID JAm
+          ORIGIN_SECRET: !Ref OriginSecret
       Policies:
         - DynamoDBCrudPolicy: { TableName: !Ref TableName }
         - S3ReadPolicy: { BucketName: !Ref CatalogBucket }

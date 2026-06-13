@@ -31,6 +31,14 @@ const routes = {
 
 export async function handler(event) {
     const req = parseRequest(event);
+    // CloudFront injects this secret on the API origin; with it set, direct
+    // Function URL access is rejected (browser-POST-compatible alternative to
+    // IAM OAC, which requires a client-supplied payload hash on POST).
+    const secret = process.env.ORIGIN_SECRET;
+    if (secret && req.headers['x-origin-verify'] !== secret) {
+        return { statusCode: 403, headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify({ error: 'Forbidden' }) };
+    }
     const name = req.path.replace(/^.*\/dbcontrol\//, '');
     const route = routes[name];
     if (!route) {
