@@ -18,6 +18,8 @@ const opt = (name, dflt) => { const i = args.indexOf(name); return i >= 0 ? args
 const PRUNE = args.includes('--prune');
 const TABLE = opt('--table', 'sidjam');
 const ENDPOINT = opt('--endpoint', 'http://localhost:8001');
+const DB = opt('--db', 'sidjam');
+const WIPE = args.includes('--wipe');
 
 const client = ENDPOINT === 'aws'
     ? new DynamoDBClient({ region: 'us-east-1' })   // real AWS, ambient credentials
@@ -31,7 +33,7 @@ const ddb = DynamoDBDocumentClient.from(client, { marshallOptions: { removeUndef
 function mysqlRows(sql) {
     const out = execFileSync('docker', [
         'compose', 'exec', '-T', 'sidjam-db',
-        'mysql', '-N', '-B', '-r', '-usiduser', '-pjam@sid2025', 'sidjam', '-e', sql,
+        'mysql', '-N', '-B', '-r', '-usiduser', '-pjam@sid2025', DB, '-e', sql,
     ], {
         cwd: new URL('../..', import.meta.url).pathname,
         env: { ...process.env, PATH: `${process.env.HOME}/bin:${process.env.PATH}`,
@@ -110,6 +112,27 @@ const keptIds = new Set(kept.map(u => u.user_id));
 const keptVotes = votes.filter(v => keptIds.has(v.user_id) || !PRUNE);
 
 await ensureTable();
+
+if (WIPE) {
+    const { ScanCommand } = await import('@aws-sdk/lib-dynamodb');
+    let wiped = 0, key;
+    do {
+        const r = await ddb.send(new ScanCommand({ TableName: TABLE,
+            ProjectionExpression: 'PK, SK', ExclusiveStartKey: key }));
+        for (let i = 0; i < r.Items.length; i += 25) {
+            const chunk = r.Items.slice(i, i + 25).map(Key => ({ DeleteRequest: { Key } }));
+            let req = { RequestItems: { [TABLE]: chunk } };
+            do {
+                const w = await ddb.send(new BatchWriteCommand(req));
+                req = w.UnprocessedItems && Object.keys(w.UnprocessedItems).length
+                    ? { RequestItems: w.UnprocessedItems } : null;
+            } while (req);
+            wiped += chunk.length;
+        }
+        key = r.LastEvaluatedKey;
+    } while (key);
+    console.log(`wiped ${wiped} existing items`);
+}
 
 const userItems = kept.map(u => ({
     PK: `USER#${u.user_id}`, SK: 'META',
