@@ -1647,6 +1647,10 @@ window.flashProfileIcon = function() {
 };
 
 async function initializeApp() {
+    // Static hosting: index.html kicks off a bootstrap fetch that resolves
+    // window.user / window.isLoggedIn (on PHP hosting index.php injects them
+    // inline and this promise is undefined).
+    if (window.userReady) await window.userReady;
     window.logmsg('sID JAm application initializing...');
     checkAdminAndShowUserCount();
     const profileIcon = document.getElementById('profile-icon');

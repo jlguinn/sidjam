@@ -18,3 +18,4 @@ www/src/webaudio-player/
 www/catalog/
 lambda/node_modules/
 lambda/.aws-sam/
+www/index.html
