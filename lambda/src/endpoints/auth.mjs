@@ -103,6 +103,8 @@ export async function register(req) {
         });
     }
 
+    console.log(`[REGISTER] user_id=${userId} | username="${username}" | email=${email} | ${guest && !guest.email ? 'guest-upgrade' : 'new'}`);
+
     const bodyHtml = `
     <p>Thank you for registering to sID JAm!</p>
     <p>Visit <a href="https://sidjam.com">https://sidjam.com</a> to access sID JAm.</p>

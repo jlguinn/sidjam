@@ -20,12 +20,13 @@ export async function sendMail(toEmail, subject, body, isHtml = false) {
         const Body = isHtml
             ? { Html: { Charset: 'UTF-8', Data: body }, Text: { Charset: 'UTF-8', Data: stripTags(body) } }
             : { Text: { Charset: 'UTF-8', Data: body } };
-        await ses.send(new SendEmailCommand({
+        const res = await ses.send(new SendEmailCommand({
             Destination: { ToAddresses: [toEmail] },
             Message: { Body, Subject: { Charset: 'UTF-8', Data: subject } },
             Source: `${SENDER_NAME} <${SENDER_EMAIL}>`,
             ReplyToAddresses: [SENDER_EMAIL],
         }));
+        console.log(`[MAIL] sent to ${toEmail} | "${subject}" | MessageId=${res?.MessageId ?? 'unknown'}`);
         return true;
     } catch (e) {
         console.error(`sendMail failed for ${toEmail}: ${e.message}`);
