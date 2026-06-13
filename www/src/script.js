@@ -15,6 +15,8 @@ import * as viz from './viz.js';
 
 let currentSongElapsedTime = 0;
 let debouncedFilterHandler = null;
+let pendingShareSubsong = 0;   // subsong from a shared link, honored on first load
+let sharedTrackApplied = false; // set when initializeApp opened a shared track
 
 
 function debounce(func, delay) {
@@ -446,7 +448,8 @@ window.toggleVUMeters = () => {
 };
 
 window.togglePlayPause = async () => {
-    // 
+    document.getElementById('playPauseButton')?.classList.remove('throb'); // clear shared-link pulse on first tap
+    //
     // If the player object doesn't exist yet, this is the first play click.
     if (!player.sidPlayer) {
         window.logmsg("First play click: Initializing player and loading song...",2);
@@ -468,7 +471,10 @@ window.togglePlayPause = async () => {
 
         if (songToPlay) {
             // 3. Load the CORRECT song and tell it to autoplay.
-            await player.loadSong(songToPlay, -1, {
+            //    Honor a shared-link subsong on this first load, else default (-1).
+            const firstTrack = pendingShareSubsong > 0 ? pendingShareSubsong : -1;
+            pendingShareSubsong = 0;
+            await player.loadSong(songToPlay, firstTrack, {
                 autoPlay: true,
                 updateSongInfo: () => ui.updateSongInfo(player.sidPlayer),
                 updatePlayPauseButton: () => ui.updatePlayPauseButton(player.isPlaying),
@@ -669,6 +675,94 @@ window.prevTrack = () => {
         loadSongBound(currentSongFilename, targetTrack, true);
     }
 };
+
+// --- Share: capture the now-playing track as a "magic" URL and hand it to the
+// native share sheet (mobile) or clipboard (desktop). Pure client-side. ---
+function buildShareUrl(song, subsong) {
+    // base64url so the HVSC path travels as one opaque token
+    const token = btoa(unescape(encodeURIComponent(song)))
+        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const url = new URL(window.location.origin + window.location.pathname);
+    url.searchParams.set('play', token);
+    if (subsong > 0) url.searchParams.set('t', String(subsong));
+    return url.toString();
+}
+
+window.shareNowPlaying = async () => {
+    const state = brackets.getPlayerState();
+    const song = state.currentMode === 'nowPlaying'
+        ? state.nowPlayingSong
+        : state.contenders?.[state.activeContender];
+    if (!song) { showToast('Nothing playing to share yet.'); return; }
+
+    const subsong = player.sidPlayer ? player.sidPlayer.getSongInfo().actualSubsong : 0;
+    const shareUrl = buildShareUrl(song, subsong);
+    window.logmsg(`Share URL: ${shareUrl}`, 2);
+
+    const shareData = { title: 'sID JAm', text: 'Listen to this SID tune on sID JAm', url: shareUrl };
+    try {
+        if (navigator.share) {
+            await navigator.share(shareData);            // native sheet on mobile
+        } else if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(shareUrl); // desktop fallback
+            showToast('Share link copied!');
+        } else {
+            showToast('Copy the address bar to share.');
+        }
+    } catch (e) {
+        if (e && e.name === 'AbortError') return;        // user dismissed the share sheet
+        try { await navigator.clipboard.writeText(shareUrl); showToast('Share link copied!'); }
+        catch { showToast("Couldn't share automatically."); }
+    }
+};
+
+function showToast(msg) {
+    let t = document.getElementById('share-toast');
+    if (!t) { t = document.createElement('div'); t.id = 'share-toast'; document.body.appendChild(t); }
+    t.textContent = msg;
+    t.classList.add('visible');
+    clearTimeout(showToast._timer);
+    showToast._timer = setTimeout(() => t.classList.remove('visible'), 2500);
+}
+
+// Deep-link consume: decode ?play=<token>&t=<subsong> and prime nowPlaying mode.
+// Audio cannot autostart (browser gesture policy) so we only stage the track;
+// the throbbing play button (set in initializeApp) invites the first tap.
+function applySharedTrack(song, subsong) {
+    const validPaths = new Set(window.sidJamData.sidFiles);
+    let path = song;
+    if (!validPaths.has(path)) {
+        const alt = path.replace(/^\/?sid\/C64Music\//, '').replace(/^\/+/, '');
+        if (validPaths.has(alt)) path = alt;
+        else if (validPaths.has('/' + path)) path = '/' + path;
+        else { window.logmsg(`Shared track not in catalog: ${song}`, 0); return false; }
+    }
+    brackets.updatePlayerState({
+        currentMode: 'nowPlaying',
+        nowPlayingSong: path,
+        peekPlayingSong: null,
+        nowPlayingSongBracket: brackets.getSongBracket(path),
+    });
+    pendingShareSubsong = subsong > 0 ? subsong : 0;
+    sharedTrackApplied = true;
+    return true;
+}
+
+function consumeShareLink() {
+    const params = new URLSearchParams(location.search);
+    const tok = params.get('play');
+    if (!tok) return;
+    try {
+        const b64 = tok.replace(/-/g, '+').replace(/_/g, '/');
+        const path = decodeURIComponent(escape(atob(b64)));
+        const sub = parseInt(params.get('t'), 10) || 0;
+        if (applySharedTrack(path, sub)) {
+            window.logmsg(`Opened shared track: ${path}${sub ? ' (subsong ' + sub + ')' : ''}`, 2);
+        }
+    } catch (e) {
+        window.logmsg(`Ignoring malformed share link: ${e}`, 0);
+    }
+}
 
 window.changeBracket = () => {
     const bracketSelect = document.getElementById("bracket-select");
@@ -1737,6 +1831,9 @@ async function initializeApp() {
         brackets.pickContenders(updateRoundInfoBound, updateVsMatchupBound, updateWinnerButtonsBound, updateBombButtonBound);
     }
 
+    // Shared "magic" link (?play=...): override into nowPlaying mode on that track.
+    consumeShareLink();
+
     if (!window.isLoggedIn) {
         brackets.updatePlayerState({ nextHint: 'jAM' });
         window.logmsg("Unregistered user: Initializing hint system.", 2);
@@ -1758,6 +1855,18 @@ async function initializeApp() {
 
     // SET INITIAL UI STATE (NO SONG LOADED)
     document.getElementById('playPauseButton').disabled = false;
+
+    // Load-time footprint: elapsed from initial launch to first bout loaded + play enabled.
+    if (typeof window.__appLaunchT === 'number') {
+        const elapsedSec = (performance.now() - window.__appLaunchT) / 1000;
+        window.logmsg(`First bout loaded, play button enabled — ${elapsedSec.toFixed(2)}s from launch.`, 0);
+    }
+
+    // Shared-link open: pulse the play button (autoplay is blocked) to invite the first tap.
+    if (sharedTrackApplied) {
+        document.getElementById('playPauseButton')?.classList.add('throb');
+    }
+
     document.getElementById('prevButton').disabled = true;
     document.getElementById('nextButton').disabled = true;
     document.getElementById('jamButton').disabled = true;

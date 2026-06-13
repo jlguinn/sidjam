@@ -282,9 +282,56 @@ body {
     background-image: url('../image/next.png');
 }
 
+.image-button--share {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3v12'/%3E%3Cpath d='M8 7l4-4 4 4'/%3E%3Cpath d='M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 26px 26px;
+}
+
+/* Share button: pinned top-left of the player panel (mirrors the color-toggle
+   top-right), and only present in Now Playing mode. */
+#shareButton {
+    position: absolute;
+    top: var(--spacing-xs);
+    left: var(--spacing-xs);
+    margin: 0;
+    z-index: 2;
+    display: none;
+}
+#shareButton.share-visible {
+    display: inline-block;
+}
+#shareButton:hover {
+    filter: brightness(1.2);
+}
+
 .image-button:disabled {
     filter: grayscale(100%) opacity(0.5);
     cursor: not-allowed;
+}
+
+/* Transient "Share link copied!" confirmation (desktop clipboard fallback). */
+#share-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    max-width: 80vw;
+    text-align: center;
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+#share-toast.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
 }
 
 .revive-highlight {

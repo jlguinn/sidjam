@@ -1,5 +1,5 @@
 <?php
-$version = "2026.06.12";
+$version = "2026.06.13";
 
 // Define debug toggle (hardcoded for now)
 $debug_enabled = isset($_GET['debug']) && $_GET['debug'] === 'true'; // Set to true if ?debug=true is in the URL
@@ -214,7 +214,8 @@ $cxn->close();
             const PLAYER_LOG_LEVEL = typeof window.LOG_LEVEL === 'number' ? window.LOG_LEVEL : 0;
             if (PLAYER_LOG_LEVEL >= msgLogLevel) console.log(msg);
         };
-        console.log("sID JAm Version <?php echo $version; ?>");  
+        console.log("sID JAm Version <?php echo $version; ?>");
+        window.__appLaunchT = performance.now();  // launch anchor for load-time footprint
         window.logmsg(`Log Level: ${window.LOG_LEVEL === 1 ? "VERBOSE" : window.LOG_LEVEL === 2 ? "DEBUGGING" : window.LOG_LEVEL === 0 ? "TERSE" : window.LOG_LEVEL === -1 ? "SILENT" : window.LOG_LEVEL.toString()}`, 0);
     </script>
     <script type="module" src="src/script.js"></script>
@@ -250,6 +251,7 @@ $cxn->close();
 
 <section id="player-section">
         <div id="player-info">
+            <button id="shareButton" class="image-button image-button--share" title="Share this track" aria-label="Share this track" onclick="window.shareNowPlaying()"></button>
             <div id="song-title">-</div>
             <div id="track-details">
                 <p id="song-author">Author: -</p>

@@ -179,6 +179,7 @@ export function updateVsMatchup(playerState) {
 
     if (playerState.currentMode === "nowPlaying") {
         vsMatchup.classList.add("now-playing");
+        document.getElementById('shareButton')?.classList.add('share-visible'); // Share is a Now Playing-only action
         // Conditionally add revive-highlight to the inner span
         const highlightClass = playerState.isReviveActive ? 'revive-highlight' : ''; //
         song1.innerHTML = `<span class="text--exterior ${highlightClass}">${playerState.nowPlayingSong ? playerState.nowPlayingSong.split('/').pop() : '-'}</span>`; //
@@ -186,6 +187,7 @@ export function updateVsMatchup(playerState) {
         song2.innerHTML = "";
     } else {
         vsMatchup.classList.remove("now-playing");
+        document.getElementById('shareButton')?.classList.remove('share-visible');
         const songName0 = playerState.contenders[0]?.split('/').pop() || "-";
         const songName1 = playerState.contenders[1]?.split('/').pop() || "-";
         let song1Class = playerState.hasPlayed && playerState.activeContender === 0 ? 'active-song text--contender' : 'text--exterior';
