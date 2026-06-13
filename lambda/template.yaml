@@ -1,0 +1,77 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  sID JAm API - single Lambda serving the /dbcontrol/* contract, DynamoDB
+  single-table, SES via execution role. CloudFront + S3 (static site, HVSC,
+  catalog) are configured separately at cutover; this stack is the dynamic half.
+
+Parameters:
+  TableName:
+    Type: String
+    Default: sidjam
+  CatalogBucket:
+    Type: String
+    Description: S3 bucket holding catalog/sidtunes.json
+  SesSenderEmail:
+    Type: String
+    Default: admin@sidjam.com
+
+Resources:
+  SidjamTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: !Ref TableName
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: PK, AttributeType: S }
+        - { AttributeName: SK, AttributeType: S }
+        - { AttributeName: email_lc, AttributeType: S }
+        - { AttributeName: session_id, AttributeType: S }
+        - { AttributeName: username_lc, AttributeType: S }
+      KeySchema:
+        - { AttributeName: PK, KeyType: HASH }
+        - { AttributeName: SK, KeyType: RANGE }
+      GlobalSecondaryIndexes:
+        - IndexName: gsi_email
+          KeySchema: [{ AttributeName: email_lc, KeyType: HASH }]
+          Projection: { ProjectionType: ALL }
+        - IndexName: gsi_session
+          KeySchema: [{ AttributeName: session_id, KeyType: HASH }]
+          Projection: { ProjectionType: ALL }
+        - IndexName: gsi_uname
+          KeySchema: [{ AttributeName: username_lc, KeyType: HASH }]
+          Projection: { ProjectionType: ALL }
+      TimeToLiveSpecification: { AttributeName: ttl, Enabled: true }
+
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: sidjam-api
+      Runtime: nodejs22.x
+      Handler: src/handler.handler
+      CodeUri: .
+      MemorySize: 256
+      Timeout: 15
+      Environment:
+        Variables:
+          SIDJAM_TABLE: !Ref TableName
+          CATALOG_BUCKET: !Ref CatalogBucket
+          CATALOG_KEY: catalog/sidtunes.json
+          SES_SENDER_EMAIL: !Ref SesSenderEmail
+          SES_SENDER_NAME: sID JAm
+      Policies:
+        - DynamoDBCrudPolicy: { TableName: !Ref TableName }
+        - S3ReadPolicy: { BucketName: !Ref CatalogBucket }
+        - Statement:
+            - Effect: Allow
+              Action: [ 'ses:SendEmail' ]
+              Resource: '*'
+      FunctionUrlConfig:
+        AuthType: NONE   # fronted by CloudFront; locked to OAC at cutover (story 66)
+
+Outputs:
+  FunctionUrl:
+    Value: !GetAtt ApiFunctionUrl.FunctionUrl
+  TableArn:
+    Value: !GetAtt SidjamTable.Arn

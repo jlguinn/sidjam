@@ -141,3 +141,28 @@ hosted zone would add $0.50/mo).
 4. S3 package dry run (task 483).
 5. Deploy to the chosen account; private smoke test via CloudFront default domain — all
    before any DNS change (cutover is story 66).
+
+---
+
+## Implementation notes (2026-06-12, task 481 — local build VERIFIED)
+
+- **Leaderboard is computed on read**, not maintained as write-time aggregate items
+  (supersedes the "Leaderboard agg" row above). Reason: the SQL re-evaluates the
+  "registered users" subquery at query time — a guest's old votes start counting the
+  moment they register. Computing from vote items on read (a filtered scan, 964 rows)
+  preserves those semantics exactly and removes the reconcile-on-register complexity.
+- **New endpoint `bootstrap.php`**: the session/guest logic from index.php's PHP
+  prologue (cookie → user, else mint guest), returning the `window.user` payload.
+  Static index.html + a small script.js await replace the server-rendered bootstrap
+  (wiring lands with task 483 packaging).
+- **Sessions**: PHP `$_SESSION` + cookie dual-tracking collapses to the durable
+  `session_id` cookie (30-day), which the PHP already used as fallback everywhere.
+- **Reset-link path fixed**: emails now link `/dbcontrol/reset_password.php` (the PHP
+  emailed `/help/reset_password.php`, which doesn't exist in the repo webroot).
+- **Local parity proof**: `lambda/tools/diff_endpoints.mjs` replays identical request
+  sequences (reads, auth flows, votes, account ops, resets, deletes) against the PHP
+  stack (:8090, MySQL) and `lambda/local_server.mjs` (:9090, DynamoDB Local seeded by
+  `lambda/tools/migrate_to_dynamo.mjs`): **65/65 checks pass**, plus an end-to-end
+  reset-token happy path (request → token → form POST → signin → single-use) on both.
+- Local PHP reference needed `aws/aws-sdk-php` composer-installed (email-sending
+  success paths fatal'd without it — local-stack artifact, not a contract difference).
