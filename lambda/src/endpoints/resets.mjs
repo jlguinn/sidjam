@@ -1,14 +1,25 @@
 // send_reset_email.php + reset_password.php (the latter returns an HTML page -
 // it is the link target in the reset email, not a frontend XHR endpoint).
 import { getUserByEmail, putResetToken, getResetToken, deleteResetToken, updateUser } from '../lib/db.mjs';
-import { validateEmail, newResetToken, passwordHash } from '../lib/php.mjs';
+import { validateEmail, normalizeEmail, newResetToken, passwordHash } from '../lib/php.mjs';
 import { jsonResponse, htmlResponse } from '../lib/http.mjs';
 import { sendMail } from '../lib/mail.mjs';
+import { clientIp, hit } from '../lib/ratelimit.mjs';
+
+// Same generic reply whether or not the address is registered, and whether or
+// not it was throttled - never reveals account existence or the rate-limit state.
+const RESET_OK = { success: true, message: 'If this email address was registered, a password reset link will be sent.' };
 
 export async function sendResetEmail(req) {
     const email = (req.form.email ?? '').trim();
     if (!email) return jsonResponse({ success: false, message: 'Email is required' });
     if (!validateEmail(email)) return jsonResponse({ success: false, message: 'Invalid email format' });
+
+    // Abuse throttle: cap reset sends per IP and per normalized address per hour.
+    // On trip, return the constant response and skip the send (no enumeration).
+    const ipOk = (await hit('reset_ip', clientIp(req), 5)).allowed;
+    const emailOk = (await hit('reset_email', normalizeEmail(email), 3)).allowed;
+    if (!ipOk || !emailOk) return jsonResponse(RESET_OK);
 
     const user = await getUserByEmail(email);
     if (user) {
@@ -16,17 +27,19 @@ export async function sendResetEmail(req) {
         const expires = Math.floor(Date.now() / 1000) + 3600;
         await putResetToken(token, user.user_id, expires);
 
-        const resetLink = `https://sidjam.com/dbcontrol/reset_password.php?token=${token}`;
+        // Must target www: the apex is forwarding-only post-cutover and 404s
+        // deep paths, so an apex reset link never reaches the Lambda page.
+        const resetLink = `https://www.sidjam.com/dbcontrol/reset_password.php?token=${token}`;
         const bodyHtml = `
         <p>A password reset for the sID JAm account associated with this e-mail has been requested. You can click the link below to reset your password:</p>
         <p><a href="${resetLink}">Reset Your Password</a></p>
         <p>This link will expire in 1 hour. If you did not make this request or otherwise no longer need a password change, you may ignore this request.</p>
-        <p>You can visit <a href="https://sidjam.com">https://sidjam.com</a> to access your account or learn more about sID JAm.</p>
+        <p>You can visit <a href="https://www.sidjam.com">https://www.sidjam.com</a> to access your account or learn more about sID JAm.</p>
 `;
         await sendMail(email, 'sID JAm - Password Reset Request', bodyHtml, true);
     }
     // Same response either way: don't reveal whether the email exists
-    return jsonResponse({ success: true, message: 'If this email address was registered, a password reset link will be sent.' });
+    return jsonResponse(RESET_OK);
 }
 
 function resetPage(message, showForm) {

@@ -2,9 +2,10 @@
 // signin.php + register.php + logout.php
 import { getUserById, getUserBySessionId, getUserByEmail, getUserByUsername,
          allocateUserId, putUser, updateUser } from '../lib/db.mjs';
-import { passwordVerify, passwordHash, newSessionId, validateEmail, curdate } from '../lib/php.mjs';
+import { passwordVerify, passwordHash, newSessionId, validateEmail, normalizeEmail, curdate } from '../lib/php.mjs';
 import { jsonResponse, sessionCookie } from '../lib/http.mjs';
 import { sendMail } from '../lib/mail.mjs';
+import { clientIp, hit } from '../lib/ratelimit.mjs';
 
 async function createGuest() {
     const userId = await allocateUserId();
@@ -70,6 +71,14 @@ export async function register(req) {
     if (password.length < 8) {
         return jsonResponse({ success: false, message: 'Password must be at least 8 characters long' });
     }
+
+    // Abuse throttle (bot form-spam protection; no PHP equivalent). Runs after
+    // the cheap format checks so malformed junk never touches the counters, and
+    // before any account write. Per-IP and per-normalized-email hourly caps.
+    const tooMany = { success: false, message: 'Too many registration attempts. Please try again later.' };
+    if (!(await hit('register_ip', clientIp(req), 5)).allowed) return jsonResponse(tooMany);
+    if (!(await hit('register_email', normalizeEmail(email), 3)).allowed) return jsonResponse(tooMany);
+
     if (await getUserByEmail(email)) {
         return jsonResponse({ success: false, message: 'Email already exists' });
     }
@@ -105,13 +114,21 @@ export async function register(req) {
 
     console.log(`[REGISTER] user_id=${userId} | username="${username}" | email=${email} | ${guest && !guest.email ? 'guest-upgrade' : 'new'}`);
 
+    // Global circuit breaker: legit registration is ~0-5/day, so an hourly cap
+    // well above that hard-stops a distributed flood (rotating IPs/emails slip
+    // the per-key caps) from firing welcome mail at harvested addresses. The
+    // account is still created either way - only the SES send is suppressed.
     const bodyHtml = `
     <p>Thank you for registering to sID JAm!</p>
-    <p>Visit <a href="https://sidjam.com">https://sidjam.com</a> to access sID JAm.</p>
-    <p>See also: <a href="https://sidjam.com/help.html">https://sidjam.com/help.html</a> for help.</p>
+    <p>Visit <a href="https://www.sidjam.com">https://www.sidjam.com</a> to access sID JAm.</p>
+    <p>See also: <a href="https://www.sidjam.com/help.html">https://www.sidjam.com/help.html</a> for help.</p>
     <p>Thank you!</p>
 `;
-    await sendMail(email, 'Welcome to sID JAm!', bodyHtml, true);
+    if ((await hit('welcome_global', 'ALL', 20)).allowed) {
+        await sendMail(email, 'Welcome to sID JAm!', bodyHtml, true);
+    } else {
+        console.warn(`[THROTTLE] welcome email to ${email} suppressed - global hourly cap reached`);
+    }
 
     return jsonResponse({ success: true, message: 'Registration successful!' },
                         { setCookie: sessionCookie(sessionId) });

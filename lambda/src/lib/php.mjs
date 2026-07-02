@@ -31,6 +31,21 @@ export function validateEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
 }
 
+// Canonical form for rate-limit / dedup keying ONLY (never stored or emailed).
+// Gmail ignores dots and +suffixes and treats googlemail as gmail, so one inbox
+// is reachable as a.b@ / ab@ / a+x@gmail - collapse those to a single bucket so
+// the dot-trick can't multiply past a per-address throttle.
+export function normalizeEmail(email) {
+    const e = (email ?? '').trim().toLowerCase();
+    const at = e.lastIndexOf('@');
+    if (at < 1) return e;
+    let local = e.slice(0, at).split('+')[0];
+    let domain = e.slice(at + 1);
+    if (domain === 'googlemail.com') domain = 'gmail.com';
+    if (domain === 'gmail.com') local = local.replace(/\./g, '');
+    return `${local}@${domain}`;
+}
+
 // CURDATE() in the reference runs in UTC containers; match it.
 export function curdate() {
     return new Date().toISOString().slice(0, 10);

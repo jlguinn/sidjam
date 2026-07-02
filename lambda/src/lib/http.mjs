@@ -5,6 +5,7 @@
 
 export function parseRequest(event) {
     const method = event.requestContext?.http?.method ?? 'GET';
+    const ip = event.requestContext?.http?.sourceIp ?? null;
     const path = event.rawPath ?? '/';
     const query = Object.fromEntries(new URLSearchParams(event.rawQueryString ?? ''));
 
@@ -29,7 +30,7 @@ export function parseRequest(event) {
         try { json = JSON.parse(rawBody); } catch { json = null; }
     }
 
-    return { method, path, query, cookies, form, json, rawBody, headers };
+    return { method, ip, path, query, cookies, form, json, rawBody, headers };
 }
 
 // PHP's json_encode escapes "/" as "\/" by default; replicate so responses
