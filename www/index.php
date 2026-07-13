@@ -1,5 +1,5 @@
 <?php
-$version = "2026.07.02";
+$version = "2026.07.13";
 
 // Define debug toggle (hardcoded for now)
 $debug_enabled = isset($_GET['debug']) && $_GET['debug'] === 'true'; // Set to true if ?debug=true is in the URL
@@ -196,8 +196,9 @@ $cxn->close();
     <meta property="og:title" content="sID JAm - C64 SID Music Battle of the Bands">
     <meta property="og:description" content="Listen to and vote on thousands of C64 SID tunes from the HVSC. Join the tournament and help find the best 8-bit tracks of all time.">
     <meta property="og:type" content="website">
-    <meta property="og:image" content="http://www.sidjam.com/image/sidjam_logo.jpg">
-    <meta property="og:url" content="http://www.sidjam.com/">
+    <meta property="og:image" content="https://www.sidjam.com/image/sidjam_logo.jpg">
+    <meta property="og:url" content="https://www.sidjam.com/">
+    <link rel="canonical" href="https://www.sidjam.com/">
     <title>sID JAm - C64 SID Music Battle of the Bands</title>
     <link rel="stylesheet" href="src/styles.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tektur:wght@400;700&display=swap">
