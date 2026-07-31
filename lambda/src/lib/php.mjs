@@ -24,11 +24,31 @@ export function newResetToken() {
     return crypto.randomBytes(32).toString('hex');
 }
 
-// filter_var(FILTER_VALIDATE_EMAIL) approximation. The reference's exact
-// RFC-822 edge behavior doesn't matter to the frontend; this matches it for
-// all realistic addresses.
+// filter_var(FILTER_VALIDATE_EMAIL) equivalent: an RFC 5322 dot-atom local part
+// (no leading, trailing or consecutive dots) plus a real domain. The earlier
+// [^\s@]+ approximation was looser than the PHP it replaced and let through the
+// form bot's signature address shape - gan..jason@gmail.com - which filter_var
+// rejects and which Gmail bounces 100% of the time. Quoted local parts ("a..b"@x)
+// are legal but never legitimate from a signup form, so they stay rejected.
+const ATOM = "[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+";
+const LOCAL_RE = new RegExp(`^${ATOM}(\\.${ATOM})*$`);
+const LABEL_RE = /^[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?$/;
+
 export function validateEmail(email) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+    const e = (email ?? '').trim();
+    if (e.length > 254) return false;
+    const at = e.lastIndexOf('@');
+    if (at < 1) return false;
+    const local = e.slice(0, at);
+    const domain = e.slice(at + 1);
+    if (local.length > 64 || !LOCAL_RE.test(local)) return false;
+    if (domain.length > 253) return false;
+    const labels = domain.split('.');
+    // require a dotted domain with an alphabetic TLD - "user@localhost" is
+    // syntactically fine but not something SES can ever deliver to
+    return labels.length >= 2
+        && labels.every(l => l.length <= 63 && LABEL_RE.test(l))
+        && /^[A-Za-z]{2,}$/.test(labels[labels.length - 1]);
 }
 
 // Canonical form for rate-limit / dedup keying ONLY (never stored or emailed).

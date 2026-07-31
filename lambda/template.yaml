@@ -71,7 +71,9 @@ Resources:
         - S3ReadPolicy: { BucketName: !Ref CatalogBucket }
         - Statement:
             - Effect: Allow
-              Action: [ 'ses:SendEmail' ]
+              # GetSuppressedDestination: skip sends to addresses that already
+              # hard-bounced (see lib/mail.mjs)
+              Action: [ 'ses:SendEmail', 'ses:GetSuppressedDestination' ]
               Resource: '*'
       FunctionUrlConfig:
         AuthType: NONE   # fronted by CloudFront; locked to OAC at cutover (story 66)
