@@ -1,7 +1,7 @@
 // bootstrap (new: the session logic from index.php's PHP prologue) +
 // signin.php + register.php + logout.php
 import { getUserById, getUserBySessionId, getUserByEmail, getUserByUsername,
-         allocateUserId, putUser, updateUser } from '../lib/db.mjs';
+         allocateUserId, putUser, updateUser, hasDecisionedBout } from '../lib/db.mjs';
 import { passwordVerify, passwordHash, newSessionId, validateEmail, normalizeEmail, curdate } from '../lib/php.mjs';
 import { jsonResponse, sessionCookie } from '../lib/http.mjs';
 import { sendMail } from '../lib/mail.mjs';
@@ -72,6 +72,22 @@ export async function register(req) {
         return jsonResponse({ success: false, message: 'Password must be at least 8 characters long' });
     }
 
+    // Decision gate (bot form-spam protection; no PHP equivalent). Registration
+    // upgrades the current guest session in place, so a real registrant has
+    // already been playing under this same cookie and has decisioned bouts to
+    // show for it. The form bot fires a single POST to register.php with no
+    // session and no votes, so it never qualifies. Resolve the guest once here
+    // and reuse it for the upgrade decision below. No cookie -> no user -> no
+    // bouts -> rejected with zero DB reads, which is the bot's exact shape.
+    // The message is deliberately plain-friendly: it can only ever be read by a
+    // human who reached the form before playing (bots ignore the body), and it
+    // tells them the one thing they need to do.
+    const cookieSession = req.cookies.session_id;
+    const guest = cookieSession ? await getUserBySessionId(cookieSession) : null;
+    if (!guest || !(await hasDecisionedBout(guest.user_id))) {
+        return jsonResponse({ success: false, message: 'You must decision a bout before registering.' });
+    }
+
     // Abuse throttle (bot form-spam protection; no PHP equivalent). Runs after
     // the cheap format checks so malformed junk never touches the counters, and
     // before any account write. Per-IP and per-normalized-email hourly caps.
@@ -91,9 +107,8 @@ export async function register(req) {
     const today = curdate();
     const sessionId = newSessionId();
 
-    // Upgrade the current guest (cookie session) if it exists and has no email
-    const cookieSession = req.cookies.session_id;
-    const guest = cookieSession ? await getUserBySessionId(cookieSession) : null;
+    // Upgrade the current guest (the cookie session resolved above) if it has no
+    // email; the decision gate has already proven it exists and has played.
     let userId;
     if (guest && !guest.email) {
         userId = guest.user_id;

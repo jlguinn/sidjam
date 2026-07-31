@@ -91,6 +91,25 @@ export async function getVotesByUser(userId) {
     return r.Items ?? [];
 }
 
+// Has this user ever decisioned a bout - i.e. does any TUNE# row carry a real
+// win or loss (not merely a 0/0 revived row)? This is the registration gate's
+// signal: on this site voting precedes signup (guests play, then upgrade in
+// place), so a real registrant already qualifies, while the form bot - a single
+// POST to register.php with no session and no votes - never does. Server-side
+// win/loss filter so the returned page is only the qualifying rows; a page is
+// well under 1MB for any real user, so one round-trip settles it.
+export async function hasDecisionedBout(userId) {
+    if (!userId) return false;
+    const r = await ddb.send(new QueryCommand({
+        TableName: TABLE,
+        KeyConditionExpression: 'PK = :pk AND begins_with(SK, :tune)',
+        FilterExpression: 'win > :z OR loss > :z',
+        ProjectionExpression: 'sid_id',
+        ExpressionAttributeValues: { ':pk': userPK(userId), ':tune': 'TUNE#', ':z': 0 },
+    }));
+    return (r.Items ?? []).length > 0;
+}
+
 // INSERT ... ON DUPLICATE KEY UPDATE win = win + n, loss = loss + n, atomically
 // across the whole votes array like the PHP transaction.
 export async function applyVotes(userId, votes) {
