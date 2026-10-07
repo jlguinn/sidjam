@@ -164,5 +164,8 @@ hosted zone would add $0.50/mo).
   stack (:8090, MySQL) and `lambda/local_server.mjs` (:9090, DynamoDB Local seeded by
   `lambda/tools/migrate_to_dynamo.mjs`): **65/65 checks pass**, plus an end-to-end
   reset-token happy path (request → token → form POST → signin → single-use) on both.
+- **Retired 2026-10-06**: the PHP backend (`www/dbcontrol/*.php`), its web/mailhog
+  compose services and `diff_endpoints.mjs` were removed once prod had run stable for
+  four months; git history is the archive. The parity result above stands as recorded.
 - Local PHP reference needed `aws/aws-sdk-php` composer-installed (email-sending
   success paths fatal'd without it — local-stack artifact, not a contract difference).

@@ -53,8 +53,6 @@ print("package_s3: catalog ok (hvsc=%s count=%d)" % (c["hvsc"], c["count"]))
 # Site payload (small, changes per release): everything except exclusions
 aws s3 sync www "s3://$BUCKET" "${DRY[@]}" --delete \
     --exclude "index.php" \
-    --exclude "dbcontrol/*" \
-    --exclude "vendor/*" --exclude "composer.*" \
     --exclude "sid/*" \
     --exclude "src/websid/.git/*" --exclude "src/webaudio-player/.git/*" \
     --exclude "*.gz"

@@ -1,17 +1,12 @@
 # Local credentials and runtime state — never commit
 .env
-www/dbcontrol/sidcon.php
 dbcontrol_sidjam/
 # Local MySQL data and mail
 mysql-data/
 init.sql/
 logs/
-# HVSC collection (multi-GB) and composer artifacts
+# HVSC collection (multi-GB)
 www/sid/HVSC_*
-www/vendor/
-www/composer.json
-www/composer.lock
-docker-compose.override.yml
 www/src/websid/
 www/src/webaudio-player/
 # Generated static catalog (rebuild with tools/generate_catalog.sh)
